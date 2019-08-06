@@ -30,10 +30,6 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
      * 打开文件。
      */
     std::ifstream fin(kstrConfigFilePath, std::ios::in);
-    /**
-     * 存储配置文件中每一行的数据。
-     */
-    char linebuf[501] = {'\0'};
 
     /**
      * 循环读取每一行，过滤掉注释等，将配置信息加载到 vconfig_item_set_ 。
@@ -65,7 +61,7 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
             char c = strbuftmp[strbuftmp.size() - 1];
             if ((c == '\n') || (c == '\r') || (c == ' '))
             {
-                linebuf[strbuftmp.size() - 1] = '\0';
+                strbuftmp[strbuftmp.size() - 1] = '\0';
                 continue;
             }
             break;
@@ -90,9 +86,16 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
 
 std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem)
 {
-    std::string strret = "";
+    std::vector<ConfigItem *>::iterator it;
+    for (it == vconfig_item_set_.begin(); it != vconfig_item_set_.end(); it++)
+    {
+        if ((*it)->stritem == kstrConfigItem)
+        {
+            return (*it)->striteminfo;
+        }
+    }
 
-    return strret;
+    return "";
 }
 
 std::string XMoonConfig::ClearSpace(const std::string &kstr)
