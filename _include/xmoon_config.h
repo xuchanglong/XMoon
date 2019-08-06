@@ -20,34 +20,6 @@ private:
 
 public:
     /**
-     * @function     加载配置信息。
-     * @paras           kstrConfigFilePath   配置文件路径。
-     * @return          0   操作成功。
-     * @author        xuchangong
-     * @time            2019-08-01
-     */
-    int Load(const std::string &kstrConfigFilePath);
-
-    /**
-     * @function     得到指定的配置选项的信息。
-     * @paras           kstrConfigItem   配置选项。
-     * @return         配置选项的信息。未找到则返回空。
-     * @author        xuchangong
-     * @time            2019-08-01
-     */
-    std::string GetConfigItem(const std::string &kstrConfigItem);
-
-    /**
-     * @function     对指定的字符串清空左右的空格字符。
-     * @paras        kstr   待处理的字符串。
-     * @return       处理完成之后字符串。
-     * @author        xuchangong
-     * @time            2019-08-06
-     */
-    std::string ClearSpace(const std::string &kstr);
-
-public:
-    /**
      * @function    单例的生成器。
      * @paras           none
      * @return         单例的指针。
@@ -85,6 +57,34 @@ private:
         }
     };
 
+public:
+    /**
+     * @function     加载配置信息。
+     * @paras           kstrConfigFilePath   配置文件路径。
+     * @return          0   操作成功。
+     * @author        xuchangong
+     * @time            2019-08-01
+     */
+    int Load(const std::string &kstrConfigFilePath);
+
+    /**
+     * @function     得到指定的配置选项的信息。
+     * @paras           kstrConfigItem   配置选项。
+     * @return         配置选项的信息。未找到则返回空。
+     * @author        xuchangong
+     * @time            2019-08-01
+     */
+    std::string GetConfigItem(const std::string &kstrConfigItem);
+
+    /**
+     * @function     对指定的字符串清空左右的空格字符。
+     * @paras        kstr   待处理的字符串。
+     * @return       处理完成之后字符串。
+     * @author        xuchangong
+     * @time            2019-08-06
+     */
+    std::string ClearSpace(const std::string &kstr);
+
 private:
     static XMoonConfig *pinstance_;
     static DeleteXMoonConfig delxmoonconfig;
@@ -94,6 +94,18 @@ private:
      * 配置文件中所有条目的信息的集合。
      */
     std::vector<ConfigItem *> vconfig_item_set_;
+/**
+ * 测试接口,正常使用时禁止使用。
+ */
+public:
+    /**
+     * @function    返回 vconfig_item_set_ 选项和值的字符串形式。
+     * @paras       none 。
+     * @return      vconfig_item_set_ 选项和值的字符串形式。
+     * @author      xuchanglong
+     * @time        2019-08-06
+     */
+    std::string testStringConfigItemSet();
 };
 
 #endif

@@ -133,3 +133,16 @@ std::string XMoonConfig::ClearSpace(const std::string &kstr)
     }
     return kstr.substr(notspacepos_s, notspacepos_e - notspacepos_s + 1);
 }
+
+std::string XMoonConfig::testStringConfigItemSet()
+{
+    std::string strret;
+    strret.clear();
+
+    std::vector<ConfigItem *>::iterator it;
+    for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); it++)
+    {
+        strret += (*it)->stritem + "=" + (*it)->striteminfo + '\n';
+    }
+    return strret;
+}
