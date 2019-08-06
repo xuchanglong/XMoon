@@ -42,36 +42,33 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
      * 循环读取每一行，过滤掉注释等，将配置信息加载到 vconfig_item_set_ 。
      * 检测流上的文件结束符，若检测到，则返回非0，反之则返回0。
      */
-    while (fin.getline(linebuf, strlen(linebuf)))
+    while (!fin.eof())
     {
-        /**
-         * 读取每一行的数据，该行数据超过500个，则返回nullptr。
-         */
-        std::stringstream strline(linebuf);
+        std::string strbuftmp;
+        std::getline(fin, strbuftmp);
         /**
          * 去掉注释、空行等无用数据行。
          */
         if (
-            (strline[0] == '#') ||
-            (strline[0] == '\t') ||
-            (strline[0] == '\0') ||
-            (strline[0] == ';') ||
-            (strline[0] == '\n') ||
-            (strline[0] == ' ') ||
-            (strline[0] == '['))
+            (strbuftmp[0] == '#') ||
+            (strbuftmp[0] == '\t') ||
+            (strbuftmp[0] == '\0') ||
+            (strbuftmp[0] == ';') ||
+            (strbuftmp[0] == '\n') ||
+            (strbuftmp[0] == ' ') ||
+            (strbuftmp[0] == '['))
         {
             continue;
         }
         /**
          * 去掉每行后面的换行、回车以及空格等。
          */
-        /*
         while (true)
         {
-            char c = linebuf[strlen(linebuf) - 1];
+            char c = strbuftmp[strbuftmp.size() - 1];
             if ((c == '\n') || (c == '\r') || (c == ' '))
             {
-                linebuf[strlen(linebuf) - 1] = '\0';
+                linebuf[strbuftmp.size() - 1] = '\0';
                 continue;
             }
             break;
@@ -79,15 +76,17 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
         /**
          * 开始截取选项以及选项信息。
          */
-        /*
-        char *pc = strchr(linebuf, '=');
-        if (pc == nullptr)
+        size_t pos = strbuftmp.find("=");
+        if (pos != 0)
         {
             ConfigItem *pitem = new ConfigItem;
             memset(pitem, 0, sizeof(ConfigItem) * 1);
-            pitem->stritem =
+            pitem->stritem = strbuftmp.substr(0, pos);
+            pitem->stritem = strbuftmp.substr(pos + 1);
+
+            vconfig_item_set_.push_back(pitem);
         }
-        */
+        strbuftmp.clear();
     }
     return iret;
 }
