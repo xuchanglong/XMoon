@@ -81,6 +81,8 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
         }
         strbuftmp.clear();
     }
+    fin.clear();
+    fin.close();
     return iret;
 }
 
