@@ -1,7 +1,4 @@
 #include "xmoon_config.h"
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
 #include <fstream>
 
 XMoonConfig *XMoonConfig::pinstance_ = nullptr;
@@ -45,7 +42,7 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
     while (!fin.eof())
     {
         std::string strbuftmp;
-        std::getline(fin, strbuftmp);
+        getline(fin, strbuftmp);
         /**
          * 去掉注释、空行等无用数据行。
          */
@@ -80,9 +77,9 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
         if (pos != 0)
         {
             ConfigItem *pitem = new ConfigItem;
-            memset(pitem, 0, sizeof(ConfigItem) * 1);
-            pitem->stritem = strbuftmp.substr(0, pos);
-            pitem->stritem = strbuftmp.substr(pos + 1);
+            //memset(pitem, 0, sizeof(ConfigItem) * 1);
+            pitem->stritem = ClearSpace(strbuftmp.substr(0, pos));
+            pitem->striteminfo = ClearSpace(strbuftmp.substr(pos + 1));
 
             vconfig_item_set_.push_back(pitem);
         }
@@ -96,4 +93,43 @@ std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem)
     std::string strret = "";
 
     return strret;
+}
+
+std::string XMoonConfig::ClearSpace(const std::string &kstr)
+{
+    /**
+     * 非空格第1个字符的位置和最后1个字符的位置。
+     */
+    size_t notspacepos_s = 0;
+    size_t notspacepos_e = 0;
+    /**
+     * 找到字符串从左向右，第一个非空格的字符的位置。
+     */
+    for (size_t i = 0; i < kstr.size(); ++i)
+    {
+        if (kstr[i] != ' ')
+        {
+            notspacepos_s = i;
+            break;
+        }
+    }
+    /**
+     * 找到字符串从右向左，第一个非空格的字符的位置。
+     */
+    for (int i = kstr.size() - 1; i >= 0; --i)
+    {
+        if (kstr[i] != ' ')
+        {
+            notspacepos_e = i;
+            break;
+        }
+    }
+    if (
+        ((notspacepos_e - notspacepos_s) < 0)||
+        (notspacepos_e==0 && notspacepos_s==0)
+        )
+    {
+        return "";
+    }
+    return kstr.substr(notspacepos_s, notspacepos_e - notspacepos_s + 1);
 }

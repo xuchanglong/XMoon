@@ -37,6 +37,15 @@ public:
      */
     std::string GetConfigItem(const std::string &kstrConfigItem);
 
+    /**
+     * @function     对指定的字符串清空左右的空格字符。
+     * @paras        kstr   待处理的字符串。
+     * @return       处理完成之后字符串。
+     * @author        xuchangong
+     * @time            2019-08-06
+     */
+    std::string ClearSpace(const std::string &kstr);
+
 public:
     /**
      * @function    单例的生成器。
