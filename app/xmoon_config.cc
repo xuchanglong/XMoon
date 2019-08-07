@@ -12,7 +12,7 @@ XMoonConfig::XMoonConfig()
 XMoonConfig::~XMoonConfig()
 {
     std::vector<ConfigItem *>::iterator it;
-    for (it == vconfig_item_set_.begin(); it != vconfig_item_set_.end(); ++it)
+    for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); ++it)
     {
         delete *it;
         *it = nullptr;
