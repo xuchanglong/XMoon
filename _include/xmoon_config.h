@@ -11,6 +11,7 @@
 #include "xmoon_global.h"
 #include <vector>
 #include <string.h>
+#include <new>
 
 class XMoonConfig
 {
@@ -32,7 +33,15 @@ public:
         {
             if (pinstance_ == nullptr)
             {
-                pinstance_ = new XMoonConfig();
+                try
+                {
+                    pinstance_ = new XMoonConfig();
+                }
+                catch(const std::exception& e)
+                {
+                    //std::cerr << e.what() << '\n';
+                    return nullptr;
+                }
             }
         }
         return pinstance_;
@@ -62,6 +71,7 @@ public:
      * @function     加载配置信息。
      * @paras           kstrConfigFilePath   配置文件路径。
      * @return          0   操作成功。
+     *                  -1  申请内存失败。
      * @author        xuchangong
      * @time            2019-08-01
      */

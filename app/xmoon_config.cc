@@ -23,10 +23,6 @@ XMoonConfig::~XMoonConfig()
 int XMoonConfig::Load(const std::string &kstrConfigFilePath)
 {
     /**
-     * 存储返回值。
-     */
-    int iret = 0;
-    /**
      * 打开文件。
      */
     std::ifstream fin(kstrConfigFilePath, std::ios::in);
@@ -71,7 +67,17 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
         size_t pos = strbuftmp.find("=");
         if (pos != 0)
         {
-            ConfigItem *pitem = new ConfigItem;
+            ConfigItem *pitem = nullptr;
+            try
+            {
+                pitem = new ConfigItem;
+            }
+            catch(const std::exception& e)
+            {
+                //std::cerr << e.what() << '\n';
+                return -1;
+            }
+            
             //memset(pitem, 0, sizeof(ConfigItem) * 1);
             pitem->stritem = ClearSpace(strbuftmp.substr(0, pos));
             pitem->striteminfo = ClearSpace(strbuftmp.substr(pos + 1));
@@ -82,7 +88,7 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
     }
     fin.clear();
     fin.close();
-    return iret;
+    return 0;
 }
 
 std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem)

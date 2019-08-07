@@ -1,6 +1,6 @@
 #include "xmoon_config.h"
 
-void testfuncs(std::string strconfigfilepath);
+int testfuncs(std::string strconfigfilepath);
 
 int main()
 {
@@ -8,27 +8,41 @@ int main()
      * 测试空配置文件。
      */
     std::cout << "--------------  测试空的配置文件！  --------------" << std::endl;
-    testfuncs("./configfiles/xmoon_emptry.conf");
+    if (testfuncs("./configfiles/xmoon_emptry.conf") != 0)
+    {
+        std::cout << "test failed." << std::endl;
+    }
 
     /**
      * 测试正常的配置文件。
      */
     std::cout << std::endl;
     std::cout << "--------------  测试正常的配置文件！  --------------" << std::endl;
-    testfuncs("./configfiles/xmoon_normal.conf");
+    if (testfuncs("./configfiles/xmoon_normal.conf") != 0)
+    {
+        std::cout << "test failed." << std::endl;
+    }
     return 0;
 }
 
-void testfuncs(std::string strconfigfilepath)
+int testfuncs(std::string strconfigfilepath)
 {
     /**
      * 获取单例。
      */
     XMoonConfig *pconfig = XMoonConfig::GetInstance();
+    if (pconfig == nullptr)
+    {
+        return -1;
+    }
+
     /**
      * 加载配置文件。
      */
-    pconfig->Load(strconfigfilepath);
+    if (pconfig->Load(strconfigfilepath) != 0)
+    {
+        return -2;
+    }
 
     std::cout << "验证从配置文件中读取的内容是否正确。" << std::endl;
     /**
@@ -46,4 +60,5 @@ void testfuncs(std::string strconfigfilepath)
     std::cout << "loglevel = " << pconfig->GetConfigItem("loglevel") << std::endl;
     std::cout << "workerprocessessum = " << pconfig->GetConfigItem("workerprocessessum") << std::endl;
     std::cout << "runbydaemon = " << pconfig->GetConfigItem("runbydaemon") << std::endl;
+    return 0;
 }
