@@ -23,7 +23,7 @@ public:
      * @author      xuchanglong
      * @time        2019-08-08
      */
-    int SetProTitle(char *const *pargv, const std::string strtile);
+    int SetProTitle(char **&pargv, const std::string strtile);
 private:
     /**
      * @function    设置进程的标题功能的初始化函数。
@@ -34,6 +34,9 @@ private:
      */
     int SetProTitle_init(size_t &sysvarslen);
 private:
+    /**
+     * 
+     */
     char *pnewenv_;
 
 /**
