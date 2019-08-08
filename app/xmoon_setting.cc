@@ -62,7 +62,7 @@ int XMoonSetting::SetProTitle(char **&pargv, const std::string strtitle)
     memcpy(ptmp, strtitle.c_str(), titlelen);
     ptmp += titlelen;
 
-    memset(ptmp, 0, lentotal - titlelen) return 0;
+    memset(ptmp, 0, lentotal - titlelen);
     return 0;
 }
 
