@@ -107,9 +107,9 @@ int XMoonSetting::SetProTitle_init(size_t &sysvarslen)
     for (size_t i = 0; environ[i]; i++)
     {
         size_t len = strlen(environ[i]) + 1;
-        memcpy(ptmp, &environ[i], len);
-        ptmp += len;
+        memcpy(ptmp, environ[i], len);
         environ[i] = ptmp;
+        ptmp += len;
     }
 
     return 0;
