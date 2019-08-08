@@ -14,7 +14,7 @@ public:
     XMoonSetting();
     XMoonSetting(const XMoonSetting &obj) = delete;
     XMoonSetting &operator=(const XMoonSetting &obj) = delete;
-    ~XMoonSetting();
+    virtual ~XMoonSetting();
 public:
     /**
      * @function    设置进程的标题。
@@ -23,7 +23,7 @@ public:
      * @author      xuchanglong
      * @time        2019-08-08
      */
-    int SetProTitle(const std::string strtile);
+    int SetProTitle(char *const *pargv, const std::string strtile);
 private:
     /**
      * @function    设置进程的标题功能的初始化函数。
@@ -32,7 +32,15 @@ private:
      * @author      xuchanglong
      * @time        2019-08-08
      */
-    int SetProTitle_init();
+    int SetProTitle_init(size_t &sysvarslen);
+private:
+    char *pnewenv_;
+
+/**
+ * 测试接口,正常使用时禁止使用。
+ */
+public:
+    int testSetProTitle_init(size_t &sysvarslen);
 };
 
 #endif
