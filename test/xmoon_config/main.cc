@@ -55,7 +55,7 @@ int testfuncs(std::string strconfigfilepath)
     std::cout << str << std::endl;
 
     std::cout << "验证 GetConfigItem 函数是否正确。" << std::endl;
-    std::cout << "listenport = " << pconfig->GetConfigItem("listenport") << std::endl;
+    std::cout << "listenport = " << pconfig->GetConfigItem("listenport", "5020") << std::endl;
     std::cout << "logfilename = " << pconfig->GetConfigItem("logfilename") << std::endl;
     std::cout << "loglevel = " << pconfig->GetConfigItem("loglevel") << std::endl;
     std::cout << "workerprocessessum = " << pconfig->GetConfigItem("workerprocessessum") << std::endl;

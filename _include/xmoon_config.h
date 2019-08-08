@@ -37,7 +37,7 @@ public:
                 {
                     pinstance_ = new XMoonConfig();
                 }
-                catch(const std::exception& e)
+                catch (const std::exception &e)
                 {
                     //std::cerr << e.what() << '\n';
                     return nullptr;
@@ -80,11 +80,12 @@ public:
     /**
      * @function     得到指定的配置选项的信息。
      * @paras           kstrConfigItem   配置选项。
+     *                  strdefault      缺省值。若配置文件中不存在该配置选项，那么返回该缺省值。
      * @return         配置选项的信息。未找到则返回空。
      * @author        xuchangong
      * @time            2019-08-01
      */
-    std::string GetConfigItem(const std::string &kstrConfigItem);
+    const std::string GetConfigItem(const std::string &kstrConfigItem, const std::string strdefault = "");
 
     /**
      * @function     对指定的字符串清空左右的空格字符。
@@ -104,7 +105,7 @@ private:
      * 配置文件中所有条目的信息的集合。
      */
     std::vector<ConfigItem *> vconfig_item_set_;
-/**
+    /**
  * 测试接口,正常使用时禁止使用。
  */
 public:

@@ -14,8 +14,8 @@ XMoonConfig::~XMoonConfig()
     std::vector<ConfigItem *>::iterator it;
     for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); ++it)
     {
-        delete *it;
-        *it = nullptr;
+        delete (*it);
+        (*it) = nullptr;
     }
     vconfig_item_set_.clear();
 }
@@ -72,12 +72,12 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
             {
                 pitem = new ConfigItem;
             }
-            catch(const std::exception& e)
+            catch (const std::exception &e)
             {
                 //std::cerr << e.what() << '\n';
                 return -1;
             }
-            
+
             //memset(pitem, 0, sizeof(ConfigItem) * 1);
             pitem->stritem = ClearSpace(strbuftmp.substr(0, pos));
             pitem->striteminfo = ClearSpace(strbuftmp.substr(pos + 1));
@@ -91,7 +91,7 @@ int XMoonConfig::Load(const std::string &kstrConfigFilePath)
     return 0;
 }
 
-std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem)
+const std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem, const std::string strdefault)
 {
     std::vector<ConfigItem *>::iterator it;
     for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); it++)
@@ -102,7 +102,7 @@ std::string XMoonConfig::GetConfigItem(const std::string &kstrConfigItem)
         }
     }
 
-    return "";
+    return strdefault;
 }
 
 std::string XMoonConfig::ClearSpace(const std::string &kstr)
@@ -135,9 +135,8 @@ std::string XMoonConfig::ClearSpace(const std::string &kstr)
         }
     }
     if (
-        ((notspacepos_e - notspacepos_s) < 0)||
-        (notspacepos_e==0 && notspacepos_s==0)
-        )
+        ((notspacepos_e - notspacepos_s) < 0) ||
+        (notspacepos_e == 0 && notspacepos_s == 0))
     {
         return "";
     }
