@@ -1,13 +1,12 @@
-﻿
+﻿/**
+ * @function    存放声明的全局变量、结构体和宏等相关信息。
+ * @author       xuchanglong
+ * @time            2019-08-14
+*/
 #ifndef XMOON__INCLUDE_XMN_GLOBAL_H_
 #define XMOON__INCLUDE_XMN_GLOBAL_H_
 
 #include <iostream>
-
-//一些比较通用的定义放在这里，比如typedef定义
-//一些全局变量的外部声明也放在这里
-
-//类型定义----------------
 
 /**
  * @function    记录配置文件中每一个条目的信息。
@@ -35,12 +34,36 @@ typedef struct
 }xmn_log_t;
 
 
-//外部全局量声明
-extern char  **g_os_argv;
-extern char  *gp_envmem; 
-extern int   g_environlen; 
+/**
+ * argv 参数所占内存大小。
+*/
+extern size_t g_argvmemlen;
+/**
+ * 环境变量所占内存大小。
+*/
+extern size_t g_envmemlen;
+/**
+ * 存放 argv 参数的首地址。
+*/
+extern char  **g_argv;
+/**
+ *   argv 参数个数。
+ */ 
+extern int   g_argc; 
+/**
+ * 新搬家的环境变量的存放位置。
+ * 在 在xmn_init_setproctitle 中申请内存。
+*/
+extern char  *gp_envmem;
 
+/**
+ * 当前进程的 pid （master or work）。
+*/
 extern pid_t       xmn_pid;
+/**
+ * 父进程的 pid，一般work进程调用，存储 master 进程的 pid 。
+*/
+extern pid_t        xmn_pid_parent;
 extern xmn_log_t   xmn_log;
 
 #endif

@@ -2,6 +2,7 @@
 #include <iostream>
 #include "xmn_func.h"
 #include "xmn_macro.h"
+#include <cstring>
 
 struct XMNSignal
 {
@@ -59,8 +60,7 @@ XMNSignal SignalInfo[] = {
     /**
      *  信号 > 0，故用 0 表示末尾。 
      */
-    {0, nullptr, nullptr}
-};
+    {0, nullptr, nullptr}};
 
 /**
      *  信号的初始化函数。 
@@ -71,7 +71,17 @@ int XMNSignalInit()
      * 变量初始化。
      */
     XMNSignal *psig = nullptr;
-    sigaction sa;
+    /*
+    struct sigaction 
+    {
+        void (*sa_handler)(int);
+        void (*sa_sigaction)(int, siginfo_t *, void *);
+        sigset_t sa_mask;
+        int sa_flags;
+        void (*sa_restorer)(void);
+    }
+    */
+    struct sigaction sa;
 
     /**
      * 设置每一个信号的信号处理程序。
@@ -81,7 +91,7 @@ int XMNSignalInit()
         /**
          * 设置信号的处理函数。
         */
-        memset(sa, 0, sizeof(sigaction) * 1);
+        memset(&sa, 0, sizeof(sigaction) * 1);
         if (psig->phandler)
         {
             sa.sa_sigaction = psig->phandler;
@@ -89,14 +99,19 @@ int XMNSignalInit()
         }
         else
         {
-            sa.sa_flags = SIG_IGN;
+            /**
+             * 忽略信号的处理程序，否则OS会执行默认的处理程序，很有可能是杀死系统。
+            */
+            sa.sa_handler = SIG_IGN;
         }
-
-        sigemptyset(sa.sa_mask);
+        /**
+         * 接收信号时不堵塞其他信号。
+        */
+        sigemptyset(&sa.sa_mask);
 
         if (sigaction(psig->signum, &sa, nullptr) == -1)
         {
-            xmn_log_error_core(XMN_LOG_EMERG, "sigaction(%s) failed.", psig->strsigname);
+            xmn_log_error_core(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->strsigname);
             return -1;
         }
         else
