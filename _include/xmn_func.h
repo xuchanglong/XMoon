@@ -20,5 +20,10 @@ u_char *xmn_log_errno(u_char *buf, u_char *last, int err);
 u_char *xmn_slprintf(u_char *buf, u_char *last, const char *fmt, ...);
 u_char *xmn_vslprintf(u_char *buf, u_char *last,const char *fmt,va_list args);
 
+/**
+ * 信号相关
+*/
+int XMNSignalInit();
+
 
 #endif  

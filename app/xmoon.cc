@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "xmn_config.h"  //和配置文件处理相关的类,名字带c_表示和类有关
-#include "xmn_signal.h"
 #include "xmn_func.h"    //各种函数声明
 
 //本文件用的函数声明
@@ -42,7 +41,14 @@ int main(int argc, char *const *argv)
     
     //(3)一些初始化函数，准备放这里
     xmn_log_init();             //日志初始化(创建/打开日志文件)
-
+    /**
+     * 初始化信号。
+    */
+    if (XMNSignalInit()==-1)
+    {
+        exitcode = 1;
+        goto lblexit;
+    }
 
     //(4)一些不好归类的其他类别的代码，准备放这里
     xmn_init_setproctitle();    //把环境变量搬家

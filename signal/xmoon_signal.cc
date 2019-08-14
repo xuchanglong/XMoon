@@ -1,5 +1,7 @@
 #include <signal.h>
 #include <iostream>
+#include "xmn_func.h"
+#include "xmn_macro.h"
 
 struct XMNSignal
 {
@@ -65,7 +67,44 @@ XMNSignal SignalInfo[] = {
      */
 int XMNSignalInit()
 {
-    ; 
+    /**
+     * 变量初始化。
+     */
+    XMNSignal *psig = nullptr;
+    sigaction sa;
+
+    /**
+     * 设置每一个信号的信号处理程序。
+     */
+    for (psig = SignalInfo; psig->signum; psig++)
+    {
+        /**
+         * 设置信号的处理函数。
+        */
+        memset(sa, 0, sizeof(sigaction) * 1);
+        if (psig->phandler)
+        {
+            sa.sa_sigaction = psig->phandler;
+            sa.sa_flags = SA_SIGINFO;
+        }
+        else
+        {
+            sa.sa_flags = SIG_IGN;
+        }
+
+        sigemptyset(sa.sa_mask);
+
+        if (sigaction(psig->signum, &sa, nullptr) == -1)
+        {
+            xmn_log_error_core(XMN_LOG_EMERG, "sigaction(%s) failed.", psig->strsigname);
+            return -1;
+        }
+        else
+        {
+            xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succed!", psig->strsigname);
+        }
+    }
+    return 0;
 }
 
 static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
