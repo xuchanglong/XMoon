@@ -1,4 +1,8 @@
-﻿//和日志相关的函数放之类
+﻿/**
+ * @function    与日志相关。
+ * @author      xuchanglong
+ * @time            2019-08-15
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

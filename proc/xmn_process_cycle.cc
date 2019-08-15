@@ -1,11 +1,16 @@
 #include <signal.h>
 #include <iostream>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "xmn_macro.h"
 #include "xmn_func.h"
 #include "xmn_global.h"
 #include "xmn_config.h"
 
+/**
+ * master 进程标题。
+*/
 static std::string g_strmasterprocessname = "master process";
 
 /**
@@ -71,7 +76,7 @@ void xmn_master_process_cycle()
     }
 
     /**
-    * 设置master进程名称。
+    * 设置master进程标题。
    */
     size_t lenall = 0;
     lenall = g_strmasterprocessname.size();
@@ -102,7 +107,8 @@ void xmn_master_process_cycle()
    */
     while (true)
     {
-        ;
+        std::cout << " master 进程运行。" << std::endl;
+        sleep(1);
     }
 }
 
@@ -117,7 +123,7 @@ static void xmn_start_worker_process(const size_t &workerprocesssum)
 
 static int xmn_create_process(const size_t &inum, const std::string &strprocname)
 {
-    pit_t pid = fork();
+    pid_t pid = fork();
     switch (pid)
     {
     /**
@@ -157,7 +163,8 @@ static void xmn_worker_process_cycle(const size_t &inum, const std::string &strp
     xmn_log_error_core(XMN_LOG_NOTICE, errno, "%s %d 启动成功！", strprocname.c_str(), xmn_pid);
     while (true)
     {
-        ;
+        std::cout << inum << "  子进程运行。" << std::endl;
+        sleep(1);
     }
 }
 

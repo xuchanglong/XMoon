@@ -1,3 +1,6 @@
 *.o
 *.vscode
 *.stackdump
+*.d
+xmoon
+*.exe

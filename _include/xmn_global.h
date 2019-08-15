@@ -1,5 +1,5 @@
 ﻿/**
- * @function    存放声明的全局变量、结构体和宏等相关信息。
+ * @function    存放声明的全局变量、结构体等相关信息。
  * @author       xuchanglong
  * @time            2019-08-14
 */
@@ -37,18 +37,22 @@ typedef struct
  * argv 参数所占内存大小。
 */
 extern size_t g_argvmemlen;
+
 /**
  * 环境变量所占内存大小。
 */
 extern size_t g_envmemlen;
+
 /**
  * 存放 argv 参数的首地址。
 */
 extern char **g_argv;
+
 /**
  *   argv 参数个数。
  */
-extern int g_argc;
+extern size_t g_argc;
+
 /**
  * 新搬家的环境变量的存放位置。
  * 在 在xmn_init_setproctitle 中申请内存。

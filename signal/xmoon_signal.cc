@@ -91,7 +91,7 @@ int XMNSignalInit()
         /**
          * 设置信号的处理函数。
         */
-        memset(&sa, 0, sizeof(sigaction) * 1);
+        memset(&sa, 0, sizeof(struct sigaction) * 1);
         if (psig->phandler)
         {
             sa.sa_sigaction = psig->phandler;

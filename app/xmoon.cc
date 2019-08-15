@@ -10,6 +10,7 @@
 
 #include "xmn_config.h"
 #include "xmn_func.h"
+#include "xmn_macro.h"
 
 /**
  * @function    释放内存。
@@ -22,12 +23,12 @@ static void freeresource();
 size_t g_argvmemlen = 0;
 size_t g_envmemlen = 0;
 char **g_argv = nullptr;
-int g_argc = 0;
+size_t g_argc = 0;
 char *gp_envmem = nullptr;
 
 pid_t xmn_pid = -1;
 pid_t xmn_pid_parent = -1;
-int xmn_process = 
+int xmn_process = XMN_PROCESS_MASTER;
 
 int main(int argc, char *const *argv)
 {
@@ -36,31 +37,45 @@ int main(int argc, char *const *argv)
      */
     int exitcode = 0;
     xmn_pid = getpid();
+    xmn_pid = getppid();
     g_argv = (char **)argv;
 
     /**
      * 统计 argv 和 env 所占的内存。
     */
+    g_argvmemlen = 0;
+    for (size_t i = 0; i < argc; i++)
+    {
+        g_argvmemlen += strlen(argv[i]) + 1;
+    }
 
-   /**
+    g_envmemlen = 0;
+    for (size_t i = 0; environ[i]; i++)
+    {
+        g_envmemlen += strlen(environ[i]) + 1;
+    }
+
+    /**
     * 保存参数个数和指针。
    */
+    g_argc = argc;
+    g_argv = (char **)argv;
 
     /**
      * 初始化配置模块。
     */
-    XMNConfig *p_config = XMNConfig::GetInstance(); 
-    if (p_config->Load("xmoon.conf") != 0)        
+    XMNConfig *p_config = XMNConfig::GetInstance();
+    if (p_config->Load("xmoon.conf") != 0)
     {
         xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", "xmoon.conf");
-        exitcode = 1; 
+        exitcode = 1;
         goto lblexit;
     }
 
     /**
      * 初始化日志模块。
     */
-    xmn_log_init(); 
+    xmn_log_init();
 
     /**
      * 初始化信号模块。
@@ -74,16 +89,18 @@ int main(int argc, char *const *argv)
     /**
      * 初始化设置程序名称模块。
     */
-   xmn_init_setproctitle();
+    xmn_init_setproctitle();
 
     /**
      * 开始进入主进程工作流程。
     */
-
+    xmn_master_process_cycle();
     //--------------------------------------
 lblexit:
-    //(5)该释放的资源要释放掉
-    freeresource(); //一系列的main返回前的释放动作函数
+    /**
+     *  释放内存。
+    */
+    freeresource();
     printf("程序退出，再见!\n");
     return exitcode;
 }
