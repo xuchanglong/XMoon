@@ -15,8 +15,9 @@
 #define XMN_MAX_UINT32_VALUE   (uint32_t) 0xffffffff              //最大的32位无符号数：十进制是‭4294967295‬
 #define XMN_INT64_LEN          (sizeof("-9223372036854775808") - 1)     
 
-//日志相关--------------------
-//我们把日志一共分成八个等级【级别从高到低，数字最小的级别最高，数字大的级别最低】，以方便管理、显示、过滤等等
+/**
+ * 声明日志等级，从低到高，日志等级依次增强。
+*/
 #define XMN_LOG_STDERR            0    //控制台错误【stderr】：最高级别日志，日志的内容不再写入log参数指定的文件，而是会直接将日志输出到标准错误设备比如控制台屏幕
 #define XMN_LOG_EMERG             1    //紧急 【emerg】
 #define XMN_LOG_ALERT             2    //警戒 【alert】
@@ -27,7 +28,15 @@
 #define XMN_LOG_INFO              7    //信息 【info】
 #define XMN_LOG_DEBUG             8    //调试 【debug】：最低级别
 
-#define XMN_ERROR_LOG_PATH       "logs/error1.log"   //定义日志存放的路径和文件名 
+/**
+ * 设置日志存放路径以及文件名称。
+*/
+#define XMN_ERROR_LOG_PATH       "logs/error1.log"   
 
+/**
+ * 声明进程类型。
+*/
+#define XMN_PROCESS_MASTER 1
+#define XMN_PROCESS_WORKER 2
 
 #endif

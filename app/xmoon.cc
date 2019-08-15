@@ -27,6 +27,7 @@ char *gp_envmem = nullptr;
 
 pid_t xmn_pid = -1;
 pid_t xmn_pid_parent = -1;
+int xmn_process = 
 
 int main(int argc, char *const *argv)
 {

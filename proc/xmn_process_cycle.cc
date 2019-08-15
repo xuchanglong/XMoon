@@ -21,11 +21,11 @@ static void xmn_start_worker_process(const size_t &workerprocesssum);
  * @function    创建指定数量的 worker 进程。
  * @paras           inum    子进程编号。
  *                            strprocname   子进程的名称。
- * @return          none 。
+ * @return          创建的子进程的 pid。
  * @author          xuchanglong
  * @time              2019-08-15
 */
-static void xmn_create_process(const size_t &inum, const std::string &strprocname);
+static int xmn_create_process(const size_t &inum, const std::string &strprocname);
 
 /**
  * @function    设置子进程的标题以及进入子进程的循环。
@@ -108,20 +108,65 @@ void xmn_master_process_cycle()
 
 static void xmn_start_worker_process(const size_t &workerprocesssum)
 {
-    ;
+    for (size_t i = 0; i < workerprocesssum; i++)
+    {
+        xmn_create_process(i, "worker process");
+    }
+    return;
 }
 
-static void xmn_create_process(const size_t &inum, const std::string &strprocname)
+static int xmn_create_process(const size_t &inum, const std::string &strprocname)
 {
-    ;
+    pit_t pid = fork();
+    switch (pid)
+    {
+    /**
+     * 子进程创建失败。
+    */
+    case -1:
+        xmn_log_error_core(XMN_LOG_ALERT, errno, "xmn_create_process fork 产生的子进程num = %d，procname = \"%s\"失败！", inum, strprocname);
+        break;
+    /**
+     * 子进程创建成功。
+    */
+    case 0:
+        /**
+         * 只有子进程才能运行到这个位置。
+        */
+        xmn_pid_parent = xmn_pid;
+        xmn_pid = getpid();
+        xmn_worker_process_cycle(inum, strprocname);
+        break;
+    default:
+        /**
+         * 只有父进程才能运行到这个位置。
+        */
+        break;
+    }
+    /**
+     * 只有父进程才能运行到这个位置。
+    */
+    return pid;
 }
 
 static void xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname)
 {
-    ;
+    xmn_process = XMN_PROCESS_WORKER;
+    xmn_worker_process_init(inum);
+    xmn_setproctitle(strprocname.c_str());
+    xmn_log_error_core(XMN_LOG_NOTICE, errno, "%s %d 启动成功！", strprocname.c_str(), xmn_pid);
+    while (true)
+    {
+        ;
+    }
 }
 
 static void xmn_worker_process_init(const size_t &inum)
 {
-    ;
+    sigset_t set;
+    sigemptyset(&set);
+    if (sigprocmask(SIG_SETMASK, &set, nullptr) == -1)
+    {
+        xmn_log_error_core(XMN_LOG_ALERT, errno, "xmn_worker_process_init 在编号为 %d 的子进程中初始化失败！", inum);
+    }
 }
