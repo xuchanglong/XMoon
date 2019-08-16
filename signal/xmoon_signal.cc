@@ -13,7 +13,7 @@ struct XMNSignal
     /**
           * 信号的名称。
           */
-    std::string strsigname;
+    const char *psigname;
     /**
           *  信号的处理函数。
           */
@@ -111,12 +111,12 @@ int XMNSignalInit()
 
         if (sigaction(psig->signum, &sa, nullptr) == -1)
         {
-            xmn_log_error_core(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->strsigname);
+            xmn_log_error_core(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
             return -1;
         }
         else
         {
-            xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succed!", psig->strsigname);
+            xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succed!", psig->psigname);
         }
     }
     return 0;
