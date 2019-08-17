@@ -25,13 +25,22 @@ struct ConfigItem
     std::string striteminfo;
 };
 
-//和运行日志相关
-typedef struct
+/**
+ * @function    记录打印的日志的相关信息。
+ * @author         xuchanglong
+ * @time            2019-08-17
+*/
+struct XMNLog
 {
-    int log_level; //日志级别 或者日志类型，xmn_macro.h里分0-8共9个级别
-    int fd;        //日志文件描述符
-
-} xmn_log_t;
+    /**
+     * 打印的日志的最低等级。
+    */
+    int log_level;
+    /**
+     * 日志文件的文件描述符。
+    */
+    int fd;
+};
 
 /**
  * argv 参数所占内存大小。
@@ -55,14 +64,15 @@ extern size_t g_argc;
 
 /**
  * 新搬家的环境变量的存放位置。
- * 在 在xmn_init_setproctitle 中申请内存。
+ * 在 xmn_setproctitle_init 中申请内存。
 */
-extern char *gp_envmem;
+extern char *g_penvmem;
 
 /**
  * 当前进程的 pid （master or work）。
 */
 extern pid_t xmn_pid;
+
 /**
  * 父进程的 pid，一般work进程调用，存储 master 进程的 pid 。
 */
@@ -72,6 +82,10 @@ extern pid_t xmn_pid_parent;
  * 进程类型，记录当前的进程是 master 还是 worker 。 
 */
 extern int xmn_process;
-extern xmn_log_t xmn_log;
+
+/**
+ * 记录打开的日志文件的相关信息。
+*/
+extern XMNLog xmn_log;
 
 #endif

@@ -13,7 +13,7 @@
 #include "xmn_macro.h"
 
 /**
- * @function    释放内存。
+ * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
  * @paras           none 。
  * @author          xuchanglong
  * @time            2019-08-14
@@ -24,7 +24,7 @@ size_t g_argvmemlen = 0;
 size_t g_envmemlen = 0;
 char **g_argv = nullptr;
 size_t g_argc = 0;
-char *gp_envmem = nullptr;
+char *g_penvmem = nullptr;
 
 pid_t xmn_pid = -1;
 pid_t xmn_pid_parent = -1;
@@ -89,13 +89,12 @@ int main(int argc, char *const *argv)
     /**
      * 初始化设置程序名称模块。
     */
-    xmn_init_setproctitle();
+    xmn_setproctitle_init();
 
     /**
      * 开始进入主进程工作流程。
     */
     xmn_master_process_cycle();
-    //--------------------------------------
 lblexit:
     /**
      *  释放内存。
@@ -105,20 +104,23 @@ lblexit:
     return exitcode;
 }
 
-//专门在程序执行末尾释放资源的函数【一系列的main返回前的释放动作函数】
 void freeresource()
 {
-    //(1)对于因为设置可执行程序标题导致的环境变量分配的内存，我们应该释放
-    if (gp_envmem)
+    /**
+     * 释放存储的环境变量。
+    */
+    if (g_penvmem)
     {
-        delete[] gp_envmem;
-        gp_envmem = NULL;
+        delete []g_penvmem;
+        g_penvmem = nullptr;
     }
 
-    //(2)关闭日志文件
+    /**
+     * 关闭日志文件。
+    */
     if (xmn_log.fd != STDERR_FILENO && xmn_log.fd != -1)
     {
-        close(xmn_log.fd); //不用判断结果了
-        xmn_log.fd = -1;   //标记下，防止被再次close吧
+        close(xmn_log.fd); 
+        xmn_log.fd = -1;   
     }
 }

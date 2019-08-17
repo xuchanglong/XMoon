@@ -21,7 +21,13 @@ struct XMNSignal
 };
 
 /**
- *  信号处理函数。  
+ * @function   信号处理函数。
+ * @paras           signum      信号的编号。
+ *                           psiginfo      信号相关信息的结构体。
+ *                           pcontext   备用。
+ * @return         none 。
+ * @author       xuchanglong
+ * @time            2019-08-17
  */
 static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent);
 
@@ -62,9 +68,7 @@ XMNSignal SignalInfo[] = {
      */
     {0, nullptr, nullptr}};
 
-/**
-     *  信号的初始化函数。 
-     */
+
 int XMNSignalInit()
 {
     /**

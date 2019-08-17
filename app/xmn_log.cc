@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>   //uintptr_t
+#include <stdint.h>   //uintptr_t]
 #include <stdarg.h>   //va_start....
 #include <unistd.h>   //STDERR_FILENO等
 #include <sys/time.h> //gettimeofday
@@ -22,8 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//全局量---------------------
-//错误等级，和xmn_macro.h里定义的日志等级宏是一一对应关系
+/**
+ * 错误等级，和xmn_macro.h里定义的日志等级宏是一一对应关系。
+*/
 static u_char err_levels[][20] =
     {
         {"stderr"}, //0：控制台错误
@@ -36,7 +37,7 @@ static u_char err_levels[][20] =
         {"info"},   //7：信息
         {"debug"}   //8：调试
 };
-xmn_log_t xmn_log;
+XMNLog xmn_log;
 
 //----------------------------------------------------------------------------------------------------------------------
 //描述：通过可变参数组合出字符串【支持...省略号形参】，自动往字符串最末尾增加换行符【所以调用者不用加\n】， 往标准错误上输出这个字符串；

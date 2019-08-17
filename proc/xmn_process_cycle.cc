@@ -80,15 +80,11 @@ void xmn_master_process_cycle()
    */
     size_t lenall = 0;
     lenall = g_strmasterprocessname.size();
-    lenall += g_envmemlen;
     std::string strtemp = "";
-    if (lenall < 1000)
+    for (size_t i = 0; i < g_argc; i++)
     {
-        for (size_t i = 0; i < g_argc; i++)
-        {
-            strtemp = g_argv[i];
-            g_strmasterprocessname += +" " + strtemp;
-        }
+        strtemp = g_argv[i];
+        g_strmasterprocessname += " " + strtemp;
     }
     xmn_setproctitle(g_strmasterprocessname.c_str());
 
@@ -97,6 +93,7 @@ void xmn_master_process_cycle()
   */
     XMNConfig *pconfig = XMNConfig::GetInstance();
     size_t iworkerprocesssum = atoi(pconfig->GetConfigItem("WorkderProcess", "4").c_str());
+    xmn_start_worker_process(iworkerprocesssum);
     /**
      * 解除信号屏蔽。
     */
