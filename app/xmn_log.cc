@@ -37,7 +37,7 @@ static u_char err_levels[][20] =
         {"info"},   //7：信息
         {"debug"}   //8：调试
 };
-XMNLog xmn_log;
+XMNLog g_xmn_log;
 
 //----------------------------------------------------------------------------------------------------------------------
 //描述：通过可变参数组合出字符串【支持...省略号形参】，自动往字符串最末尾增加换行符【所以调用者不用加\n】， 往标准错误上输出这个字符串；
@@ -92,9 +92,10 @@ void xmn_log_stderr(int err, const char *fmt, ...)
     //往标准错误【一般是屏幕】输出信息
     write(STDERR_FILENO, errstr, p - errstr); //三章七节讲过，这个叫标准错误，一般指屏幕
 
-    //测试代码：
-    //printf("xmn_log_stderr()处理结果=%s\n",errstr);
-    //printf("xmn_log_stderr()处理结果=%s",errstr);
+    if (g_xmn_log.fd > STDERR_FILENO)
+    {
+        xmn_log_info(XMN_LOG_STDERR, err, (const char *)errstr);
+    }
 
     return;
 }
@@ -136,7 +137,7 @@ u_char *xmn_log_errno(u_char *buf, u_char *last, int err)
 //level:一个等级数字，我们把日志分成一些等级，以方便管理、显示、过滤等等，如果这个等级数字比配置文件中的等级数字"LogLevel"大，那么该条信息不被写到日志文件中
 //err：是个错误代码，如果不是0，就应该转换成显示对应的错误信息,一起写到日志文件中，
 //xmn_log_error_core(5,8,"这个XXX工作的有问题,显示的结果是=%s","YYYY");
-void xmn_log_error_core(int level, int err, const char *fmt, ...)
+void xmn_log_info(int level, int err, const char *fmt, ...)
 {
     u_char *last;
     u_char errstr[XMN_MAX_ERROR_STR + 1]; //这个+1也是我放入进来的，本函数可以参考xmn_log_stderr()函数的写法；
@@ -169,7 +170,7 @@ void xmn_log_error_core(int level, int err, const char *fmt, ...)
                  tm.tm_min, tm.tm_sec);
     p = xmn_cpymem(errstr, strcurrtime, strlen((const char *)strcurrtime)); //日期增加进来，得到形如：     2019/01/08 20:26:07
     p = xmn_slprintf(p, last, " [%s] ", err_levels[level]);                 //日志级别增加进来，得到形如：  2019/01/08 20:26:07 [crit]
-    p = xmn_slprintf(p, last, "%P: ", xmn_pid);                             //支持%P格式，进程id增加进来，得到形如：   2019/01/08 20:50:15 [crit] 2037:
+    p = xmn_slprintf(p, last, "%P: ", g_xmn_pid);                             //支持%P格式，进程id增加进来，得到形如：   2019/01/08 20:50:15 [crit] 2037:
 
     va_start(args, fmt);                   //使args指向起始的参数
     p = xmn_vslprintf(p, last, fmt, args); //把fmt和args参数弄进去，组合出来这个字符串
@@ -192,7 +193,7 @@ void xmn_log_error_core(int level, int err, const char *fmt, ...)
     ssize_t n;
     while (1)
     {
-        if (level > xmn_log.log_level)
+        if (level > g_xmn_log.log_level)
         {
             //要打印的这个日志的等级太落后（等级数字太大，比配置文件中的数字大)
             //这种日志就不打印了
@@ -201,7 +202,7 @@ void xmn_log_error_core(int level, int err, const char *fmt, ...)
         //磁盘是否满了的判断，先算了吧，还是由管理员保证这个事情吧；
 
         //写日志文件
-        n = write(xmn_log.fd, errstr, p - errstr); //文件写入成功后，如果中途
+        n = write(g_xmn_log.fd, errstr, p - errstr); //文件写入成功后，如果中途
         if (n == -1)
         {
             //写失败有问题
@@ -214,7 +215,7 @@ void xmn_log_error_core(int level, int err, const char *fmt, ...)
             else
             {
                 //这是有其他错误，那么我考虑把这个错误显示到标准错误设备吧；
-                if (xmn_log.fd != STDERR_FILENO) //当前是定位到文件的，则条件成立
+                if (g_xmn_log.fd != STDERR_FILENO) //当前是定位到文件的，则条件成立
                 {
                     n = write(STDERR_FILENO, errstr, p - errstr);
                 }
@@ -240,16 +241,16 @@ void xmn_log_init()
         //没读到，就要给个缺省的路径文件名了
         strplogname = XMN_ERROR_LOG_PATH; //"logs/error.log" ,logs目录需要提前建立出来
     }
-    xmn_log.log_level = atoi(p_config->GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); //缺省日志等级为6【注意】 ，如果读失败，就给缺省日志等级
+    g_xmn_log.log_level = atoi(p_config->GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); //缺省日志等级为6【注意】 ，如果读失败，就给缺省日志等级
     //nlen = strlen((const char *)plogname);
 
     //只写打开|追加到末尾|文件不存在则创建【这个需要跟第三参数指定文件访问权限】
     //mode = 0644：文件访问权限， 6: 110    , 4: 100：     【用户：读写， 用户所在组：读，其他：读】 老师在第三章第一节介绍过
-    xmn_log.fd = open(strplogname.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0644);
-    if (xmn_log.fd == -1) //如果有错误，则直接定位到 标准错误上去
+    g_xmn_log.fd = open(strplogname.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0644);
+    if (g_xmn_log.fd == -1) //如果有错误，则直接定位到 标准错误上去
     {
         xmn_log_stderr(errno, "[alert] could not open error log file: open() \"%s\" failed", strplogname.c_str());
-        xmn_log.fd = STDERR_FILENO; //直接定位到标准错误去了
+        g_xmn_log.fd = STDERR_FILENO; //直接定位到标准错误去了
     }
     return;
 }

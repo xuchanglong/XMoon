@@ -36,10 +36,10 @@
 /**
  * 设置日志存放路径以及文件名称。
 */
-#define XMN_ERROR_LOG_PATH "logs/error1.log"
+#define XMN_ERROR_LOG_PATH "error.log"
 
 /**
- * 声明进程类型。
+ * 进程类型。
 */
 #define XMN_PROCESS_MASTER 1
 #define XMN_PROCESS_WORKER 2

@@ -25,19 +25,23 @@ size_t g_envmemlen = 0;
 char **g_argv = nullptr;
 size_t g_argc = 0;
 char *g_penvmem = nullptr;
+bool g_isdaemonized = 0;
 
-pid_t xmn_pid = -1;
-pid_t xmn_pid_parent = -1;
-int xmn_process = XMN_PROCESS_MASTER;
+pid_t g_xmn_pid = -1;
+pid_t g_xmn_pid_parent = -1;
+int g_xmn_process_type = XMN_PROCESS_MASTER;
+
+sig_atomic_t g_xmn_reap = 0;
 
 int main(int argc, char *const *argv)
 {
     /**
      *  变量初始化。 
      */
+    std::string strdaemoncontext;
     int exitcode = 0;
-    xmn_pid = getpid();
-    xmn_pid = getppid();
+    g_xmn_pid = getpid();
+    g_xmn_pid_parent = getppid();
     g_argv = (char **)argv;
 
     /**
@@ -55,6 +59,8 @@ int main(int argc, char *const *argv)
         g_envmemlen += strlen(environ[i]) + 1;
     }
 
+    g_xmn_log.fd = -1;
+    g_xmn_log.log_level = 8;
     /**
     * 保存参数个数和指针。
    */
@@ -67,6 +73,7 @@ int main(int argc, char *const *argv)
     XMNConfig *p_config = XMNConfig::GetInstance();
     if (p_config->Load("xmoon.conf") != 0)
     {
+        xmn_log_init();
         xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", "xmoon.conf");
         exitcode = 1;
         goto lblexit;
@@ -82,7 +89,7 @@ int main(int argc, char *const *argv)
     */
     if (XMNSignalInit() == -1)
     {
-        exitcode = 1;
+        exitcode = 2;
         goto lblexit;
     }
 
@@ -91,6 +98,36 @@ int main(int argc, char *const *argv)
     */
     xmn_setproctitle_init();
 
+    /**
+     * 创建守护进程。
+    */
+    strdaemoncontext = p_config->GetConfigItem("Daemon", "0");
+    if ( strdaemoncontext.compare("1"))
+    {
+        int r = xmn_daemon();
+        /**
+         * 父进程退出。
+        */
+        if (r == 1)
+        {
+            freeresource();
+            exitcode = 0;
+            return exitcode;
+        }
+       /**
+         * 创建进程失败。
+        */
+       else if (r != 0)
+       {
+           exitcode = 3;
+           goto lblexit;
+       }
+       
+        /**
+         * 守护进程创建成功。
+        */
+       g_isdaemonized = true;
+    }
     /**
      * 开始进入主进程工作流程。
     */
@@ -111,16 +148,16 @@ void freeresource()
     */
     if (g_penvmem)
     {
-        delete []g_penvmem;
+        delete[] g_penvmem;
         g_penvmem = nullptr;
     }
 
     /**
      * 关闭日志文件。
     */
-    if (xmn_log.fd != STDERR_FILENO && xmn_log.fd != -1)
+    if (g_xmn_log.fd != STDERR_FILENO && g_xmn_log.fd != -1)
     {
-        close(xmn_log.fd); 
-        xmn_log.fd = -1;   
+        close(g_xmn_log.fd);
+        g_xmn_log.fd = -1;
     }
 }

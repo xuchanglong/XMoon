@@ -7,6 +7,8 @@
 #ifndef XMOON__INCLUDE_XMN_FUNC_H_
 #define XMOON__INCLUDE_XMN_FUNC_H_
 
+#include <string>
+
 /******************************  设置进程相关函数  *******************************/
 /**
  * @function    初始化函数，用于分配内存，转移 envion 至新的内存中，为进程标题腾出位置。
@@ -30,7 +32,7 @@ int xmn_setproctitle(const std::string &strtitle);
 /******************************  日志打印相关函数  *******************************/
 void xmn_log_init();
 void xmn_log_stderr(int err, const char *fmt, ...);
-void xmn_log_error_core(int level, int err, const char *fmt, ...);
+void xmn_log_info(int level, int err, const char *fmt, ...);
 
 u_char *xmn_log_errno(u_char *buf, u_char *last, int err);
 u_char *xmn_slprintf(u_char *buf, u_char *last, const char *fmt, ...);
@@ -55,5 +57,16 @@ int XMNSignalInit();
  * @time            2019-08-17
 */
 void xmn_master_process_cycle();
+
+/**
+ * @function    创建守护进程。
+ * @paras           none 。
+ * @return          0   子进程返回。
+ *                            -1    创建失败。
+ *                             1    主进程返回。
+ * @author      xuchanglong
+ * @time            2019-08-17
+*/
+int xmn_daemon();
 
 #endif

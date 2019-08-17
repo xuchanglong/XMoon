@@ -6,7 +6,8 @@
 #ifndef XMOON__INCLUDE_XMN_GLOBAL_H_
 #define XMOON__INCLUDE_XMN_GLOBAL_H_
 
-#include <iostream>
+#include <string>
+#include "signal.h"
 
 /**
  * @function    记录配置文件中每一个条目的信息。
@@ -71,21 +72,34 @@ extern char *g_penvmem;
 /**
  * 当前进程的 pid （master or work）。
 */
-extern pid_t xmn_pid;
+extern pid_t g_xmn_pid;
 
 /**
  * 父进程的 pid，一般work进程调用，存储 master 进程的 pid 。
 */
-extern pid_t xmn_pid_parent;
+extern pid_t g_xmn_pid_parent;
 
 /**
  * 进程类型，记录当前的进程是 master 还是 worker 。 
 */
-extern int xmn_process;
+extern int g_xmn_process_type;
 
 /**
  * 记录打开的日志文件的相关信息。
 */
-extern XMNLog xmn_log;
+extern XMNLog g_xmn_log;
 
+/**
+ * 守护进程是否启动成功。
+ * 0    未启用。
+ * 1    已启用。
+*/
+extern  bool g_isdaemonized;
+
+/**
+ * 标记子进程状态变化。
+ * 0    没有变化。
+ *  1   已变化。
+*/
+extern sig_atomic_t g_xmn_reap;
 #endif

@@ -115,7 +115,7 @@ int XMNSignalInit()
 
         if (sigaction(psig->signum, &sa, nullptr) == -1)
         {
-            xmn_log_error_core(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
+            xmn_log_info(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
             return -1;
         }
         else
