@@ -16,6 +16,6 @@ all:
 
 clean:
 #-rf：删除文件夹，强制删除
-	rm -rf app/link_obj app/dep xmoon
+	rm -rf app/link_obj/*d app/dep/*d xmoon
 	rm -rf signal/*.gch app/*.gch
 
