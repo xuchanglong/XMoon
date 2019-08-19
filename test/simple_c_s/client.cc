@@ -2,6 +2,9 @@
 #include "sys/socket.h"
 #include <iostream>
 #include "unistd.h"
+//#include "linux/in.h"
+#include "arpa/inet.h"
+#include <string.h>
 
 #define SERVERPORT 59002
 
@@ -29,6 +32,9 @@
 
 int main()
 {
+    /**
+     * 保存从server端接收来的数据。
+    */
     char buf[1000 + 1] = {'\0'};
     /**
      * 创建socket。
@@ -40,7 +46,7 @@ int main()
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
-    if (inet_pton(AF_INET, "192.168.0.53", &addr.sin_addr.s_addr) <= 0)
+    if (inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr) <= 0)
     {
         std::cout << "inet_pton failed." << std::endl;
         return 1;
@@ -48,7 +54,7 @@ int main()
     /**
      * 连接 server 。
     */
-    if (connect(clientfd, (struct sockaddr *)&addr, sizeof(addr)))
+    if (connect(clientfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         std::cout << "connect to server failed." << std::endl;
         return 2;
@@ -56,7 +62,7 @@ int main()
     /**
      * 读取 server 发来的数据。
     */
-    for (read(clientfd, buf, 1000))
+    if (read(clientfd, buf, 1000))
     {
         std::cout << "Recieve data is " << buf << std::endl;
         memset(buf, '\0', strlen(buf));

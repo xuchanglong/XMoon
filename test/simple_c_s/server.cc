@@ -11,10 +11,6 @@
 #include "sys/types.h"
 #include "sys/socket.h"
 /**
- * IPPROTO_IP
-*/
-#include "linux/in.h"
-/**
  * htonl()、htons()
 */
 #include "arpa/inet.h"
@@ -26,6 +22,7 @@
  * write()、read()
 */
 #include "unistd.h"
+#include <iostream>
 
 /**
  * 端口号。
@@ -107,16 +104,15 @@ int main()
     /**
      * 其他变量初始化。
     */
-    int r = 0;
     //保存连接的 client 的 ip 和 port 信息。
     struct sockaddr_in addrclient;
     memset(&addrclient, 0, sizeof(struct sockaddr_in) * 1);
     //保存连接的 client 的的 ip 和 port 信息的大小。
     socklen_t addrclientlen = 0;
     //要发送给 client 的数据。
-    const char *pbuf = "Hello client."
-        //接受客户端连接而得到的连接套接字。
-        int confd = 0;
+    const char *pbuf = "Hello client.\n";
+    //接受客户端连接而得到的连接套接字。
+    int confd = 0;
     /**
      * 创建 socket 。
     */
@@ -127,9 +123,9 @@ int main()
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(struct sockaddr_in) * 1);
     addr.sin_family = AF_INET;
-    addr.sin_port = htonl(SERVERPORT);
-    addr.sin_addr.s_addr = htons(INADDR_ANY);
-    r = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
+    addr.sin_port = htons(SERVERPORT);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
     /**
      * 设置监听的 client 的数量。
     */
@@ -150,8 +146,8 @@ int main()
         /**
          * 向 client 发送数据。
         */
-        size_t len = write(confd, pbuf, strlen(pbuf));
-        close(linkfd);
+        write(confd, pbuf, strlen(pbuf));
+        close(confd);
     }
     close(listenfd);
     return 0;
