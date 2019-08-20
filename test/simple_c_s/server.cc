@@ -65,7 +65,8 @@
  *                                                    INADDR_ANY  0,0,0,0 地址，相当于本地所有地址的意思。
  *                                                                                                                                                                     本机有多块网卡，所有的网卡发来的数据都发送到该 socket 上。
  *           __len  __addr 指向的地址的长度。
- * @return  后续补充。
+ * @return   0  操作成功。
+ *           -1 操作失败，由全局变量 errno 来获取报错代码。
 */
 
 /**
@@ -74,8 +75,8 @@
  * @function    监听由 __fd 发来的连接。socket()建立的socket是主动型的，该函数之后，该socket变成被动型。
  * @paras       __fd    要监听的套接字。
  *              __n     最大的排队等待连接的数量。
- * @return      0       操作成功。
- *              -1      失败。
+ * @return      0  操作成功。
+ *              -1 操作失败，由全局变量 errno 来获取报错代码。
 */
 
 /**
@@ -104,6 +105,8 @@ int main()
     /**
      * 其他变量初始化。
     */
+    int r = 0;
+    int isenddatasum = 0;
     //保存连接的 client 的 ip 和 port 信息。
     struct sockaddr_in addrclient;
     memset(&addrclient, 0, sizeof(struct sockaddr_in) * 1);
@@ -125,15 +128,33 @@ int main()
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
+    r = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
+    if (r == -1)
+    {
+        std::cout << "bind error,return value is " << r
+                  << ",error code is " << errno
+                  << ",error info is " << strerror(errno)
+                  << "."<< std::endl;
+        return 1
+    }
+
     /**
      * 设置监听的 client 的数量。
     */
-    if (listen(listenfd, CLIENTSUM) != 0)
+    r = listen(listenfd, CLIENTSUM);
+    if (r == -1)
     {
-        std::cout << "listen failed!" << std::endl;
-        return 2;
+        std::cout << "listen error,return value is " << r
+                  << ",error code is " << errno
+                  << ",error info is " << strerror(errno)
+                  << "."<< std::endl;
+        return 2
     }
+    else
+    {
+        std::cout << "Server start successfully and listening." << std::endl;
+    }
+
     /**
      * 开始接收 client 发来的连接，并发送数据。
     */
@@ -146,7 +167,8 @@ int main()
         /**
          * 向 client 发送数据。
         */
-        write(confd, pbuf, strlen(pbuf));
+        isenddatasum = write(confd, pbuf, strlen(pbuf));
+        std::cout << "Send " << isenddatasum << " bytes." << std::endl;
         close(confd);
     }
     close(listenfd);

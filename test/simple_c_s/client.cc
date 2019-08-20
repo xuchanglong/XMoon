@@ -1,3 +1,10 @@
+/**
+ * @function    简单的客户端的实现。
+ * @author      xuchanglong
+ * @time        2019-08-18
+ * @website     https://www.cnblogs.com/jiangzhaowei/p/8261174.html
+*/
+
 #include "sys/types.h"
 #include "sys/socket.h"
 #include <iostream>
@@ -54,9 +61,12 @@ int main()
     /**
      * 连接 server 。
     */
-    if (connect(clientfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    if (connect(clientfd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        std::cout << "connect to server failed." << std::endl;
+        std::cout << "connect error,return value is " << r
+                  << ",error code is " << errno
+                  << ",error info is " << strerror(errno)
+                  << "."<< std::endl;
         return 2;
     }
     /**
