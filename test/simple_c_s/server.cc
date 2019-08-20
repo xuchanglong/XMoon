@@ -135,7 +135,7 @@ int main()
                   << ",error code is " << errno
                   << ",error info is " << strerror(errno)
                   << "."<< std::endl;
-        return 1
+        return 1;
     }
 
     /**
@@ -148,7 +148,7 @@ int main()
                   << ",error code is " << errno
                   << ",error info is " << strerror(errno)
                   << "."<< std::endl;
-        return 2
+        return 2;
     }
     else
     {

@@ -39,6 +39,7 @@
 
 int main()
 {
+    int r = 0;
     /**
      * 保存从server端接收来的数据。
     */
