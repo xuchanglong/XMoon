@@ -3,6 +3,8 @@
  * @author      xuchanglong
  * @time        2019-08-18
  * @website     https://www.cnblogs.com/jiangzhaowei/p/8261174.html
+ * https://blog.csdn.net/sandware/article/details/40923491
+ * https://blog.csdn.net/xioahw/article/details/4056514
 */
 
 /**
@@ -34,6 +36,16 @@
 #define CLIENTSUM 5
 
 /**
+ * @function    在终端显示函数返回的错误信息。
+ * @paras           ireturnvalue    函数的返回值。
+ *                          err errno，即：错误代码。
+ * @return      none。
+ * @author      xuchanglong
+ * @time           2019-08-24
+*/
+void showerrorinfo(const int &ireturnvalue, const int &err);
+
+/**
  * int socket (int __domain, int __type, int __protocol)
  *  
  * @function    打开socket，类似于文件操作的open函数。
@@ -50,7 +62,7 @@
  *                             IPPROTO_IP（0），接收所有的数据包。
  *                             IPPROTO_RAW（255），只发送不接受数据包。
  *                             非 IPPROTO_IP 和 IPPROTO_RAW 的，例如 IPPROTO_TCP，仅仅接受TCP的数据包。
- * @return  socket 描述符（socket descriptor），和文件描述符一样。
+ * @return  socket 描述符（socket descriptor），和文件描述符一样（监听socket）。
 */
 
 /**
@@ -121,6 +133,16 @@ int main()
     */
     int listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     /**
+     * 开启 server 关闭时可以立刻重启 server 的功能。
+    */
+    int reuseaddr = 1;
+    r = setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(int));
+    if (r != 0)
+    {
+        showerrorinfo(r, errno);
+        return 1;
+    }
+    /**
      * 绑定 IP 和 port 。
     */
     struct sockaddr_in addr;
@@ -129,26 +151,20 @@ int main()
     addr.sin_port = htons(SERVERPORT);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     r = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
-    if (r == -1)
+    if (r != 0)
     {
-        std::cout << "bind error,return value is " << r
-                  << ",error code is " << errno
-                  << ",error info is " << strerror(errno)
-                  << "."<< std::endl;
-        return 1;
+        showerrorinfo(r, errno);
+        return 2;
     }
 
     /**
      * 设置监听的 client 的数量。
     */
     r = listen(listenfd, CLIENTSUM);
-    if (r == -1)
+    if (r != 0)
     {
-        std::cout << "listen error,return value is " << r
-                  << ",error code is " << errno
-                  << ",error info is " << strerror(errno)
-                  << "."<< std::endl;
-        return 2;
+        showerrorinfo(r, errno);
+        return 3;
     }
     else
     {
@@ -173,4 +189,12 @@ int main()
     }
     close(listenfd);
     return 0;
+}
+
+void showerrorinfo(const int &ireturnvalue, const int &err)
+{
+    std::cout << "listen error,return value is \"" << ireturnvalue << "\""
+              << ",error code is \"" << err << "\""
+              << ",error info is \"" << strerror(err) << "\""
+              << "." << std::endl;
 }

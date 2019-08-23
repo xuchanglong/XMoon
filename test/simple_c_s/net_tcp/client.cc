@@ -15,6 +15,8 @@
 
 #define SERVERPORT 59002
 
+void showerrorinfo(const int &ireturnvalue, const int &err);
+
 /**
  * int inet_pton(int af, const char *src, void *dst)
  * 
@@ -54,21 +56,31 @@ int main()
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
-    if (inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr) <= 0)
+    r = inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr);
+    if (r <= 0)
     {
-        std::cout << "inet_pton failed." << std::endl;
+        showerrorinfo(r, errno);
         return 1;
     }
     /**
+     * 开启 client 关闭时可以立刻重启 server 的功能。
+    */
+    int ireuseaddr = 1;
+    r = setsockopt(clientfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&ireuseaddr, sizeof(ireuseaddr));
+    if (r != 0)
+    {
+        showerrorinfo(r, errno);
+        return 2;
+    }
+
+    /**
      * 连接 server 。
     */
-    if (connect(clientfd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    r = connect(clientfd, (struct sockaddr *)&addr, sizeof(addr));
+    if (r != 0)
     {
-        std::cout << "connect error,return value is " << r
-                  << ",error code is " << errno
-                  << ",error info is " << strerror(errno)
-                  << "."<< std::endl;
-        return 2;
+        showerrorinfo(r, errno);
+        return 3;
     }
     /**
      * 读取 server 发来的数据。
@@ -81,4 +93,12 @@ int main()
     close(clientfd);
     std::cout << "程序执行完毕，退出！" << std::endl;
     return 0;
+}
+
+void showerrorinfo(const int &ireturnvalue, const int &err)
+{
+    std::cout << "listen error,return value is \"" << ireturnvalue << "\""
+              << ",error code is \"" << err << "\""
+              << ",error info is \"" << strerror(err) << "\""
+              << "." << std::endl;
 }
