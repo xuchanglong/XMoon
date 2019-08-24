@@ -15,7 +15,7 @@
 
 #define SERVERPORT 59002
 
-void showerrorinfo(const int &ireturnvalue, const int &err);
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
 
 /**
  * int inet_pton(int af, const char *src, void *dst)
@@ -46,31 +46,28 @@ int main()
      * 保存从server端接收来的数据。
     */
     char buf[1000 + 1] = {'\0'};
+
     /**
      * 创建socket。
     */
     int clientfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (clientfd <= 0)
+    {
+        showerrorinfo("socket", r, errno);
+        return 1;
+    }
+
     /**
      * 设置要连接的服务器的信息（ IP 和 port ）。
     */
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
-    r = inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr);
+    r = inet_pton(AF_INET, "192.168.1.106", &addr.sin_addr.s_addr);
     if (r <= 0)
     {
-        showerrorinfo(r, errno);
+        showerrorinfo("inet_pton", r, errno);
         return 1;
-    }
-    /**
-     * 开启 client 关闭时可以立刻重启 server 的功能。
-    */
-    int ireuseaddr = 1;
-    r = setsockopt(clientfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&ireuseaddr, sizeof(ireuseaddr));
-    if (r != 0)
-    {
-        showerrorinfo(r, errno);
-        return 2;
     }
 
     /**
@@ -79,25 +76,27 @@ int main()
     r = connect(clientfd, (struct sockaddr *)&addr, sizeof(addr));
     if (r != 0)
     {
-        showerrorinfo(r, errno);
+        showerrorinfo("connect", r, errno);
         return 3;
     }
+
     /**
      * 读取 server 发来的数据。
     */
     if (read(clientfd, buf, 1000))
     {
-        std::cout << "Recieve data is " << buf << std::endl;
+        std::cout << "Recieve data is \"" << buf <<"\""<< std::endl;
         memset(buf, '\0', strlen(buf));
     }
+
     close(clientfd);
     std::cout << "程序执行完毕，退出！" << std::endl;
     return 0;
 }
 
-void showerrorinfo(const int &ireturnvalue, const int &err)
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err)
 {
-    std::cout << "listen error,return value is \"" << ireturnvalue << "\""
+    std::cout << strfun << " error,return value is \"" << ireturnvalue << "\""
               << ",error code is \"" << err << "\""
               << ",error info is \"" << strerror(err) << "\""
               << "." << std::endl;

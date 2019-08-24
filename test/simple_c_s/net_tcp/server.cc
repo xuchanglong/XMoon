@@ -3,8 +3,9 @@
  * @author      xuchanglong
  * @time        2019-08-18
  * @website     https://www.cnblogs.com/jiangzhaowei/p/8261174.html
- * https://blog.csdn.net/sandware/article/details/40923491
- * https://blog.csdn.net/xioahw/article/details/4056514
+ *                          https://blog.csdn.net/sandware/article/details/40923491
+ *                          https://blog.csdn.net/xioahw/article/details/4056514
+ * @notice  查看socket的状态的指令：netstat -anp | grep -E "State|59002"
 */
 
 /**
@@ -37,13 +38,14 @@
 
 /**
  * @function    在终端显示函数返回的错误信息。
- * @paras           ireturnvalue    函数的返回值。
+ * @paras           str     报错的函数。
+ *                          ireturnvalue    函数的返回值。
  *                          err errno，即：错误代码。
  * @return      none。
  * @author      xuchanglong
  * @time           2019-08-24
 */
-void showerrorinfo(const int &ireturnvalue, const int &err);
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
 
 /**
  * int socket (int __domain, int __type, int __protocol)
@@ -128,20 +130,28 @@ int main()
     const char *pbuf = "Hello client.\n";
     //接受客户端连接而得到的连接套接字。
     int confd = 0;
+
     /**
      * 创建 socket 。
     */
     int listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (listenfd <= 0)
+    {
+        showerrorinfo("socket", r, errno);
+        return 1;
+    }
+
     /**
      * 开启 server 关闭时可以立刻重启 server 的功能。
     */
     int reuseaddr = 1;
-    r = setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(int));
+    r = setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(reuseaddr));
     if (r != 0)
     {
-        showerrorinfo(r, errno);
-        return 1;
+        showerrorinfo("setsockopt", r, errno);
+        return 2;
     }
+
     /**
      * 绑定 IP 和 port 。
     */
@@ -153,8 +163,8 @@ int main()
     r = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
     if (r != 0)
     {
-        showerrorinfo(r, errno);
-        return 2;
+        showerrorinfo("bind", r, errno);
+        return 3;
     }
 
     /**
@@ -163,8 +173,8 @@ int main()
     r = listen(listenfd, CLIENTSUM);
     if (r != 0)
     {
-        showerrorinfo(r, errno);
-        return 3;
+        showerrorinfo("listen", r, errno);
+        return 4;
     }
     else
     {
@@ -180,20 +190,22 @@ int main()
          * 接受 client 发来的连接请求，该函数正常返回时就意味着完成了 TCP 三次握手。
         */
         confd = accept(listenfd, (struct sockaddr *)&addrclient, &addrclientlen);
+
         /**
          * 向 client 发送数据。
         */
         isenddatasum = write(confd, pbuf, strlen(pbuf));
-        std::cout << "Send " << isenddatasum << " bytes." << std::endl;
+
+        std::cout << "Send \"" << isenddatasum << "\" bytes." << std::endl;
         close(confd);
     }
     close(listenfd);
     return 0;
 }
 
-void showerrorinfo(const int &ireturnvalue, const int &err)
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err)
 {
-    std::cout << "listen error,return value is \"" << ireturnvalue << "\""
+    std::cout << strfun << " error,return value is \"" << ireturnvalue << "\""
               << ",error code is \"" << err << "\""
               << ",error info is \"" << strerror(err) << "\""
               << "." << std::endl;
