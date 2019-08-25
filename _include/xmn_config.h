@@ -80,8 +80,8 @@ public:
     /**
      * @function     得到指定的配置选项的信息。
      * @paras           kstrConfigItem   配置选项。
-     *                  strdefault      缺省值。若配置文件中不存在该配置选项，那么返回该缺省值。
-     * @return         配置选项的信息。未找到则返回空。
+     *                            strdefault      缺省值。若配置文件中不存在该配置选项，那么返回该缺省值。
+     * @return         配置选项的信息。未找到则返回缺省值。
      * @author        xuchangong
      * @time            2019-08-01
      */

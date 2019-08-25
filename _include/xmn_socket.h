@@ -85,6 +85,16 @@ private:
     */
     int SetNonBlocking(const int &sockfd);
 
+    /**
+     * @function    读取配置文件中的内容。
+     * @paras   0   操作成功。
+     *                  1  读取 port 数量失败。
+     *                  2  读取 各个port 失败。
+     * @author  xuchanglong
+     * @time    2019-08-26
+    */
+    int ReadConf();
+
 private:
     /**
      *  监听的 port 的数量。
@@ -92,9 +102,19 @@ private:
     int listenport_count_;
 
     /**
+     * 保存待监听的 port 。
+    */
+    int *pportsum;
+
+    /**
      * 监听的 port 以及其对应的监听 socket 的 vector。
     */
     std::vector<XMNListenPortSockInfo *> vlistenportsockinfolist_;
+
+    /**
+     * 每个 worker 进程的 epoll 连接的最大项数。
+    */
+    int worker_connection_count;
 };
 
 #endif

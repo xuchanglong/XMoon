@@ -17,28 +17,6 @@
 
 void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
 
-/**
- * int inet_pton(int af, const char *src, void *dst)
- * 
- * @function    将点分十进制转换为二进制整数。
- * @paras       af  协议族。
- *              src 点分十进制IP地址字符串。
- *              dst 转换完之后的二进制整数。
- * @return      > 0，操作成功。
- *              0，点分十进制IP地址和协议族不匹配。
- *              负值，报错。
-*/
-
-/**
- * size_t read(int fd, void *buf, size_t count);
- * 
- * @function    从 fd 读取（接收）数据。
- * @paras       fd        客户端 socket
- *              buf       接收到的数据的存放地址。
- *              count     buf 内存字节数大小。
- * @return      接收到的数据的数量。
-*/
-
 int main()
 {
     int r = 0;
@@ -63,7 +41,7 @@ int main()
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
-    r = inet_pton(AF_INET, "192.168.1.106", &addr.sin_addr.s_addr);
+    r = inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr);
     if (r <= 0)
     {
         showerrorinfo("inet_pton", r, errno);

@@ -15,6 +15,8 @@
 XMNSocket::XMNSocket()
 {
     listenport_count_ = 0;
+    pportsum = nullptr;
+    worker_connection_count = 0;
 }
 
 XMNSocket::~XMNSocket()
@@ -26,40 +28,25 @@ XMNSocket::~XMNSocket()
         *it = nullptr;
     }
     vlistenportsockinfolist_.clear();
+
+    if (pportsum != nullptr)
+    {
+        delete[] pportsum;
+        pportsum = nullptr;
+    }
 }
 
 int XMNSocket::Initialize()
 {
-    XMNConfig *pconfig = XMNConfig::GetInstance();
-    /**
-     * 获取共有多少个 port 。
-    */
-    listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount").c_str());
-    if (listenport_count_ <= 0)
+    int r = ReadConf();
+    if (r != 0)
     {
-        return 1;
+        return r;
     }
-    /**
-     * 获取这些端口号。
-    */
-    int *pports = new int[listenport_count_];
-    std::string str;
-    std::stringstream s;
-    for (size_t i = 0; i < listenport_count_; i++)
-    {
-        s << i;
-        str = "ListenPort" + s.str();
-        pports[i] = atoi(pconfig->GetConfigItem(str).c_str());
-    }
-
     /**
      * 开启指定的端口号。
     */
-    int r = OpenListenSocket(pports, listenport_count_);
-
-    delete[] pports;
-    pports = nullptr;
-    return r;
+    return OpenListenSocket(pportsum, listenport_count_);
 }
 
 int XMNSocket::OpenListenSocket(const int *const pport, const size_t &listenportcount)
@@ -175,4 +162,47 @@ int XMNSocket::SetNonBlocking(const int &sockfd)
 {
     int setnoblock = 1;
     return ioctl(sockfd, FIONBIO, &setnoblock);
+}
+
+int XMNSocket::ReadConf()
+{
+    XMNConfig *pconfig = XMNConfig::GetInstance();
+
+    /**
+     * 获取共有多少个 port 。
+    */
+    listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount", "59002").c_str());
+    if (listenport_count_ <= 0)
+    {
+        return 1;
+    }
+
+    /**
+     * 获取这些端口号。
+    */
+    pportsum = new int[listenport_count_];
+    std::string str;
+    std::stringstream s;
+    for (size_t i = 0; i < listenport_count_; i++)
+    {
+        s << i;
+        str = "ListenPort" + s.str();
+        pportsum[i] = atoi(pconfig->GetConfigItem(str).c_str());
+        if (pportsum[i] <= 0)
+        {
+            return 2;
+        }
+        s.clear();
+        s.str("");
+    }
+
+    /**
+     * 每个 worker 进程的 epoll 连接的最大项数。
+    */
+    worker_connection_count = atoi(pconfig->GetConfigItem("worker_connections", "1024").c_str());
+    if (worker_connection_count <= 0)
+    {
+        return 3;
+    }
+    return 0;
 }
