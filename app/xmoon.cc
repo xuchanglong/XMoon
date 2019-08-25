@@ -1,8 +1,8 @@
-﻿/**
+﻿/*****************************************************************************************
  * @function    整个项目的入口函数。
  * @author        xuchanglong
  * @time            2019-08-14
-*/
+*****************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,6 +11,7 @@
 #include "xmn_config.h"
 #include "xmn_func.h"
 #include "xmn_macro.h"
+#include "xmn_socket.h"
 
 /**
  * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
@@ -26,6 +27,8 @@ char **g_argv = nullptr;
 size_t g_argc = 0;
 char *g_penvmem = nullptr;
 bool g_isdaemonized = 0;
+
+XMNSocket g_socket;
 
 pid_t g_xmn_pid = -1;
 pid_t g_xmn_pid_parent = -1;
@@ -61,6 +64,7 @@ int main(int argc, char *const *argv)
 
     g_xmn_log.fd = -1;
     g_xmn_log.log_level = 8;
+
     /**
     * 保存参数个数和指针。
    */
@@ -93,6 +97,12 @@ int main(int argc, char *const *argv)
         goto lblexit;
     }
 
+    if (g_socket.Initialize() != 0)
+    {
+        exitcode = 3;
+        goto lblexit;
+    }
+
     /**
      * 初始化设置程序名称模块。
     */
@@ -102,9 +112,10 @@ int main(int argc, char *const *argv)
      * 创建守护进程。
     */
     strdaemoncontext = p_config->GetConfigItem("Daemon", "0");
-    if ( strdaemoncontext.compare("1"))
+    if (strdaemoncontext.compare("1"))
     {
         int r = xmn_daemon();
+
         /**
          * 父进程退出。
         */
@@ -114,20 +125,22 @@ int main(int argc, char *const *argv)
             exitcode = 0;
             return exitcode;
         }
-       /**
+
+        /**
          * 创建进程失败。
         */
-       else if (r != 0)
-       {
-           exitcode = 3;
-           goto lblexit;
-       }
-       
+        else if (r != 0)
+        {
+            exitcode = 3;
+            goto lblexit;
+        }
+
         /**
          * 守护进程创建成功。
         */
-       g_isdaemonized = true;
+        g_isdaemonized = true;
     }
+
     /**
      * 开始进入主进程工作流程。
     */

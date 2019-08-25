@@ -43,7 +43,12 @@ public:
      *  @function   按照配置文件创建指定数量的监听 socket 。
      *  @paras  none 。
      *  @return 0   操作成功。
-     *                    -1    配置文件中端口号数量 <= 0 。
+     *                    1    配置文件中端口号数量 <= 0 。
+     *                     -1  sokcet 创建失败。
+     *                  -2  setsockopt 设置失败。
+     *                  -3  SetNonBlocking 设置失败。
+     *                  -4  bind 绑定失败。
+     *                  -5  listen  监听失败。
      *  @time   2019-08-25
     */
     virtual int Initialize();
@@ -63,6 +68,11 @@ private:
      *  @paras  pport  要监听的端口号的数组。
      *                  listenportcount   监听端口号的数量。
      *  @return 0   操作成功。
+     *                     -1  sokcet 创建失败。
+     *                  -2  setsockopt 设置失败。
+     *                  -3  SetNonBlocking 设置失败。
+     *                  -4  bind 绑定失败。
+     *                  -5  listen  监听失败。
      *  @time   2019-08-25
     */
     int OpenListenSocket(const int *const pport, const size_t &listenportcount);
@@ -82,7 +92,7 @@ private:
     int listenport_count_;
 
     /**
-     * 监听的 port 以及其对应的监听 socket 的链表。
+     * 监听的 port 以及其对应的监听 socket 的 vector。
     */
     std::vector<XMNListenPortSockInfo *> vlistenportsockinfolist_;
 };

@@ -37,7 +37,7 @@ int XMNSocket::Initialize()
     listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount").c_str());
     if (listenport_count_ <= 0)
     {
-        return -1;
+        return 1;
     }
     /**
      * 获取这些端口号。
