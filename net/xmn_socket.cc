@@ -11,17 +11,23 @@
 #include "errno.h"
 #include "unistd.h"
 #include <sstream>
+#include <errno.h>
 
 XMNSocket::XMNSocket()
 {
     listenport_count_ = 0;
-    pportsum = nullptr;
-    worker_connection_count = 0;
+    pportsum_ = nullptr;
+    worker_connection_count_ = 0;
+    epoll_handle_ = 0;
+    pconnsock_pool_ = nullptr;
+    pfree_connsock_list_head_ = nullptr;
+    pool_connsock_count_ = 0;
+    pool_free_connsock_count_ = 0;
 }
 
 XMNSocket::~XMNSocket()
 {
-    std::vector<XMNListenPortSockInfo *>::iterator it;
+    std::vector<XMNListenSockInfo *>::iterator it;
     for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); ++it)
     {
         delete *it;
@@ -29,10 +35,10 @@ XMNSocket::~XMNSocket()
     }
     vlistenportsockinfolist_.clear();
 
-    if (pportsum != nullptr)
+    if (pportsum_ != nullptr)
     {
-        delete[] pportsum;
-        pportsum = nullptr;
+        delete[] pportsum_;
+        pportsum_ = nullptr;
     }
 }
 
@@ -46,7 +52,7 @@ int XMNSocket::Initialize()
     /**
      * 开启指定的端口号。
     */
-    return OpenListenSocket(pportsum, listenport_count_);
+    return OpenListenSocket(pportsum_, listenport_count_);
 }
 
 int XMNSocket::OpenListenSocket(const int *const pport, const size_t &listenportcount)
@@ -128,7 +134,7 @@ int XMNSocket::OpenListenSocket(const int *const pport, const size_t &listenport
         /**
          * 将 port 和 soket 插入 vector 中。
         */
-        XMNListenPortSockInfo *pitem = new XMNListenPortSockInfo;
+        XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
         pitem->port = pport[i];
         vlistenportsockinfolist_.push_back(pitem);
@@ -147,9 +153,9 @@ exitlabel:
     return exitcode;
 }
 
-int XMNSocket::CloseListeningSocket()
+int XMNSocket::CloseListenSocket()
 {
-    std::vector<XMNListenPortSockInfo *>::iterator it;
+    std::vector<XMNListenSockInfo *>::iterator it;
     for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); it++)
     {
         close((*it)->fd);
@@ -169,7 +175,7 @@ int XMNSocket::ReadConf()
     XMNConfig *pconfig = XMNConfig::GetInstance();
 
     /**
-     * 获取共有多少个 port 。
+     * （1）获取 port 的数量。
     */
     listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount", "59002").c_str());
     if (listenport_count_ <= 0)
@@ -178,17 +184,17 @@ int XMNSocket::ReadConf()
     }
 
     /**
-     * 获取这些端口号。
+     * （2）获取所有的 port 。
     */
-    pportsum = new int[listenport_count_];
+    pportsum_ = new int[listenport_count_];
     std::string str;
     std::stringstream s;
     for (size_t i = 0; i < listenport_count_; i++)
     {
         s << i;
         str = "ListenPort" + s.str();
-        pportsum[i] = atoi(pconfig->GetConfigItem(str).c_str());
-        if (pportsum[i] <= 0)
+        pportsum_[i] = atoi(pconfig->GetConfigItem(str).c_str());
+        if (pportsum_[i] <= 0)
         {
             return 2;
         }
@@ -197,12 +203,141 @@ int XMNSocket::ReadConf()
     }
 
     /**
-     * 每个 worker 进程的 epoll 连接的最大项数。
+     * （3）获取每个 worker 进程的 epoll 连接的最大项数。
     */
-    worker_connection_count = atoi(pconfig->GetConfigItem("worker_connections", "1024").c_str());
-    if (worker_connection_count <= 0)
+    worker_connection_count_ = atoi(pconfig->GetConfigItem("worker_connections", "1024").c_str());
+    if (worker_connection_count_ <= 0)
     {
         return 3;
     }
+    return 0;
+}
+
+int XMNSocket::EpollInit()
+{
+    /**
+     * （1）创建 epoll 对象。
+    */
+    epoll_handle_ = epoll_create(worker_connection_count_);
+    if (epoll_handle_ <= 0)
+    {
+        xmn_log_stderr(errno, "EpollInit 中的 epoll_create()执行失败！");
+        return -1;
+    }
+
+    /**
+     * （2）创建指定数量的连接池。
+    */
+    pool_connsock_count_ = worker_connection_count_;
+    pconnsock_pool_ = new XMNConnSockInfo[pool_connsock_count_];
+    memset(pconnsock_pool_, 0, sizeof(XMNConnSockInfo) * pool_connsock_count_);
+    size_t conn_cout = pool_connsock_count_;
+    XMNConnSockInfo *next = nullptr;
+    /**
+     * 从数组末尾向头部进行链表的串联。
+    */
+    do
+    {
+        --conn_cout;
+        pconnsock_pool_[conn_cout].next = next;
+        pconnsock_pool_[conn_cout].fd = -1;
+        pconnsock_pool_[conn_cout].instance = 1;
+        pconnsock_pool_[conn_cout].currsequence = 0;
+
+        next = &pconnsock_pool_[conn_cout];
+    } while (conn_cout);
+    /**
+     * 赋值空闲链表的头指针，使其指向数组的第一个元素。
+    */
+    pfree_connsock_list_head_ = next;
+    pool_free_connsock_count_ = pool_connsock_count_;
+
+    /**
+     * （3）循环遍历所有监听 socket ，为每个 socket 绑定一个连接池中的连接，用于记录相关信息。
+    */
+    XMNConnSockInfo *pconnsockinfo = nullptr;
+    std::vector<XMNListenSockInfo *>::iterator it;
+    for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); ++it)
+    {
+        /**
+         * 从连接池中取出空闲节点。
+        */
+        pconnsockinfo = GetConnSockInfo((*it)->fd);
+        if (pconnsockinfo == nullptr)
+        {
+            xmn_log_stderr(errno, "EpollInit 中 GetConnSockInfo() 执行失败！");
+            return -2;
+        }
+        /**
+         * 连接对象和监听对象进行关联。
+        */
+        pconnsockinfo->plistensockinfo = (*it);
+        /**
+         * 监听对象和连接对象进行管理。
+        */
+        (*it)->pconnsockinfo = pconnsockinfo;
+
+        /**
+         * 对监听 socket 读事件设置方法，开始让监听 sokcet 履行职责。
+        */
+        pconnsockinfo->rhandler = &XMNSocket::EventAccept;
+        if (EpollAddEvent(
+                (*it)->fd,     //socekt句柄
+                1, 0,          //读，写【只关心读事件，所以参数2：readevent=1,而参数3：writeevent=0】
+                0,             //其他补充标记
+                EPOLL_CTL_ADD, //事件类型【增加，还有删除/修改】
+                pconnsockinfo  //连接池中的连接
+                ) == -1)
+        {
+            return -3;
+        }
+    }
+}
+
+int XMNSocket::EpollAddEvent(const int &fd,
+                             const int &readevent, const int &writeevent,
+                             const uint32_t &otherflag,
+                             const uint32_t &eventtype,
+                             XMNConnSockInfo *pconnsockinfo)
+{
+    struct epoll_event ev;
+    memset(&ev, 0, sizeof(struct epoll_event) * 1);
+
+    if (readevent == 1)
+    {
+        /**
+         * EPOLLIN  读事件。例如：三次握手。
+         * EPOLLRDHUP   客户端断开连接事件。
+         * EPOLLERR/EPOLLRDHUP 实际上是通过触发读写事件进行读写操作recv write来检测连接异常
+        */
+        ev.events = EPOLLIN | EPOLLRDHUP;
+
+        //https://blog.csdn.net/q576709166/article/details/8649911
+        //找下EPOLLERR的一些说法：
+        //a)对端正常关闭（程序里close()，shell下kill或ctr+c），触发EPOLLIN和EPOLLRDHUP，但是不触发EPOLLERR 和EPOLLHUP。
+        //b)EPOLLRDHUP    这个好像有些系统检测不到，可以使用EPOLLIN，read返回0，删除掉事件，关闭close(fd);如果有EPOLLRDHUP，检测它就可以直到是对方关闭；否则就用上面方法。
+        //c)client 端close()联接,server 会报某个sockfd可读，即epollin来临,然后recv一下 ， 如果返回0再掉用epoll_ctl 中的EPOLL_CTL_DEL , 同时close(sockfd)。
+        //有些系统会收到一个EPOLLRDHUP，当然检测这个是最好不过了。只可惜是有些系统，上面的方法最保险；如果能加上对EPOLLRDHUP的处理那就是万能的了。
+        //d)EPOLLERR      只有采取动作时，才能知道是否对方异常。即对方突然断掉，是不可能有此事件发生的。只有自己采取动作（当然自己此刻也不知道），read，write时，出EPOLLERR错，说明对方已经异常断开。
+        //e)EPOLLERR 是服务器这边出错（自己出错当然能检测到，对方出错你咋能知道啊）
+        //f)给已经关闭的socket写时，会发生EPOLLERR，也就是说，只有在采取行动（比如读一个已经关闭的socket，或者写一个已经关闭的socket）时候，才知道对方是否关闭了。
+        //这个时候，如果对方异常关闭了，则会出现EPOLLERR，出现Error把对方DEL掉，close就可以了。
+    }
+    else
+    {
+        //其他事件……
+    }
+
+    ev.events |= otherflag;
+
+    ev.data.ptr = (void *)((uintptr_t)pconnsockinfo | pconnsockinfo->instance);
+
+    int r = epoll_ctl(epoll_handle_, eventtype, fd, &ev);
+    if (r == -1)
+    {
+        xmn_log_stderr(errno, "EpollAddEvent 中 epoll_ctl执行失败！");
+        return -1;
+    }
+
     return 0;
 }
