@@ -8,6 +8,7 @@
 
 #include <string>
 #include "signal.h"
+#include "xmn_socket.h"
 
 /**
  * @function    记录配置文件中每一个条目的信息。
@@ -94,7 +95,7 @@ extern XMNLog g_xmn_log;
  * 0    未启用。
  * 1    已启用。
 */
-extern  bool g_isdaemonized;
+extern bool g_isdaemonized;
 
 /**
  * 标记子进程状态变化。
@@ -102,4 +103,9 @@ extern  bool g_isdaemonized;
  *  1   已变化。
 */
 extern sig_atomic_t g_xmn_reap;
+
+/**
+ * xmn socket 对象。
+*/
+extern XMNSocket g_socket;
 #endif

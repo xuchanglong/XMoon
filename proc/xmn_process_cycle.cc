@@ -45,16 +45,16 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
  * @author          xuchanglong
  * @time              2019-08-15
 */
-static void xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname);
+static int xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname);
 
 /**
  * @function    子进程开始进入循环之前进行初始化。
  * @paras           inum    子进程编号。
- * @return          none 。
+ * @return          0   操作成功。
  * @author          xuchanglong
  * @time              2019-08-15
 */
-static void xmn_worker_process_init(const size_t &inum);
+static int xmn_worker_process_init(const size_t &inum);
 
 void xmn_master_process_cycle()
 {
@@ -158,10 +158,16 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
     return pid;
 }
 
-static void xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname)
+static int xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname)
 {
+    int r = 0;
     g_xmn_process_type = XMN_PROCESS_WORKER;
-    xmn_worker_process_init(inum);
+    r = xmn_worker_process_init(inum);
+    if (r != 0)
+    {
+        return -1;
+    }
+
     xmn_setproctitle(strprocname.c_str());
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", strprocname.c_str(), g_xmn_pid);
     while (true)
@@ -171,12 +177,25 @@ static void xmn_worker_process_cycle(const size_t &inum, const std::string &strp
     }
 }
 
-static void xmn_worker_process_init(const size_t &inum)
+static int xmn_worker_process_init(const size_t &inum)
 {
+    /**
+     * （1）解锁屏蔽的信号。
+    */
     sigset_t set;
     sigemptyset(&set);
     if (sigprocmask(SIG_SETMASK, &set, nullptr) == -1)
     {
         xmn_log_info(XMN_LOG_ALERT, errno, "xmn_worker_process_init 在编号为 %d 的子进程中初始化失败！", inum);
+        return -1;
     }
+    /**
+     * （2）初始化 epoll ，并向监听 socket 添加监听事件。
+    */
+    int r = g_socket.EpollInit();
+    if (r != 0)
+    {
+        return -2;
+    }
+    return 0;
 }

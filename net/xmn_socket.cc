@@ -278,7 +278,7 @@ int XMNSocket::EpollInit()
         (*it)->pconnsockinfo = pconnsockinfo;
 
         /**
-         * 对监听 socket 读事件设置方法，开始让监听 sokcet 履行职责。
+         * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
         pconnsockinfo->rhandler = &XMNSocket::EventAccept;
         if (EpollAddEvent(
@@ -292,6 +292,7 @@ int XMNSocket::EpollInit()
             return -3;
         }
     }
+    return 0;
 }
 
 int XMNSocket::EpollAddEvent(const int &fd,

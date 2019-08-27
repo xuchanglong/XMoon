@@ -97,6 +97,9 @@ int main(int argc, char *const *argv)
         goto lblexit;
     }
 
+    /**
+     * 开始监听指定 port 。
+    */
     if (g_socket.Initialize() != 0)
     {
         exitcode = 3;
