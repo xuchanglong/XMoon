@@ -23,6 +23,7 @@ XMNSocket::XMNSocket()
     pfree_connsock_list_head_ = nullptr;
     pool_connsock_count_ = 0;
     pool_free_connsock_count_ = 0;
+    memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
 }
 
 XMNSocket::~XMNSocket()
@@ -338,6 +339,146 @@ int XMNSocket::EpollAddEvent(const int &fd,
     {
         xmn_log_stderr(errno, "EpollAddEvent 中 epoll_ctl执行失败！");
         return -1;
+    }
+
+    return 0;
+}
+
+int XMNSocket::EpollProcessEvents(int timer)
+{
+    int ieventcount = 0;
+    /**
+     * （1）取出发生的事件信息。
+    */
+    /**
+     * @function    从双向链表中获取 XMN_EPOLL_WAIT_MAX_EVENTS 个 epoll_event 对象。
+     * @paras   epoll_handle_ epoll 对象，相当于事件代理。
+     *                   wait_events_   epoll_event 对象存储池。
+     *                  XMN_EPOLL_WAIT_MAX_EVENTS   wait_events_ 大小。
+     *                  timer   超时时间，若为-1，则一直堵塞，直至有事件到来。
+     * @return  >0  实际返回的 epoll_event 对象的数量，即：事件的数量。
+     *                   = 0   等待超时。
+     *                  -1  有错误发生，报错代码保存在 errno 中。
+     * @notice  该函数的返回条件如下：
+     * （1）等待超时。
+     * （2）有事件发生。
+     * （3）有信号发生。                                                                 
+    */
+    ieventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
+
+    /**
+     * 对事件进行过滤。
+    */
+    if (ieventcount == -1)
+    {
+        /**
+         * 信号所致。不是错误，但是得记录。
+        */
+        if (errno == EINTR)
+        {
+            xmn_log_info(XMN_LOG_INFO, errno, "EpollProcessEvents 中 epoll_wait 执行错误，因为有信号到来。");
+            return 0;
+        }
+        /**
+         * 发生错误，需要处理。
+        */
+        else
+        {
+            xmn_log_info(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 执行错误！");
+            return -2;
+        }
+    }
+    else if (ieventcount == 0)
+    {
+        /**
+         * 正常超时返回。
+        */
+        if (timer != -1)
+        {
+            return 0;
+        }
+        /**
+         * epoll_wait 在设置了一直堵塞的情况下返回了超时状态，肯定有问题。
+        */
+        else
+        {
+            xmn_log_info(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 在设置一直堵塞的情况下返回了超时！");
+            return -3;
+        }
+    }
+
+    /**
+     * （2）对每一个事件进行处理。
+    */
+    /**
+     * 执行到这里说明收到了事件。
+    */
+    XMNConnSockInfo *pconnsockinfo;
+    int instance = 0;
+    for (size_t i = 0; i < ieventcount; ++i)
+    {
+        /**
+         *  获取该事件对应的连接的相关信息。
+        */
+        pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + ieventcount)->data.ptr;
+        instance = (uintptr_t)pconnsockinfo & 1;
+        pconnsockinfo = (XMNConnSockInfo *)((uintptr_t)pconnsockinfo & (uintptr_t)~1);
+
+        /**
+         * 处理过期事件。
+        */
+        if (pconnsockinfo->fd == -1)
+        {
+            /**
+             * 来了3个事件，
+             * 第1个事件关闭连接，fd == -1 。
+             * 第2个事件正常处理。
+             * 第3个事件则是第1个连接的事件，为过期事件。
+            */
+            xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 fd == -1 的过期事件 %p", pconnsockinfo);
+            continue;
+        }
+
+        if (pconnsockinfo->instance != instance)
+        {
+            /**
+             * 来了3个事件。
+             * 第1个事件关闭连接，fd == -1。
+             * 第2个事件建立连接，该新连接恰好用到了线程池中第1个事件释放的连接。
+             * 第3个事件是第1个事件对应的连接的事件，为过期事件。
+             * 判断的原理就是每次从连接池中获取连接时，instance 都会取反。
+            */
+            xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 instance 改变的过期事件 %p", pconnsockinfo);
+            continue;
+        }
+        /**
+         * 程序走到这里，可以认为事件是非过期事件。
+         * 确定事件类型，根据不同的类型来调用不同的处理函数。
+        */
+        uint32_t events_type = wait_events_[i].events;
+        /**
+         * TOTD：正常关闭连接，具体代码是不是这么写，后续确认！
+        */
+        if (events_type & (EPOLLERR | EPOLLHUP))
+        {
+            events_type |= EPOLLIN | EPOLLOUT;
+        }
+        /**
+         * 读事件。触发条件，
+         * （1）客户端新连入。
+         * （2）已连接发送了数据。
+        */
+        if (events_type & EPOLLIN)
+        {
+            (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
+        }
+        /**
+         * 写事件。server 可以向 client 发送数据了。
+        */
+        if (events_type & EPOLLOUT)
+        {
+            /* code */
+        }
     }
 
     return 0;

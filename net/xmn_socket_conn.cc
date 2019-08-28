@@ -39,12 +39,13 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
 
     /**
      * 将保留的信息重新赋值。
+     * 这些保留信息的值都是为了确定 epoll_wait 返回的 epoll_event 是否为过期事件。
     */
-    pconnsockinfo->instance = instance;
+    pconnsockinfo->instance = !instance;
+    pconnsockinfo->currsequence = currsequence;
     /**
      * 每次取节点时该值都加1。
     */
-    pconnsockinfo->currsequence = currsequence;
     ++pconnsockinfo->currsequence;
     return pconnsockinfo;
 }

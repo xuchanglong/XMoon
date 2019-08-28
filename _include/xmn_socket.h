@@ -18,6 +18,10 @@ using xmn_event_handler = int (CXMNSocket::*)(struct XMNConnSockInfo *pconnsocki
  * 存放已经完成连接的 socket 的队列的大小。
 */
 #define XMN_LISTEN_BACKLOG 511
+/**
+ * 存放一次从 epoll_wait 的双向链表中取出的 epoll_event 的最大数量。
+*/
+#define XMN_EPOLL_WAIT_MAX_EVENTS 512
 
 /**
  *  @function   存放监听 socket 的相关的信息。
@@ -125,72 +129,12 @@ public:
 
 public:
     /**
-     *  @function   关闭监听 socket 。
-     *  @paras  none 。
-     *  @return 0   操作成功。
-     *  @time   2019-08-25
-    */
-    int CloseListenSocket();
-
-    /**
      * @function    初始化 epoll 功能。
      * @paras   none 。
      * @return  0   操作成功。
      * @time    2019-08-26
     */
     int EpollInit();
-
-private:
-    /**
-     *  @function    打开指定数量的监听 socket 并进行相关配置。
-     *  @paras  pport  要监听的端口号的数组。
-     *                  listenportcount   监听端口号的数量。
-     *  @return 0   操作成功。
-     *                     -1  sokcet 创建失败。
-     *                  -2  setsockopt 设置失败。
-     *                  -3  SetNonBlocking 设置失败。
-     *                  -4  bind 绑定失败。
-     *                  -5  listen  监听失败。
-     *  @time   2019-08-25
-    */
-    int OpenListenSocket(const int *const pport, const size_t &listenportcount);
-
-    /**
-     *  @function    设置文件 IO 为非堵塞。
-     *  @paras  sockfd  被设置的 IO 的文件描述符。
-     *  @return 0   操作成功。
-     *  @time   2019-08-25
-    */
-    int SetNonBlocking(const int &sockfd);
-
-    /**
-     * @function    读取配置文件中的内容。
-     * @paras   0   操作成功。
-     *                  1  读取 port 数量失败。
-     *                  2  读取 各个port 失败。
-     * @author  xuchanglong
-     * @time    2019-08-26
-    */
-    int ReadConf();
-
-    /**
-     * @function    从连接池中取出一个连接，该连接与 fd 对应的 socket 进行绑定。
-     * @paras   fd  待绑定的 socket 。
-     * @return  非0 绑定好的连接。
-     *                  nullptr 池已空。
-     * @author  xuchanglong
-     * @time    2019-08-26
-    */
-    XMNConnSockInfo *GetConnSockInfo(const int &fd);
-
-    /**
-     * @function    新的连接专用的处理函数。当连接进入时，该函数会被 EpollProcessEvents 所调用。
-     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
-     * @return  0   操作成功。
-     * @author  xuchanglong
-     * @time    2019-08-27
-    */
-    int EventAccept(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    向 epoll 中增加事件。
@@ -210,6 +154,81 @@ private:
                       const uint32_t &otherflag,
                       const uint32_t &eventtype,
                       XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    epoll 等待接收和处理事件。
+     * @paras   timer   等待事件的超时时间，单位 ms 。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-08-28
+    */
+    int EpollProcessEvents(int timer);
+
+private:
+    /**
+     * @function    读取配置文件中的内容。
+     * @paras   0   操作成功。
+     *                  1  读取 port 数量失败。
+     *                  2  读取 各个port 失败。
+     * @author  xuchanglong
+     * @time    2019-08-26
+    */
+    int ReadConf();
+
+    /**
+     *  @function    打开指定数量的监听 socket 并进行相关配置。
+     *  @paras  pport  要监听的端口号的数组。
+     *                  listenportcount   监听端口号的数量。
+     *  @return 0   操作成功。
+     *                     -1  sokcet 创建失败。
+     *                  -2  setsockopt 设置失败。
+     *                  -3  SetNonBlocking 设置失败。
+     *                  -4  bind 绑定失败。
+     *                  -5  listen  监听失败。
+     *  @time   2019-08-25
+    */
+    int OpenListenSocket(const int *const pport, const size_t &listenportcount);
+
+    /**
+     *  @function   关闭监听 socket 。
+     *  @paras  none 。
+     *  @return 0   操作成功。
+     *  @time   2019-08-25
+    */
+    int CloseListenSocket();
+
+    /**
+     *  @function    设置文件 IO 为非堵塞。
+     *  @paras  sockfd  被设置的 IO 的文件描述符。
+     *  @return 0   操作成功。
+     *  @time   2019-08-25
+    */
+    int SetNonBlocking(const int &sockfd);
+
+    //------------------------------------------ 业务处理 handler 。
+    /**
+     * @function    新的连接专用的处理函数。当连接进入时，该函数会被 EpollProcessEvents 所调用。
+     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-08-27
+    */
+    int EventAccept(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    设置数据来时读处理的函数。
+    */
+    int WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    从连接池中取出一个连接，该连接与 fd 对应的 socket 进行绑定。
+     * @paras   fd  待绑定的 socket 。
+     * @return  非0 绑定好的连接。
+     *                  nullptr 池已空。
+     * @author  xuchanglong
+     * @time    2019-08-26
+    */
+    XMNConnSockInfo *GetConnSockInfo(const int &fd);
 
 private:
     /**
@@ -256,6 +275,11 @@ private:
      * 连接池中可用连接的数量。
     */
     size_t pool_free_connsock_count_;
+
+    /**
+     * 用于存储 epoll_wait() 返回的发生的事件。
+    */
+    struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
 };
 
 #endif

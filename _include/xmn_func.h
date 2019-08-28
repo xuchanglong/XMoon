@@ -69,4 +69,13 @@ void xmn_master_process_cycle();
 */
 int xmn_daemon();
 
+/**
+ * @function    处理子进程的网络事件和定时器事件。
+ * @paras   none 。
+ * @return 0    操作成功。
+ * @author  xuchanglong
+ * @time    2019-08-27
+*/
+int XMNProcessEventsTimers();
+
 #endif

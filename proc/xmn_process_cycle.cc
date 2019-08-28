@@ -172,8 +172,7 @@ static int xmn_worker_process_cycle(const size_t &inum, const std::string &strpr
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", strprocname.c_str(), g_xmn_pid);
     while (true)
     {
-        std::cout << inum << "  子进程运行。" << std::endl;
-        sleep(1);
+        r = XMNProcessEventsTimers();
     }
 }
 
