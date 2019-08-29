@@ -216,6 +216,15 @@ private:
     int EventAccept(XMNConnSockInfo *pconnsockinfo);
 
     /**
+     * @function    关闭已经建立的连接。
+     * @paras   pfd 待关闭的连接。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-08-29
+    */
+    void CloseAcceptedConn(XMNConnSockInfo *pfd);
+
+    /**
      * @function    设置数据来时读处理的函数。
     */
     int WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
@@ -229,6 +238,15 @@ private:
      * @time    2019-08-26
     */
     XMNConnSockInfo *GetConnSockInfo(const int &fd);
+
+    /**
+     * @function    回收指定的连接至连接池中。
+     * @paras   pconnsockinfo   待回收的连接。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-08-29
+    */
+    void FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo);
 
 private:
     /**

@@ -367,6 +367,11 @@ int XMNSocket::EpollProcessEvents(int timer)
     ieventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
 
     /**
+     * 由于多个进程同时监控 port ，导致客户端来了连接，多个进程的 epoll_wait 会部分返回，
+     * 然后只有一个进程的 accept 会获取到该连接，其他的进程白走一遭，浪费了 CPU 资源。
+    */
+
+    /**
      * 对事件进行过滤。
     */
     if (ieventcount == -1)

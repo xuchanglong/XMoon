@@ -1,6 +1,6 @@
+#include <string.h>
 #include "xmn_func.h"
 #include "xmn_socket.h"
-#include <string.h>
 
 XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
 {
@@ -48,4 +48,15 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
     */
     ++pconnsockinfo->currsequence;
     return pconnsockinfo;
+}
+
+void XMNSocket::FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo)
+{
+    pconnsockinfo->next = pfree_connsock_list_head_;
+
+    ++pfree_connsock_list_head_->currsequence;
+
+    pfree_connsock_list_head_ = pconnsockinfo;
+    ++pool_free_connsock_count_;
+    return;
 }

@@ -51,8 +51,10 @@
  * @function    接收 client 发来的请求。
  * @paras       __fd        监控的socket。
  *              __addr      存放 client 的 ip 和 port 信息。
- *              __addr_len  上述存放 client 信息的结构体的大小
- * @return      连接socket，即：已连接完成的socket。
+ *              __addr_len  属于值-返回值，即：传入时必须是 struct sockaddr 的大小，
+ *                                                                                  返回时，该值存放 __addr 实际的大小。
+ * @return      >0  连接socket，即：已连接完成的socket。
+ *                         -1   有错误。
 */
 
 /**
