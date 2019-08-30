@@ -425,7 +425,7 @@ int XMNSocket::EpollProcessEvents(int timer)
         /**
          *  获取该事件对应的连接的相关信息。
         */
-        pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + ieventcount)->data.ptr;
+        pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + i)->data.ptr;
         instance = (uintptr_t)pconnsockinfo & 1;
         pconnsockinfo = (XMNConnSockInfo *)((uintptr_t)pconnsockinfo & (uintptr_t)~1);
 
@@ -462,7 +462,7 @@ int XMNSocket::EpollProcessEvents(int timer)
         */
         uint32_t events_type = wait_events_[i].events;
         /**
-         * TOTD：正常关闭连接，具体代码是不是这么写，后续确认！
+         * TODO：正常关闭连接，具体代码是不是这么写，后续确认！
         */
         if (events_type & (EPOLLERR | EPOLLHUP))
         {
