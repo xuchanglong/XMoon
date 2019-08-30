@@ -8,12 +8,14 @@
 #ifndef XMOON__INCLUDE_XMNCONFIG_H_
 #define XMOON__INCLUDE_XMNCONFIG_H_
 
-#include "xmn_global.h"
 #include <vector>
 #include <string.h>
 #include <new>
 
-class XMNConfig
+#include "xmn_global.h"
+#include "base/noncopyable.h"
+
+class XMNConfig : public NonCopyable
 {
 private:
     XMNConfig();
@@ -105,7 +107,7 @@ private:
      * 配置文件中所有条目的信息的集合。
      */
     std::vector<ConfigItem *> vconfig_item_set_;
-    /**
+/**
  * 测试接口,正常使用时禁止使用。
  */
 public:

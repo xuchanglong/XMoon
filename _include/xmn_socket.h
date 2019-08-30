@@ -11,6 +11,8 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
+#include "base/noncopyable.h"
+
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = int (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
 
@@ -106,7 +108,7 @@ struct XMNConnSockInfo
     xmn_event_handler whandler;
 };
 
-class XMNSocket
+class XMNSocket : public NonCopyable
 {
 public:
     XMNSocket();
@@ -117,8 +119,8 @@ public:
      *  @function   按照配置文件创建指定数量的监听 socket 。
      *  @paras  none 。
      *  @return 0   操作成功。
-     *                    1    配置文件中端口号数量 <= 0 。
-     *                     -1  sokcet 创建失败。
+     *                  1   配置文件中端口号数量 <= 0 。
+     *                  -1  sokcet 创建失败。
      *                  -2  setsockopt 设置失败。
      *                  -3  SetNonBlocking 设置失败。
      *                  -4  bind 绑定失败。
