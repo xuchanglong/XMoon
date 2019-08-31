@@ -1,8 +1,15 @@
 #ifndef XMOON__INCLUDE_XMN_COMM_H_
 #define XMOON__INCLUDE_XMN_COMM_H_
 
+/**
+ * server 从 client 能够接收的最大的字节数量。
+*/
+#define PKG_MAX_LEN 3000
+
 /****************************************************
+ * 
  * 定义 server 接收 client 发来的数据的状态。
+ * 
 ****************************************************/
 enum RecvStatus
 {
@@ -25,13 +32,15 @@ enum RecvStatus
 };
 
 /**
- * XMNListenSockInfo 中存放包头的数组的大小。
+ * XMNListenSockInfo 中存放的包头数据的数组的大小。
 */
 #define XMN_PKG_HEADER_SIZE 20
 
-/**
- * 包头结构。
-*/
+/****************************************************
+ * 
+ * 包头结构，这些数据有 client 发给 server 。
+ * 
+****************************************************/
 struct XMNPkgHeader
 {
     /**

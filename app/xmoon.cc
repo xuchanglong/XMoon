@@ -1,7 +1,7 @@
 ﻿/*****************************************************************************************
  * @function    整个项目的入口函数。
- * @author        xuchanglong
- * @time            2019-08-14
+ * @author      xuchanglong
+ * @time        2019-08-14
 *****************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +12,7 @@
 #include "xmn_func.h"
 #include "xmn_macro.h"
 #include "xmn_socket.h"
+#include "xmn_memory.h"
 
 /**
  * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
@@ -67,7 +68,7 @@ int main(int argc, char *const *argv)
 
     /**
     * 保存参数个数和指针。
-   */
+    */
     g_argc = argc;
     g_argv = (char **)argv;
 
@@ -82,6 +83,10 @@ int main(int argc, char *const *argv)
         exitcode = 1;
         goto lblexit;
     }
+    /**
+     * 单例 XMNMemory 初始化。
+    */
+    XMNMemory::GetInstance();
 
     /**
      * 初始化日志模块。

@@ -24,6 +24,8 @@ XMNSocket::XMNSocket()
     pool_connsock_count_ = 0;
     pool_free_connsock_count_ = 0;
     memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
+    pkgheaderlen_ = sizeof(XMNPkgHeader);
+    msgheaderlen_ = sizeof(XMNMsgHeader);
 }
 
 XMNSocket::~XMNSocket()

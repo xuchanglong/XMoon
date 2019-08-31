@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <list>
 
 #include "base/noncopyable.h"
 #include "xmn_comm.h"
@@ -123,12 +124,12 @@ struct XMNConnSockInfo
     char dataheader[XMN_MSG_HEADER_SIZE];
 
     /**
-     * 当前接收的数据应该存放在 dataheader 的中的位置。
+     * 当前需要接收的数据应该存放在 dataheader 的中的位置。
     */
     char *pdataheaderstart;
 
     /**
-     * 当前接收的数据的字节数。
+     * 当前需要接收的数据的字节数。
     */
     size_t recvlen;
 
@@ -138,14 +139,16 @@ struct XMNConnSockInfo
     char *precvalldata;
 
     /**
-     * 标记 precvalldata 是否 new 过内存。
+     * 标记 precvalldata 是否需要释放。
     */
-    bool isnew;
+    bool isfree;
 };
 
 /****************************************************
+ * 
  * 消息头，在收到的每一个消息的前面添加消息头。
  * 用于记录该消息对应的连接以及连接序号。
+ * 
 ****************************************************/
 struct XMNMsgHeader
 {
@@ -313,6 +316,24 @@ private:
     */
     ssize_t RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &bufflen);
 
+    /**
+     * @function    判断该包是否正常以及为接收包体做准备。
+     * @paras   pconnsokcinfo   待处理的连接。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-08-31
+    */
+    void WaitRequestHandlerHeader(XMNConnSockInfo *pconnsokcinfo);
+
+    /**
+     * @function    对接收的完整的包进行处理（压入消息队列中并初始化状态机）。
+     * @paras   pconnsokcinfo   待处理的连接。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-01
+    */
+    void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
+
 private:
     /**
      *  监听的 port 的数量。
@@ -363,6 +384,21 @@ private:
      * 用于存储 epoll_wait() 返回的发生的事件。
     */
     struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
+
+    /**
+     * 包头的大小。
+    */
+    size_t pkgheaderlen_;
+
+    /**
+     * 消息头的大小。
+    */
+    size_t msgheaderlen_;
+
+    /**
+     * 存放接收的数据的消息队列。（双向链表）
+    */
+    std::list<char *> recvmsglist;
 };
 
 #endif

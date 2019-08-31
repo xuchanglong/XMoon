@@ -24,10 +24,10 @@ private:
 public:
     /**
      * @function    单例的生成器。
-     * @paras           none
-     * @return         单例的指针。
-     * @author        xuchanglong
-     * @time             2019-08-01        
+     * @paras       none 。
+     * @return      单例的指针。
+     * @author      xuchanglong
+     * @time        2019-08-01        
      */
     static XMNConfig *GetInstance()
     {
@@ -41,7 +41,6 @@ public:
                 }
                 catch (const std::exception &e)
                 {
-                    //std::cerr << e.what() << '\n';
                     return nullptr;
                 }
             }
@@ -52,8 +51,8 @@ public:
 private:
     /**
      * @function    单例的销毁类。
-     * @author        xuchanglong
-     * @time             2019-08-01        
+     * @author      xuchanglong
+     * @time        2019-08-01        
      */
     class DeleteXMNConfig
     {
@@ -71,21 +70,21 @@ private:
 public:
     /**
      * @function     加载配置信息。
-     * @paras           kstrConfigFilePath   配置文件路径。
-     * @return          0   操作成功。
-     *                  -1  申请内存失败。
-     * @author        xuchangong
-     * @time            2019-08-01
+     * @paras        kstrConfigFilePath   配置文件路径。
+     * @return       0   操作成功。
+     *               -1  申请内存失败。
+     * @author       xuchangong
+     * @time          2019-08-01
      */
     int Load(const std::string &kstrConfigFilePath);
 
     /**
      * @function     得到指定的配置选项的信息。
-     * @paras           kstrConfigItem   配置选项。
-     *                            strdefault      缺省值。若配置文件中不存在该配置选项，那么返回该缺省值。
-     * @return         配置选项的信息。未找到则返回缺省值。
-     * @author        xuchangong
-     * @time            2019-08-01
+     * @paras        kstrConfigItem   配置选项。
+     *               strdefault      缺省值。若配置文件中不存在该配置选项，那么返回该缺省值。
+     * @return       配置选项的信息。未找到则返回缺省值。
+     * @author       xuchangong
+     * @time         2019-08-01
      */
     std::string GetConfigItem(const std::string &kstrConfigItem, const std::string strdefault = "");
 
@@ -93,8 +92,8 @@ public:
      * @function     对指定的字符串清空左右的空格字符。
      * @paras        kstr   待处理的字符串。
      * @return       处理完成之后字符串。
-     * @author        xuchangong
-     * @time            2019-08-06
+     * @author       xuchangong
+     * @time         2019-08-06
      */
     std::string ClearSpace(const std::string &kstr);
 
