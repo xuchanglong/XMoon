@@ -8,7 +8,7 @@
 #include "xmn_macro.h"
 #include "xmn_func.h"
 
-int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
+void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * （1）变量申请。
@@ -57,7 +57,7 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
             */
             if (errnotmp == EAGAIN)
             {
-                return 0;
+                return;
             }
             logerrorlevel = XMN_LOG_ALERT;
             /**
@@ -72,7 +72,7 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
             {
                 logerrorlevel = XMN_LOG_ERR;
             }
-            xmn_log_info(logerrorlevel, errnotmp, "EventAccept 中 accept4 或者 accept 执行失败！");
+            xmn_log_info(logerrorlevel, errnotmp, "EventAcceptHandler 中 accept4 或者 accept 执行失败！");
             /**
              * accept4() 系统没有实现。
             */
@@ -96,8 +96,11 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
                  * 然后再弄个定时器，定时器到了则继续执行该函数，
                  * 但是定时器到了有个标记，会把读事件增加到listen socket上去；
                 */
+                /**
+                 * TODO：具体操作后续补充。
+                */
             }
-            return -1;
+            return;
         }
         /**
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
@@ -110,9 +113,9 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
             */
             if (close(linkfd) == -1)
             {
-                xmn_log_info(XMN_LOG_ALERT, errno, "EventAccept 中 close (%d) 失败！", linkfd);
+                xmn_log_info(XMN_LOG_ALERT, errno, "EventAcceptHandler 中 close (%d) 失败！", linkfd);
             }
-            return -2;
+            return;
         }
         /**
          * 执行到这里说明已经成功地从连接池中拿到了一个连接。
@@ -126,8 +129,8 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
                 /**
                  * 回收连接至连接池并关闭 socket 。
                 */
-                CloseAcceptedConn(pconnsockinfo_new);
-                return -3;
+                CloseConnection(pconnsockinfo_new);
+                return;
             }
         }
         /**
@@ -148,7 +151,7 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
         int r = EpollAddEvent(linkfd, 1, 0, EPOLLET, EPOLL_CTL_ADD, pconnsockinfo_new);
         if (r != 0)
         {
-            CloseAcceptedConn(pconnsockinfo_new);
+            CloseConnection(pconnsockinfo_new);
             return -4;
         }
         break;
@@ -157,7 +160,7 @@ int XMNSocket::EventAccept(XMNConnSockInfo *pconnsockinfo)
     return 0;
 }
 
-void XMNSocket::CloseAcceptedConn(XMNConnSockInfo *pfd)
+void XMNSocket::CloseConnection(XMNConnSockInfo *pfd)
 {
     /**
      * 先回收连接的目的是防止 close 失败导致连接无法回收。
@@ -167,7 +170,7 @@ void XMNSocket::CloseAcceptedConn(XMNConnSockInfo *pfd)
     pfd->fd = -1;
     if (close(fd) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "CloseAcceptedConn 中 close (%d) 失败！", fd);
+        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", fd);
     }
 
     return;

@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 
 #include "base/noncopyable.h"
+#include "xmn_comm.h"
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = int (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -20,8 +21,9 @@ using xmn_event_handler = int (CXMNSocket::*)(struct XMNConnSockInfo *pconnsocki
  * 存放已经完成连接的 socket 的队列的大小。
 */
 #define XMN_LISTEN_BACKLOG 511
+
 /**
- * 存放一次从 epoll_wait 的双向链表中取出的 epoll_event 的最大数量。
+ * 存放每次从 epoll_wait 的双向链表中取出的 epoll_event 的最大数量。
 */
 #define XMN_EPOLL_WAIT_MAX_EVENTS 512
 
@@ -106,6 +108,57 @@ struct XMNConnSockInfo
      * 写事件相关处理函数。
     */
     xmn_event_handler whandler;
+
+    /****************************************************
+     * 与收包相关的变量。
+    ****************************************************/
+    /**
+     * 接收当前数据包的状态。
+    */
+    RecvStatus recvstat;
+
+    /**
+     * 存放包头数据。
+    */
+    char dataheader[XMN_MSG_HEADER_SIZE];
+
+    /**
+     * 当前接收的数据应该存放在 dataheader 的中的位置。
+    */
+    char *pdataheaderstart;
+
+    /**
+     * 当前接收的数据的字节数。
+    */
+    size_t recvlen;
+
+    /**
+     * 存放最终接收的 消息头 + 包头 + 包体。
+    */
+    char *precvalldata;
+
+    /**
+     * 标记 precvalldata 是否 new 过内存。
+    */
+    bool isnew;
+};
+
+/****************************************************
+ * 消息头，在收到的每一个消息的前面添加消息头。
+ * 用于记录该消息对应的连接以及连接序号。
+****************************************************/
+struct XMNMsgHeader
+{
+    /**
+     * 指定该消息记录对应的是哪个连接。
+    */
+    XMNConnSockInfo *pconnsockinfo;
+
+    /**
+     * 指定该消息对应的连接的序号，用于判断该连接是否是过期连接。
+     * 因为同一个 XMNConnSockInfo 可能对应出多个连接。
+    */
+    uint64_t currsequence;
 };
 
 class XMNSocket : public NonCopyable
@@ -211,11 +264,11 @@ private:
     /**
      * @function    新的连接专用的处理函数。当连接进入时，该函数会被 EpollProcessEvents 所调用。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
-     * @return  0   操作成功。
+     * @return  none .
      * @author  xuchanglong
      * @time    2019-08-27
     */
-    int EventAccept(XMNConnSockInfo *pconnsockinfo);
+    void EventAcceptHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    关闭已经建立的连接。
@@ -224,12 +277,12 @@ private:
      * @author  xuchanglong
      * @time    2019-08-29
     */
-    void CloseAcceptedConn(XMNConnSockInfo *pfd);
+    void CloseConnection(XMNConnSockInfo *pfd);
 
     /**
      * @function    设置数据来时读处理的函数。
     */
-    int WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
+    void WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    从连接池中取出一个连接，该连接与 fd 对应的 socket 进行绑定。
@@ -249,6 +302,16 @@ private:
      * @time    2019-08-29
     */
     void FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
+     * @paras   pconnsockinfo   待接收数据的连接。
+     *                  pbuff   保存接收到的数据。
+     *                  bufflen 接收的数据的字节数。
+     * @author  xuchanglong
+     * @time    2019-08-31
+    */
+    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &bufflen);
 
 private:
     /**

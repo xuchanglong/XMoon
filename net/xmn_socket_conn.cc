@@ -35,7 +35,7 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
     */
     memset(pconnsockinfo, 0, sizeof(struct XMNConnSockInfo) * 1);
     pconnsockinfo->fd = fd;
-    //后续补充……
+    pconnsockinfo->recvstat = PKG_HD_INIT;
 
     /**
      * 将保留的信息重新赋值。

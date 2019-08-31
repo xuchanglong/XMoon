@@ -232,21 +232,21 @@ int XMNSocket::EpollInit()
     pool_connsock_count_ = worker_connection_count_;
     pconnsock_pool_ = new XMNConnSockInfo[pool_connsock_count_];
     memset(pconnsock_pool_, 0, sizeof(XMNConnSockInfo) * pool_connsock_count_);
-    size_t conn_cout = pool_connsock_count_;
+    size_t conn_count = pool_connsock_count_;
     XMNConnSockInfo *next = nullptr;
     /**
      * 从数组末尾向头部进行链表的串联。
     */
     do
     {
-        --conn_cout;
-        pconnsock_pool_[conn_cout].next = next;
-        pconnsock_pool_[conn_cout].fd = -1;
-        pconnsock_pool_[conn_cout].instance = 1;
-        pconnsock_pool_[conn_cout].currsequence = 0;
+        --conn_count;
+        pconnsock_pool_[conn_count].next = next;
+        pconnsock_pool_[conn_count].fd = -1;
+        pconnsock_pool_[conn_count].instance = 1;
+        pconnsock_pool_[conn_count].currsequence = 0;
 
-        next = &pconnsock_pool_[conn_cout];
-    } while (conn_cout);
+        next = &pconnsock_pool_[conn_count];
+    } while (conn_count);
     /**
      * 赋值空闲链表的头指针，使其指向数组的第一个元素。
     */
@@ -281,7 +281,7 @@ int XMNSocket::EpollInit()
         /**
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
-        pconnsockinfo->rhandler = &XMNSocket::EventAccept;
+        pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
         if (EpollAddEvent(
                 (*it)->fd,     //socekt句柄
                 1, 0,          //读，写【只关心读事件，所以参数2：readevent=1,而参数3：writeevent=0】
