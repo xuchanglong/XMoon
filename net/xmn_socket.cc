@@ -229,7 +229,7 @@ int XMNSocket::EpollInit()
     }
 
     /**
-     * （2）创建指定数量的连接池。
+     * （2）创建指定数量的连接池和空闲连接的单向链表。
     */
     pool_connsock_count_ = worker_connection_count_;
     pconnsock_pool_ = new XMNConnSockInfo[pool_connsock_count_];
@@ -276,7 +276,7 @@ int XMNSocket::EpollInit()
         */
         pconnsockinfo->plistensockinfo = (*it);
         /**
-         * 监听对象和连接对象进行管理。
+         * 监听对象和连接对象进行关联。
         */
         (*it)->pconnsockinfo = pconnsockinfo;
 
@@ -369,6 +369,7 @@ int XMNSocket::EpollProcessEvents(int timer)
     ieventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
 
     /**
+     * TODO：这里有惊群效应，后续对该问题进行处理。
      * 由于多个进程同时监控 port ，导致客户端来了连接，多个进程的 epoll_wait 会部分返回，
      * 然后只有一个进程的 accept 会获取到该连接，其他的进程白走一遭，浪费了 CPU 资源。
     */
@@ -420,7 +421,7 @@ int XMNSocket::EpollProcessEvents(int timer)
     /**
      * 执行到这里说明收到了事件。
     */
-    XMNConnSockInfo *pconnsockinfo;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
     int instance = 0;
     for (size_t i = 0; i < ieventcount; ++i)
     {
@@ -468,6 +469,11 @@ int XMNSocket::EpollProcessEvents(int timer)
         */
         if (events_type & (EPOLLERR | EPOLLHUP))
         {
+            /**
+             * 加上读写标记方便后续处理。
+             * EPOLLIN  表示指定的 epoll_event 对应的连接有可读数据。
+             * EPOLLOUT 表示指定的 epoll_event 对应的连接是可写的。
+            */
             events_type |= EPOLLIN | EPOLLOUT;
         }
         /**
@@ -481,10 +487,14 @@ int XMNSocket::EpollProcessEvents(int timer)
         }
         /**
          * 写事件。server 可以向 client 发送数据了。
+         * 注意：对方关闭连接时也执行这部分代码，
+         * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
         if (events_type & EPOLLOUT)
         {
-            /* code */
+            /**
+             * TODO：后续补充可写情况的代码。
+            */
         }
     }
 

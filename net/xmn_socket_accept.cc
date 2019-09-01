@@ -147,17 +147,18 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         pconnsockinfo_new->rhandler = &XMNSocket::WaitRequestHandler;
         /**
         * （4）将新建立的连接加入到 epoll 的红黑树中。
+        *   读写标记设置为 1 和 0 的目的是让 client 首先向 server 发送消息。
         */
         int r = EpollAddEvent(linkfd, 1, 0, EPOLLET, EPOLL_CTL_ADD, pconnsockinfo_new);
         if (r != 0)
         {
             CloseConnection(pconnsockinfo_new);
-            return -4;
+            return;
         }
         break;
     } while (true);
 
-    return 0;
+    return;
 }
 
 void XMNSocket::CloseConnection(XMNConnSockInfo *pfd)

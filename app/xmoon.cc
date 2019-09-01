@@ -40,7 +40,7 @@ sig_atomic_t g_xmn_reap = 0;
 int main(int argc, char *const *argv)
 {
     /**
-     *  变量初始化。 
+     *  （1）变量初始化。 
      */
     std::string strdaemoncontext;
     int exitcode = 0;
@@ -73,7 +73,7 @@ int main(int argc, char *const *argv)
     g_argv = (char **)argv;
 
     /**
-     * 初始化配置模块。
+     * （2）初始化配置模块。
     */
     XMNConfig *p_config = XMNConfig::GetInstance();
     if (p_config->Load("xmoon.conf") != 0)
@@ -84,17 +84,17 @@ int main(int argc, char *const *argv)
         goto lblexit;
     }
     /**
-     * 单例 XMNMemory 初始化。
+     * （3）单例 XMNMemory 初始化。
     */
     XMNMemory::GetInstance();
 
     /**
-     * 初始化日志模块。
+     * （4）初始化日志模块。
     */
     xmn_log_init();
 
     /**
-     * 初始化信号模块。
+     * （5）初始化信号模块。
     */
     if (XMNSignalInit() == -1)
     {
@@ -103,7 +103,7 @@ int main(int argc, char *const *argv)
     }
 
     /**
-     * 开始监听指定 port 。
+     * （6）开始监听指定 port 。
     */
     if (g_socket.Initialize() != 0)
     {
@@ -112,12 +112,12 @@ int main(int argc, char *const *argv)
     }
 
     /**
-     * 初始化设置程序名称模块。
+     * （7）初始化设置程序名称模块。
     */
     xmn_setproctitle_init();
 
     /**
-     * 创建守护进程。
+     * （8）创建守护进程。
     */
     strdaemoncontext = p_config->GetConfigItem("Daemon", "0");
     if (strdaemoncontext.compare("1"))
@@ -150,12 +150,13 @@ int main(int argc, char *const *argv)
     }
 
     /**
-     * 开始进入主进程工作流程。
+     * （9）开始进入主进程工作流程。
     */
     xmn_master_process_cycle();
+
 lblexit:
     /**
-     *  释放内存。
+     *  （10）释放内存。
     */
     freeresource();
     printf("程序退出，再见!\n");
@@ -165,7 +166,7 @@ lblexit:
 void freeresource()
 {
     /**
-     * 释放存储的环境变量。
+     * （1）释放存储的环境变量。
     */
     if (g_penvmem)
     {
@@ -174,7 +175,7 @@ void freeresource()
     }
 
     /**
-     * 关闭日志文件。
+     * （2）关闭日志文件。
     */
     if (g_xmn_log.fd != STDERR_FILENO && g_xmn_log.fd != -1)
     {

@@ -16,7 +16,7 @@
 #include "xmn_comm.h"
 
 using CXMNSocket = class XMNSocket;
-using xmn_event_handler = int (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
+using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
 
 /**
  * 存放已经完成连接的 socket 的队列的大小。
@@ -121,7 +121,7 @@ struct XMNConnSockInfo
     /**
      * 存放包头数据。
     */
-    char dataheader[XMN_MSG_HEADER_SIZE];
+    char dataheader[XMN_PKG_HEADER_SIZE];
 
     /**
      * 当前需要接收的数据应该存放在 dataheader 的中的位置。
@@ -334,6 +334,23 @@ private:
     */
     void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
 
+    /**
+     * @function    将接收到的数据压入消息链表中。
+     * @paras   pdata   接收到的数据。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-01
+    */
+    int PutInRecvMsgList(char *pdata)
+    {
+        if (pdata == nullptr)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
+
 private:
     /**
      *  监听的 port 的数量。
@@ -398,7 +415,7 @@ private:
     /**
      * 存放接收的数据的消息队列。（双向链表）
     */
-    std::list<char *> recvmsglist;
+    std::list<char *> recvmsglist_;
 };
 
 #endif

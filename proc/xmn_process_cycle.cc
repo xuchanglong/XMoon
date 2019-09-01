@@ -59,7 +59,7 @@ static int xmn_worker_process_init(const size_t &inum);
 void xmn_master_process_cycle()
 {
     /**
-     * 屏蔽各种信号。
+     * （1）屏蔽各种信号。
     */
     sigset_t set;
     sigemptyset(&set);
@@ -81,7 +81,7 @@ void xmn_master_process_cycle()
     }
 
     /**
-    * 设置master进程标题。
+    * （2）设置master进程标题。
    */
     size_t lenall = 0;
     lenall = g_strmasterprocessname.size();
@@ -95,18 +95,19 @@ void xmn_master_process_cycle()
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功", g_strmasterprocessname, g_xmn_pid);
 
     /**
-   * 创建 worker 子进程。
+   * （3）创建 worker 子进程。
   */
     XMNConfig *pconfig = XMNConfig::GetInstance();
     size_t iworkerprocesssum = atoi(pconfig->GetConfigItem("WorkderProcess", "4").c_str());
     xmn_start_worker_process(iworkerprocesssum);
+
     /**
-     * 解除信号屏蔽。
+     * （4）解除信号屏蔽。
     */
     sigemptyset(&set);
 
     /**
-    * 开始master进程循环。
+    * （5）开始master进程循环。
    */
     while (true)
     {
@@ -119,13 +120,17 @@ static void xmn_start_worker_process(const size_t &workerprocesssum)
 {
     for (size_t i = 0; i < workerprocesssum; i++)
     {
-        xmn_create_process(i, "worker process");
+        if (xmn_create_process(i, "worker process") <= 0)
+        {
+            return;
+        }
     }
     return;
 }
 
 static int xmn_create_process(const size_t &inum, const std::string &strprocname)
 {
+    int r = 0;
     pid_t pid = fork();
     switch (pid)
     {
@@ -134,7 +139,7 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
     */
     case -1:
         xmn_log_info(XMN_LOG_ALERT, errno, "xmn_create_process fork 产生的子进程num = %d，procname = \"%s\"失败！", inum, strprocname);
-        break;
+        return -1;
     /**
      * 子进程创建成功。
     */
@@ -144,7 +149,12 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
         */
         g_xmn_pid_parent = g_xmn_pid;
         g_xmn_pid = getpid();
-        xmn_worker_process_cycle(inum, strprocname);
+        r = xmn_worker_process_cycle(inum, strprocname);
+        if (r != 0)
+        {
+            return -2;
+        }
+
         break;
     default:
         /**
@@ -189,7 +199,7 @@ static int xmn_worker_process_init(const size_t &inum)
         return -1;
     }
     /**
-     * （2）初始化 epoll ，并向监听 socket 添加监听事件。
+     * （2）初始化 epoll ，并向 epoll 添加监听事件。
     */
     int r = g_socket.EpollInit();
     if (r != 0)

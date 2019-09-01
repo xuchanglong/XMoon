@@ -10,6 +10,8 @@ int XMNProcessEventsTimers()
     /**
      * （2）处理定时器事件。
     */
-    //……
+    /**
+     * TODO：后续补充。
+    */
     return 0;
 }

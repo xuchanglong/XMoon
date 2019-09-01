@@ -16,9 +16,11 @@
 
 class XMNMemory : public NonCopyable
 {
+public:
+    ~XMNMemory();
+
 private:
     XMNMemory();
-    ~XMNMemory();
 
 public:
     /**
@@ -67,7 +69,7 @@ private:
     };
 
 public:
-    static XMNMemory *pmemory;
+    static XMNMemory *pinstance_;
     static DeleteXMNMemory deletememory;
 
 public:

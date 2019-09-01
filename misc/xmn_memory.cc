@@ -1,7 +1,17 @@
 #include "xmn_memory.h"
 
-XMNMemory *XMNMemory::pmemory = nullptr;
+XMNMemory *XMNMemory::pinstance_ = nullptr;
 XMNMemory::DeleteXMNMemory XMNMemory::deletememory;
+
+XMNMemory::XMNMemory()
+{
+    ;
+}
+
+XMNMemory::~XMNMemory()
+{
+    ;
+}
 
 void *XMNMemory::AllocMemory(const size_t &bytecount, const bool &ismemset)
 {

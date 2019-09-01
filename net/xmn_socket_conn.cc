@@ -1,6 +1,7 @@
 #include <string.h>
 #include "xmn_func.h"
 #include "xmn_socket.h"
+#include "xmn_memory.h"
 
 XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
 {
@@ -41,7 +42,7 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
 
     /**
      * 将保留的信息重新赋值。
-     * 这些保留信息的值都是为了确定 epoll_wait 返回的 epoll_event 是否为过期事件。
+     * 这些保留信息的值都是为了判定 epoll_wait 返回的 epoll_event 是否为过期事件。
     */
     pconnsockinfo->instance = !instance;
     pconnsockinfo->currsequence = currsequence;
@@ -54,9 +55,22 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
 
 void XMNSocket::FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo)
 {
+    /**
+     * （1）释放存放完整数据包的内存。
+    */
+    if (pconnsockinfo->isfree)
+    {
+        XMNMemory::GetInstance()->FreeMemory((void *)pconnsockinfo->precvalldata);
+        pconnsockinfo->isfree = false;
+        pconnsockinfo->precvalldata = nullptr;
+    }
+
+    /**
+     * （2）将连接插入空闲连接链表中。
+    */
     pconnsockinfo->next = pfree_connsock_list_head_;
 
-    ++pfree_connsock_list_head_->currsequence;
+    ++pconnsockinfo->currsequence;
 
     pfree_connsock_list_head_ = pconnsockinfo;
     ++pool_free_connsock_count_;
