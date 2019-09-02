@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstring>
 
-#define SERVERIP "192.168.1.105"
+#define SERVERIP "192.168.6.129"
 #define SERVERPORT 59002
 
 struct LoginInfo
@@ -18,6 +18,7 @@ struct LoginInfo
 
 int connectserver(int &clientfd, const std::string &strserverip, const size_t &port);
 void senddata(int clientfd, char *buf, const size_t &buflen);
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
 
 int main()
 {
@@ -30,6 +31,7 @@ int main()
     else
     {
         std::cout << "连接 server 失败！" << std::endl;
+        return 1;
     }
 
     int pkgheaderlen = sizeof(XMNPkgHeader);
@@ -61,19 +63,20 @@ int connectserver(int &clientfd, const std::string &strserverip, const size_t &p
     /**
      * 创建连接 socket 。
     */
-    clientfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TP);
+    clientfd = socket(AF_INET, SOCK_STREAM, 0);
     /**
      * 设置收发的超时时间。
     */
-    int sendtime = 5000, rcvtime = 5000;
-    if (setsockopt(clientfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&sendtime, sizeof(int)) != 0)
+    struct timeval sendtimeout = {3, 0};
+    struct timeval recvtimeout = {3, 0};
+    if (setsockopt(clientfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&sendtimeout, sizeof(struct timeval)) != 0)
     {
-        std::cout << "setsockopt sendtime failed." << std::endl;
+        showerrorinfo("setsockopt", r, errno);
         return 2;
     }
-    if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&rcvtime, sizeof(int)) != 0)
+    if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&recvtimeout, sizeof(struct timeval)) != 0)
     {
-        std::cout << "setsockopt rcvtime failed." << std::endl;
+        showerrorinfo("setsockopt", r, errno);
         return 3;
     }
     /**
@@ -82,11 +85,11 @@ int connectserver(int &clientfd, const std::string &strserverip, const size_t &p
     struct sockaddr_in serveraddr;
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(port);
-    serveraddr.sin_addr.s_addr = inet_addr(strserverip.c_str());
-    r = connect(clientfd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr));
+    inet_pton(AF_INET, strserverip.c_str(), &serveraddr.sin_addr.s_addr);
+    r = connect(clientfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     if (r == -1)
     {
-        std::cout << "Connected the server failed." << std::endl;
+        showerrorinfo("connect", r, errno);
         return 1;
     }
 
@@ -105,9 +108,18 @@ void senddata(int clientfd, char *buf, const size_t &buflen)
         lentmp = send(clientfd, buf + uwrote, buflen - uwrote, 0);
         if (lentmp <= 0)
         {
+            showerrorinfo("connect", lentmp, errno);
             return;
         }
         uwrote += lentmp;
     }
     return;
+}
+
+void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err)
+{
+    std::cout << strfun << " error,return value is \"" << ireturnvalue << "\""
+              << ",error code is \"" << err << "\""
+              << ",error info is \"" << strerror(err) << "\""
+              << "." << std::endl;
 }
