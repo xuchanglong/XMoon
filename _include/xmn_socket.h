@@ -341,15 +341,7 @@ private:
      * @author  xuchanglong
      * @time    2019-09-01
     */
-    int PutInRecvMsgList(char *pdata)
-    {
-        if (pdata == nullptr)
-        {
-            return -1;
-        }
-
-        return 0;
-    }
+    int PutInRecvMsgList(char *pdata);
 
 private:
     /**

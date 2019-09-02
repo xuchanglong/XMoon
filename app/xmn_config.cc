@@ -44,7 +44,8 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
             (strbuftmp[0] == ';') ||
             (strbuftmp[0] == '\n') ||
             (strbuftmp[0] == ' ') ||
-            (strbuftmp[0] == '['))
+            (strbuftmp[0] == '[') ||
+            (strbuftmp[0] == '\r'))
         {
             continue;
         }

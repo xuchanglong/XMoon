@@ -252,3 +252,13 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     pconnsockinfo->precvalldata = nullptr;
     return;
 }
+
+int XMNSocket::PutInRecvMsgList(char *pdata)
+{
+    if (pdata == nullptr)
+    {
+        return -1;
+    }
+    xmn_log_stderr(errno, "完整地收到了一包。");
+    return 0;
+}
