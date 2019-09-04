@@ -46,7 +46,7 @@ void XMNMemory::FreeMemory(void *pmemory)
     */
     try
     {
-        delete pmemory;
+        delete (char *)pmemory;
         pmemory = nullptr;
     }
     catch(const std::exception& e)

@@ -62,5 +62,5 @@ struct XMNPkgHeader
     */
     int crc32;
 };
-#pragma pack(1)
+#pragma pack()
 #endif
