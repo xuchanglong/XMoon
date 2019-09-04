@@ -108,4 +108,9 @@ extern sig_atomic_t g_xmn_reap;
  * xmn socket 对象。
 */
 extern XMNSocket g_socket;
+
+/**
+ * 线程池对象。
+*/
+extern XMNThreadPool g_threadpool;
 #endif

@@ -13,6 +13,7 @@
 #include "xmn_macro.h"
 #include "xmn_socket.h"
 #include "xmn_memory.h"
+#include "xmn_threadpool.h"
 
 /**
  * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
@@ -30,6 +31,7 @@ char *g_penvmem = nullptr;
 bool g_isdaemonized = 0;
 
 XMNSocket g_socket;
+XMNThreadPool g_threadpoll;
 
 pid_t g_xmn_pid = -1;
 pid_t g_xmn_pid_parent = -1;

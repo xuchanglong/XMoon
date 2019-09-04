@@ -50,11 +50,12 @@ static int xmn_worker_process_cycle(const size_t &inum, const std::string &strpr
 /**
  * @function    子进程开始进入循环之前进行初始化。
  * @paras           inum    子进程编号。
+ *                            kstrTitleName 进程标题名称。
  * @return          0   操作成功。
  * @author          xuchanglong
  * @time              2019-08-15
 */
-static int xmn_worker_process_init(const size_t &inum);
+static int xmn_worker_process_init(const size_t &inum, const std::string &kstrProcName);
 
 void xmn_master_process_cycle()
 {
@@ -171,22 +172,32 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
 static int xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname)
 {
     int r = 0;
+    /**
+     * （1）worker 进程初始化。
+    */
     g_xmn_process_type = XMN_PROCESS_WORKER;
-    r = xmn_worker_process_init(inum);
+    r = xmn_worker_process_init(inum, strprocname);
     if (r != 0)
     {
         return -1;
     }
 
-    xmn_setproctitle(strprocname.c_str());
-    xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", strprocname.c_str(), g_xmn_pid);
+    /**
+     * （2）开始子进程循环。
+    */
     while (true)
     {
         r = XMNProcessEventsTimers();
     }
+
+    /**
+     * （3）子进程退出，销毁线程池。
+    */
+    g_threadpool.Destroy();
+    return 0;
 }
 
-static int xmn_worker_process_init(const size_t &inum)
+static int xmn_worker_process_init(const size_t &inum, const std::string &kstrProcName)
 {
     /**
      * （1）解锁屏蔽的信号。
@@ -198,13 +209,28 @@ static int xmn_worker_process_init(const size_t &inum)
         xmn_log_info(XMN_LOG_ALERT, errno, "xmn_worker_process_init 在编号为 %d 的子进程中初始化失败！", inum);
         return -1;
     }
+    
     /**
-     * （2）初始化 epoll ，并向 epoll 添加监听事件。
+     * （2）创建线程池。
+    */
+    XMNConfig *pconfig = XMNConfig::GetInstance();
+    size_t threadpollsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
+    g_threadpool.Create(threadpollsize);
+
+    /**
+     * （3）初始化 epoll ，并向 epoll 添加监听事件。
     */
     int r = g_socket.EpollInit();
     if (r != 0)
     {
         return -2;
     }
+
+    /**
+     * （4）设置进程标题。
+    */
+    xmn_setproctitle(kstrProcName.c_str());
+
+    xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", kstrProcName.c_str(), g_xmn_pid);
     return 0;
 }
