@@ -259,6 +259,6 @@ int XMNSocket::PutInRecvMsgList(char *pdata)
     {
         return -1;
     }
-    xmn_log_stderr(errno, "完整地收到了一包。");
+    xmn_log_stderr(errno, pdata);
     return 0;
 }

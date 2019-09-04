@@ -101,7 +101,7 @@ void senddata(int clientfd, char *buf, const size_t &buflen)
     /**
      * 已发送的数据。
     */
-    int uwrote = 0;
+    size_t uwrote = 0;
     int lentmp = 0;
     while (uwrote < buflen)
     {
