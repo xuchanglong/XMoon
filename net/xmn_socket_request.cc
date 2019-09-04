@@ -259,6 +259,6 @@ int XMNSocket::PutInRecvMsgList(char *pdata)
     {
         return -1;
     }
-    xmn_log_stderr(errno, pdata);
+    xmn_log_stderr(errno, "已接收到完整数据包。");
     return 0;
 }
