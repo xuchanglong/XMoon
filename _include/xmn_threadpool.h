@@ -50,7 +50,7 @@ public:
      * @author  xuchanglong
      * @time    2019-09-04
     */
-    int Create(const int &kThreadCount);
+    int Create(const size_t &kThreadCount);
 
     /**
      * @funtion 释放线程池中所有线程。
