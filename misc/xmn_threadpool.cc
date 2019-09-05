@@ -2,17 +2,14 @@
 #include "xmn_func.h"
 #include <errno.h>
 
+bool XMNThreadPool::isquit_ = false;
+
 XMNThreadPool::XMNThreadPool()
 {
     threadpoolsize_ = 0;
 }
 
 XMNThreadPool::~XMNThreadPool()
-{
-    ;
-}
-
-void *XMNThreadPool::ThreadFunc(void *pthreaddata)
 {
     ;
 }
@@ -44,4 +41,9 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
     */
 
     return 0;
+}
+
+void *XMNThreadPool::ThreadFunc(void *pthreaddata)
+{
+    
 }

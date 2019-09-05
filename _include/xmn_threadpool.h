@@ -87,6 +87,16 @@ private:
      * 保持线程池中每个线程的信息。
     */
     std::vector<ThreadInfo *> vthreadinfo_;
+
+    /**
+     * 线程是否退出的标识。
+    */
+    static bool isquit_;
+
+    /**
+     * 线程池中正在运行的线程的数量。
+    */
+    size_t threadrunningcount;
 };
 
 #endif
