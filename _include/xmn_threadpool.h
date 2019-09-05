@@ -4,6 +4,7 @@
 #include "base/noncopyable.h"
 #include <pthread.h>
 #include <string.h>
+#include <vector>
 
 class XMNThreadPool : public NonCopyable
 {
@@ -75,6 +76,17 @@ private:
      * TODO：后续补充。
     */
     static void *ThreadFunc(void *pthreaddata);
+
+private:
+    /**
+     * 线程池中线程的数量。
+    */
+    size_t threadpoolsize_;
+
+    /**
+     * 保持线程池中每个线程的信息。
+    */
+    std::vector<ThreadInfo *> vthreadinfo_;
 };
 
 #endif
