@@ -2,6 +2,7 @@
 #include "xmn_func.h"
 #include <errno.h>
 #include "xmn_global.h"
+#include <unistd.h>
 
 bool XMNThreadPool::isquit_ = false;
 
@@ -54,20 +55,51 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
     XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
     char *pmsg = nullptr;
 
-    pthread_mutex_lock(&thread_mutex_);
-
     size_t pid = pthread_self();
-    while ((!isquit_) && ((pmsg = g_socket.PutOutRecvMsgList()) == nullptr))
+    /**
+     * 从消息链表中取出数据。
+    */
+    while (true)
     {
-        /**
-         * 运行到这里，说明线程没有接收到退出命令且从消息队列中拿到了消息。
-        */
-        /**
-         * 标记该线程已经开始运行。
-        */
-        pthreadinfo->isrunning_ = true;
-        pthread_cond_wait(&thread_cond_, &thread_mutex_);
-    }
+        pthread_mutex_lock(&thread_mutex_);
+        while ((!isquit_) && ((pmsg = g_socket.PutOutRecvMsgList()) == nullptr))
+        {
+            /**
+             * 运行到这里，说明线程没有接收到退出命令且从消息队列中拿到了消息。
+            */
+            /**
+             * 标记该线程已经开始运行。
+            */
+            pthreadinfo->isrunning_ = true;
+            /**
+             * 进入该函数时，解锁。
+             * 走出该函数时，加锁。
+            */
+            pthread_cond_wait(&thread_cond_, &thread_mutex_);
+        }
 
+        /**
+         * 运行到这里，说明线程从消息链表中取出了数据或者 isquit_ == true 。
+        */
+
+        /**
+         * 解锁。
+        */
+        int err = pthread_mutex_unlock(&thread_mutex_);
+
+        /**
+         * 正在运行的线程数 + 1 。
+        */
+        ++pthreadpool->threadrunningcount;
+
+        /**
+         * 开始业务处理。
+        */
+        sleep(5);
+        /**
+         * 业务处理结束。
+        */
+        --pthreadpool->threadrunningcount;
+    }
     return nullptr;
 }

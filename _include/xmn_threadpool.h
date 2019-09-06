@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <vector>
+#include <atomic>
 
 class XMNThreadPool : public NonCopyable
 {
@@ -96,7 +97,7 @@ private:
     /**
      * 线程池中正在运行的线程的数量。
     */
-    size_t threadrunningcount;
+    std::atomic<size_t>  threadrunningcount;
 
     /**
      * 线程同步互斥量。
