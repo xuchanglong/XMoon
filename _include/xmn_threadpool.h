@@ -23,7 +23,7 @@ private:
         }
         ~ThreadInfo(){};
 
-    private:
+public:
         /**
          * 该线程所在的线程池的首地址。
         */
@@ -97,6 +97,16 @@ private:
      * 线程池中正在运行的线程的数量。
     */
     size_t threadrunningcount;
+
+    /**
+     * 线程同步互斥量。
+    */
+    static pthread_mutex_t thread_mutex_;
+
+    /**
+     * 线程同步条件。
+    */
+    static pthread_cond_t thread_cond_;
 };
 
 #endif

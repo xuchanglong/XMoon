@@ -5,6 +5,7 @@
 #include "xmn_func.h"
 #include "xmn_memory.h"
 #include "xmn_comm.h"
+#include "xmn_lockmutex.hpp"
 
 void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
@@ -259,6 +260,16 @@ int XMNSocket::PutInRecvMsgList(char *pdata)
     {
         return -1;
     }
-    xmn_log_stderr(errno, "已接收到完整数据包。");
+    //xmn_log_stderr(errno, "已接收到完整数据包。");
+    XMNLockMutex lockmutex(&thread_mutex_recvmsg);
+    recvmsglist_.push_back(pdata);
     return 0;
+}
+
+char *XMNSocket::PutOutRecvMsgList()
+{
+    XMNLockMutex lockmutex(&thread_mutex_recvmsg);
+    char *pbuf = recvmsglist_.front();
+    recvmsglist_.pop_front();
+    return pbuf;
 }

@@ -9,6 +9,7 @@
 #include <string>
 #include "signal.h"
 #include "xmn_socket.h"
+#include "xmn_threadpool.h"
 
 /**
  * @function    记录配置文件中每一个条目的信息。

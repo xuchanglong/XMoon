@@ -224,6 +224,25 @@ public:
     */
     int EpollProcessEvents(int timer);
 
+       /**
+     * @function    从消息链表中获取消息。
+     * @paras   none 。
+     * @return  非0 获取消息成功。
+     *                  nullptr 获取消息失败。
+     * @author  xuchanglong
+     * @time    2019-09-06
+    */
+    char *PutOutRecvMsgList();
+
+    /**
+     * @function    返回消息链表中元素的数量。
+     * @paras   none 。
+     * @return   消息链表中元素的数量。
+     * @author  xuchanglong
+     * @time    2019-09-06
+    */
+    size_t RecvMsgListSize();
+
 private:
     /**
      * @function    读取配置文件中的内容。
@@ -400,7 +419,7 @@ private:
      * 包头的大小。
     */
     size_t pkgheaderlen_;
-
+    
     /**
      * 消息头的大小。
     */
@@ -410,6 +429,11 @@ private:
      * 存放接收的数据的消息队列。（双向链表）
     */
     std::list<char *> recvmsglist_;
+
+    /**
+     * 存放接收的消息链表的互斥量。
+    */
+    pthread_mutex_t thread_mutex_recvmsg;
 };
 
 #endif
