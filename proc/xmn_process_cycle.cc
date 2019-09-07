@@ -83,7 +83,7 @@ void xmn_master_process_cycle()
     }
 
     /**
-    * （2）设置master进程标题。
+    * （2）设置 master 进程标题。
    */
     size_t lenall = 0;
     lenall = g_strmasterprocessname.size();
@@ -109,11 +109,15 @@ void xmn_master_process_cycle()
     sigemptyset(&set);
 
     /**
-    * （5）开始master进程循环。
+    * （5）开始 master 进程循环。
    */
     while (true)
     {
         sigsuspend(&set);
+
+        /**
+         * TODO：这里添加对各种信号的处理函数。
+        */
         sleep(1);
     }
 }
@@ -210,17 +214,17 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
         xmn_log_info(XMN_LOG_ALERT, errno, "xmn_worker_process_init 在编号为 %d 的子进程中初始化失败！", inum);
         return -1;
     }
-    
+
     /**
      * （2）创建线程池。
     */
     XMNConfig *pconfig = XMNConfig::GetInstance();
-    size_t threadpollsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
-    
+    size_t threadpoolsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
+
     /**
      * TODO：这里需要判断该函数的返回值。
     */
-    g_threadpool.Create(threadpollsize);
+    g_threadpool.Create(threadpoolsize);
 
     /**
      * （3）初始化 epoll ，并向 epoll 添加监听事件。

@@ -145,6 +145,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
 {
     XMNSignal *psi = nullptr;
     char *action = (char *)"";
+
     /**
      * 遍历信号数组。
     */
@@ -155,6 +156,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
             break;
         }
     }
+
     /**
      * 分别不同的进程对信号进行的处理。
     */
@@ -164,10 +166,12 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
         {
             g_xmn_reap = 1;
         }
+
         /**
          * 这里添加对其他信号的处理。
         */
     }
+
     else if (g_xmn_process_type == XMN_PROCESS_WORKER)
     {
         /**
@@ -180,6 +184,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
          * 这里添加其他进程对信号的处理。
         */
     }
+
     /**
      * 对这次信号进行日志记录。
     */
@@ -191,6 +196,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     {
         xmn_log_info(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->psigname, action);
     }
+    
     /**
      * 对信号进行处理。
     */

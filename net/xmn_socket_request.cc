@@ -29,7 +29,7 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
      * （1）开始接收包头数据。
     */
 
-    xmn_log_stderr(0, "Data is arrived.");
+    //xmn_log_stderr(0, "Data is arrived.");
 
     if (pconnsockinfo->recvstat == PKG_HD_INIT)
     {
@@ -277,6 +277,11 @@ int XMNSocket::PutInRecvMsgList(char *pdata)
 char *XMNSocket::PutOutRecvMsgList()
 {
     XMNLockMutex lockmutex(&thread_mutex_recvmsg);
+    if (recvmsglist_.empty())
+    {
+        return nullptr;
+    }
+
     char *pbuf = recvmsglist_.front();
     recvmsglist_.pop_front();
     return pbuf;

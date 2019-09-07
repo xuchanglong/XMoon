@@ -25,17 +25,19 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
 {
     int r = 0;
     threadpoolsize_ = kThreadCount;
+
     /**
-     * （1）创建指定数量的线程池。
+     * （1）创建指定数量的线程。
     */
     for (size_t i = 0; i < threadpoolsize_; i++)
     {
         ThreadInfo *pthreadinfoitem = new ThreadInfo(this);
+
         /**
          * 线程创建完毕之后，该线程就会开始被系统调用，即：ThreadFunc 开始运行。
         */
         r = pthread_create(&pthreadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)pthreadinfoitem);
-        if (r == -1)
+        if (r != 0)
         {
             xmn_log_stderr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
             return -1;

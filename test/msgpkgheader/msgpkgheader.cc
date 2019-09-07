@@ -22,6 +22,7 @@ void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int
 
 int main()
 {
+    size_t senddatacount = 0;
     int clientfd = 0;
     int r = connectserver(clientfd, SERVERIP, SERVERPORT);
     if (r == 0)
@@ -49,7 +50,9 @@ int main()
     while (true)
     {
         senddata(clientfd, sendbuf, pkgheaderlen + loginfolen);
-        sleep(3);
+        senddatacount++;
+        std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
+        sleep(2);
     }
     return 0;
 }
