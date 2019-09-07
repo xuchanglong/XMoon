@@ -2,6 +2,7 @@
 #define XMOON__INCLUDE_XMN_THREADPOOL_H_
 
 #include "base/noncopyable.h"
+
 #include <pthread.h>
 #include <string.h>
 #include <vector>
@@ -24,7 +25,7 @@ private:
         }
         ~ThreadInfo(){};
 
-public:
+    public:
         /**
          * 该线程所在的线程池的首地址。
         */
@@ -64,17 +65,20 @@ public:
 
     /**
      * @function    唤醒一个线程开始执行任务。
-     * @paras   kMsgCount    消息队列中消息的数量。
+     * @paras   none 。
      * @return  0   操作成功
      * @author  xuchanglong
      * @time    2019-09-05
     */
-    int Call(const size_t &kMsgCount);
+    int Call();
 
 private:
     /**
-     * @function    新创建的线程的入口函数。
-     * TODO：后续补充。
+     * @function    线程的执行入口函数。
+     * @paras   pthreaddata 保存当前线程信息的内存。
+     * @return  nullptr 。
+     * @author  xuchanglong
+     * @time 2019-09-07
     */
     static void *ThreadFunc(void *pthreaddata);
 
@@ -97,7 +101,7 @@ private:
     /**
      * 线程池中正在运行的线程的数量。
     */
-    std::atomic<size_t>  threadrunningcount;
+    std::atomic<size_t> threadrunningcount;
 
     /**
      * 线程同步互斥量。

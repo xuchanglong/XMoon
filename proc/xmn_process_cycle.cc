@@ -3,15 +3,16 @@
  * @author      xuchanglong
  * @time            2019-08-15
 *****************************************************************************************/
+#include "xmn_macro.h"
+#include "xmn_func.h"
+#include "xmn_global.h"
+#include "xmn_config.h"
+
 #include <signal.h>
 #include <iostream>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "xmn_macro.h"
-#include "xmn_func.h"
-#include "xmn_global.h"
-#include "xmn_config.h"
 
 /**
  * master 进程标题。

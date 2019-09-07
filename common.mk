@@ -3,10 +3,10 @@
 
 ifeq ($(DEBUG),true)
 #-g是生成调试信息。GNU调试器可以利用该信息
-CC = g++ -g
+CC = g++ -std=c++11 -g
 VERSION = debug
 else
-CC = g++
+CC = g++ -std=c++11 
 VERSION = release
 endif
 
@@ -69,7 +69,7 @@ $(BIN):$(LINK_OBJ)
 
 #一些变量：$@：目标，     $^：所有目标依赖
 # gcc -o 是生成可执行文件
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ -lpthread 
 
 #----------------------------------------------------------------1end-------------------
 
@@ -99,7 +99,7 @@ $(DEP_DIR)/%.d:%.cc
 	echo -n $(LINK_OBJ_DIR)/ > $@
 #	gcc -MM $^ | sed 's/^/$(LINK_OBJ_DIR)&/g' > $@
 #  >>表示追加
-	gcc -I$(INCLUDE_PATH) -MM $^ >> $@
+	$(CC) -I$(INCLUDE_PATH) -MM $^ >> $@
 
 #上行处理后，.d文件中内容应该就如：/mnt/hgfs/linux/xmoon/app/link_obj/xmoon.o: xmoon.c xmn_func.h ../signal/xmn_signal.h
 

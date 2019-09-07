@@ -114,4 +114,5 @@ extern XMNSocket g_socket;
  * 线程池对象。
 */
 extern XMNThreadPool g_threadpool;
+
 #endif

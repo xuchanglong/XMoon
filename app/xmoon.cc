@@ -31,7 +31,7 @@ char *g_penvmem = nullptr;
 bool g_isdaemonized = 0;
 
 XMNSocket g_socket;
-XMNThreadPool g_threadpoll;
+XMNThreadPool g_threadpool;
 
 pid_t g_xmn_pid = -1;
 pid_t g_xmn_pid_parent = -1;
