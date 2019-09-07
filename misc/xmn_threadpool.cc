@@ -13,6 +13,7 @@ XMNThreadPool::XMNThreadPool()
 {
     threadpoolsize_ = 0;
     threadrunningcount = 0;
+    lasttime_ = 0;
 }
 
 XMNThreadPool::~XMNThreadPool()
@@ -140,10 +141,72 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
 
 int XMNThreadPool::Destroy()
 {
+    int r = 0;
+    /**
+     * （1）置位线程退出标志并向线程池中所有线程发送消息。
+    */
+    if (isquit_)
+    {
+        return -1;
+    }
+    isquit_ = true;
+
+    r = pthread_cond_broadcast(&thread_cond_);
+    if (r != 0)
+    {
+        xmn_log_stderr(r, "XMNThreadPool::Destroy() 中 pthread_cond_signal 执行失败。");
+    }
+
+    /**
+     * （2）等待线程池中的线程都退出。
+    */
+    std::vector<ThreadInfo *>::iterator it;
+    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); ++it)
+    {
+        /**
+         * @function    1、等待指定的线程退出。
+         *                           2、释放退出的线程的系统资源。
+        */
+        pthread_join((*it)->threadhandle_, nullptr);
+    }
+
+    /**
+     * （3）释放存储线程池中各个线程信息的内存。
+    */
+    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); ++it)
+    {
+        delete (*it);
+        (*it) = nullptr;
+    }
+    vthreadinfo_.clear();
+
     return 0;
 }
 
 int XMNThreadPool::Call()
 {
+    /**
+     * （1）向线程池中的线程发生一个消息，注意仅仅对其中优先级最高的线程发送。
+     * 使该线程从 pthread_cond_wait 函数跳出。
+    */
+    int r = pthread_cond_signal(&thread_cond_);
+    if (r != 0)
+    {
+        xmn_log_stderr(r, "XMNThreadPool::Call 中 pthread_cond_signal 执行失败。");
+    }
+
+    /**
+     * （2）若线程池中线程满负荷运作，则报警显示。
+    */
+    if (threadpoolsize_ == threadrunningcount)
+    {
+        time_t currtime = time(nullptr);
+        if (currtime - lasttime_ > 10)
+        {
+            lasttime_ = currtime;
+            xmn_log_stderr(0,"线程池满负荷运转，可考虑扩容线程池。");
+        }
+    }
+
     return 0;
 }

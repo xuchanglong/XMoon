@@ -1,11 +1,13 @@
-#include <errno.h>
-#include <arpa/inet.h>
 #include "xmn_socket.h"
 #include "xmn_macro.h"
 #include "xmn_func.h"
 #include "xmn_memory.h"
 #include "xmn_comm.h"
 #include "xmn_lockmutex.hpp"
+#include "xmn_global.h"
+
+#include <errno.h>
+#include <arpa/inet.h>
 
 void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
@@ -243,8 +245,14 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
      * TODO：返回值为-1暂时没有想好怎么处理。
     */
     PutInRecvMsgList(pconnsockinfo->precvalldata);
+
     /**
-     * （2）更新状态机至初始状态。
+     * （2）调用线程池中的线程处理数据。
+    */
+    g_threadpool.Call();
+
+    /**
+     * （3）更新状态机至初始状态。
     */
     pconnsockinfo->isfree = false;
     pconnsockinfo->recvstat = PKG_HD_INIT;

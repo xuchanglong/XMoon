@@ -112,6 +112,11 @@ private:
      * 线程同步条件。
     */
     static pthread_cond_t thread_cond_;
+
+    /**
+     * 记录上次线程不够用时发生的时间。
+    */
+    time_t lasttime_;
 };
 
 #endif

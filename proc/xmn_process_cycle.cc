@@ -216,6 +216,10 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     */
     XMNConfig *pconfig = XMNConfig::GetInstance();
     size_t threadpollsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
+    
+    /**
+     * TODO：这里需要判断该函数的返回值。
+    */
     g_threadpool.Create(threadpollsize);
 
     /**
