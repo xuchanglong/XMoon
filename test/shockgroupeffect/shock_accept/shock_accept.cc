@@ -13,30 +13,9 @@
 #define PORT 8888
 #define WORKERCOUNT 4
 
-int worker(int listenfd, int i) 17
-{
-    while (true)
-    {
-        printf("I am worker %d, begin to accept connection.\n", i);
-        struct sockaddr_in client_addr;
-        socklen_t client_addrlen = sizeof(client_addr);
-        int connfd = accept(listenfd, (struct sockaddr *)&client_addr, &client_addrlen);
+int worker(int listenfd, int i);
 
-        if (connfd != -1)
-        {
-            printf("worker %d accept a connection success.\t", i);
-            printf("ip :%s\t", inet_ntoa(client_addr.sin_addr));
-            printf("port: %d \n", client_addr.sin_port);
-        }
-        else
-        {
-            printf("worker %d accept a connection failed,error:%s", i, strerror(errno));
-            close(connfd);
-        }
-    }
-    return 0;
-}
-int main() 35
+int main()
 {
     int i = 0;
     struct sockaddr_in address;
@@ -71,5 +50,29 @@ int main() 35
     /*wait child process*/
     int status;
     wait(&status);
+    return 0;
+}
+
+int worker(int listenfd, int i)
+{
+    while (true)
+    {
+        printf("I am worker %d, begin to accept connection.\n", i);
+        struct sockaddr_in client_addr;
+        socklen_t client_addrlen = sizeof(client_addr);
+        int connfd = accept(listenfd, (struct sockaddr *)&client_addr, &client_addrlen);
+
+        if (connfd != -1)
+        {
+            printf("worker %d accept a connection success.\t", i);
+            printf("ip :%s\t", inet_ntoa(client_addr.sin_addr));
+            printf("port: %d \n", client_addr.sin_port);
+        }
+        else
+        {
+            printf("worker %d accept a connection failed,error:%s", i, strerror(errno));
+            close(connfd);
+        }
+    }
     return 0;
 }
