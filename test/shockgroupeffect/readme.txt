@@ -1,0 +1,1 @@
+测试 linux 服务器中的 accept 和 epoll 的惊群效应。
