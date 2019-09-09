@@ -70,6 +70,9 @@ int XMNSocket::OpenListenSocket(const int *const pport, const size_t &listenport
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
+    /**
+     * 0,0,0,0 该地址代表本机所有 IP 。
+    */
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     /**

@@ -18,9 +18,15 @@ int worker(int listenfd, int i);
 int main()
 {
     int i = 0;
+    /**
+     * IPv4 套接字地质结构。
+    */
     struct sockaddr_in address;
-    bzero(&address, sizeof(address));
+    memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
+    /**
+     * 点分十进制字符串  -->  网络字节序二进制
+    */
     inet_pton(AF_INET, IP, &address.sin_addr);
     address.sin_port = htons(PORT);
 

@@ -28,7 +28,7 @@ int main()
     /**
      * 创建socket。
     */
-    int clientfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    int clientfd = socket(AF_INET, SOCK_STREAM, 0);
     if (clientfd <= 0)
     {
         showerrorinfo("socket", r, errno);
@@ -51,7 +51,7 @@ int main()
     /**
      * 连接 server 。
     */
-    r = connect(clientfd, (struct sockaddr *)&addr, sizeof(addr));
+    r = connect(clientfd, (struct sockaddr *)&addr, sizeof(sockaddr_in));
     if (r != 0)
     {
         showerrorinfo("connect", r, errno);
@@ -63,7 +63,7 @@ int main()
     */
     if (read(clientfd, buf, 1000))
     {
-        std::cout << "Recieve data is \"" << buf <<"\""<< std::endl;
+        std::cout << "Recieve data is \"" << buf << "\"" << std::endl;
         memset(buf, '\0', strlen(buf));
     }
 

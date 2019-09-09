@@ -67,7 +67,7 @@ int main()
     /**
      * 创建 socket 。
     */
-    int listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenfd <= 0)
     {
         showerrorinfo("socket", r, errno);
@@ -93,7 +93,7 @@ int main()
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    r = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
+    r = bind(listenfd, (struct sockaddr *)&addr, sizeof(sockaddr_in));
     if (r != 0)
     {
         showerrorinfo("bind", r, errno);
