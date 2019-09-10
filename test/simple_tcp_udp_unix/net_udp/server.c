@@ -10,14 +10,14 @@
 
 int main()
 {
-    int sockfd;
+    int serverfd;
     struct sockaddr_in addr_server;
     struct sockaddr_in addr_client;
     socklen_t socklen;
     char buf[MAXDATASIZE];
     int num = 0;
 
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    if ((serverfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
     {
         perror("Creating socked failed.");
         return 1;
@@ -25,7 +25,7 @@ int main()
     addr_server.sin_family = AF_INET;
     addr_server.sin_port = ntohs(PORT);
     addr_server.sin_addr.s_addr = ntohl(INADDR_ANY);
-    if ((bind(sockfd, (struct sockaddr *)&addr_server, sizeof(struct sockaddr_in))) == -1)
+    if ((bind(serverfd, (struct sockaddr *)&addr_server, sizeof(struct sockaddr_in))) == -1)
     {
         perror("Bind() error.");
         return 2;
@@ -33,7 +33,7 @@ int main()
     socklen = sizeof(struct sockaddr_in);
     while (true)
     {
-        num = recvfrom(sockfd, buf, MAXDATASIZE, 0, (struct sockaddr *)&addr_client, &socklen);
+        num = recvfrom(serverfd, buf, MAXDATASIZE, 0, (struct sockaddr *)&addr_client, &socklen);
         if (num < 0)
         {
             perror("recvfrom error.");
@@ -47,7 +47,7 @@ int main()
         printf("You got a message <%s> from client.\nIt's ip is %s,port is %d.\n",
                buf, clientip, ntohs(addr_client.sin_port));
                
-        sendto(sockfd, "Welcome\n", 8, 0, (struct sockaddr *)&addr_client, socklen);
+        sendto(serverfd, "Welcome\n", 8, 0, (struct sockaddr *)&addr_client, socklen);
 
         if (strcmp(buf, "bye"))
         {
