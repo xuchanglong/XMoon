@@ -7,6 +7,7 @@
 #include <string.h>
 #include <vector>
 #include <atomic>
+#include <list>
 
 class XMNThreadPool : public NonCopyable
 {
@@ -72,6 +73,15 @@ public:
     */
     int Call();
 
+    /**
+     * @function    将接收到的数据压入消息链表中。
+     * @paras   pdata   接收到的数据。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-01
+    */
+    int PutInRecvMsgList_Signal(char *pdata);
+
 private:
     /**
      * @function    线程的执行入口函数。
@@ -81,6 +91,16 @@ private:
      * @time 2019-09-07
     */
     static void *ThreadFunc(void *pthreaddata);
+
+    /**
+     * @function    从消息链表中获取消息。
+     * @paras   none 。
+     * @return  非0 获取消息成功。
+     *                  nullptr 获取消息失败。
+     * @author  xuchanglong
+     * @time    2019-09-06
+    */
+    char *PutOutRecvMsgList();
 
 private:
     /**
@@ -101,7 +121,7 @@ private:
     /**
      * 线程池中正在运行的线程的数量。
     */
-    std::atomic<size_t> threadrunningcount;
+    std::atomic<size_t> threadrunningcount_;
 
     /**
      * 线程同步互斥量。
@@ -117,6 +137,11 @@ private:
      * 记录上次线程不够用时发生的时间。
     */
     time_t lasttime_;
+
+    /**
+     * 存放接收的数据的消息队列。（双向链表）
+    */
+    std::list<char *> recvmsglist_;
 };
 
 #endif

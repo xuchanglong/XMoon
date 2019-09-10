@@ -244,15 +244,10 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     /**
      * TODO：返回值为-1暂时没有想好怎么处理。
     */
-    PutInRecvMsgList(pconnsockinfo->precvalldata);
+    g_threadpool.PutInRecvMsgList_Signal(pconnsockinfo->precvalldata);
 
     /**
-     * （2）调用线程池中的线程处理数据。
-    */
-    g_threadpool.Call();
-
-    /**
-     * （3）更新状态机至初始状态。
+     * （2）更新状态机至初始状态。
     */
     pconnsockinfo->isfree = false;
     pconnsockinfo->recvstat = PKG_HD_INIT;
@@ -260,29 +255,4 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     pconnsockinfo->recvlen = pkgheaderlen_;
     pconnsockinfo->precvalldata = nullptr;
     return;
-}
-
-int XMNSocket::PutInRecvMsgList(char *pdata)
-{
-    if (pdata == nullptr)
-    {
-        return -1;
-    }
-    //xmn_log_stderr(errno, "已接收到完整数据包。");
-    XMNLockMutex lockmutex(&thread_mutex_recvmsg);
-    recvmsglist_.push_back(pdata);
-    return 0;
-}
-
-char *XMNSocket::PutOutRecvMsgList()
-{
-    XMNLockMutex lockmutex(&thread_mutex_recvmsg);
-    if (recvmsglist_.empty())
-    {
-        return nullptr;
-    }
-
-    char *pbuf = recvmsglist_.front();
-    recvmsglist_.pop_front();
-    return pbuf;
 }

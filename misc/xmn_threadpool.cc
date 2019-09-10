@@ -12,7 +12,7 @@ pthread_cond_t XMNThreadPool::thread_cond_ = PTHREAD_COND_INITIALIZER;
 XMNThreadPool::XMNThreadPool()
 {
     threadpoolsize_ = 0;
-    threadrunningcount = 0;
+    threadrunningcount_ = 0;
     lasttime_ = 0;
 }
 
@@ -89,7 +89,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             xmn_log_stderr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
-        while ((!isquit_) && ((pmsg = g_socket.PutOutRecvMsgList()) == nullptr))
+        while ((!isquit_) && ((pmsg = pthreadpool->PutOutRecvMsgList()) == nullptr))
         {
             /**
              * 运行到这里，说明线程没有接收到退出命令且也没有从消息链表中拿到了消息。
@@ -121,7 +121,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 正在运行的线程数 + 1 。
         */
-        ++pthreadpool->threadrunningcount;
+        ++pthreadpool->threadrunningcount_;
 
         /**
          * 开始业务处理。
@@ -136,7 +136,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 正在运行的线程数 - 1 。
         */
-        --pthreadpool->threadrunningcount;
+        --pthreadpool->threadrunningcount_;
     }
     return nullptr;
 }
@@ -200,15 +200,59 @@ int XMNThreadPool::Call()
     /**
      * （2）若线程池中线程满负荷运作，则报警显示。
     */
-    if (threadpoolsize_ == threadrunningcount)
+    if (threadpoolsize_ == threadrunningcount_)
     {
         time_t currtime = time(nullptr);
         if (currtime - lasttime_ > 10)
         {
             lasttime_ = currtime;
-            xmn_log_stderr(0,"线程池满负荷运转，可考虑扩容线程池。");
+            xmn_log_stderr(0, "线程池满负荷运转，可考虑扩容线程池。");
         }
     }
 
     return 0;
+}
+
+int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
+{
+    int r = 0;
+    if (pdata == nullptr)
+    {
+        return -1;
+    }
+    //xmn_log_stderr(errno, "已接收到完整数据包。");
+    /**
+     * （1）向消息链表中压入 client 发来的数据。
+    */
+    r = pthread_mutex_lock(&thread_mutex_);
+    if (r != 0)
+    {
+        xmn_log_stderr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_lock 执行失败。");
+    }
+
+    recvmsglist_.push_back(pdata);
+
+    r = pthread_mutex_unlock(&thread_mutex_);
+    if (r != 0)
+    {
+        xmn_log_stderr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_unlock 执行失败。");
+    }
+    /**
+     * （2）激发线程池中的一个线程从消息链表中取走消息并处理。
+    */
+    Call();
+    return 0;
+}
+
+char *XMNThreadPool::PutOutRecvMsgList()
+{
+    if (recvmsglist_.empty())
+    {
+        return nullptr;
+    }
+
+    char *pbuf = recvmsglist_.front();
+    recvmsglist_.pop_front();
+
+    return pbuf;
 }
