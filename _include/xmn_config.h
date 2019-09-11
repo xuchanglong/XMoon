@@ -18,7 +18,7 @@
 
 class XMNConfig : public NonCopyable
 {
-    friend class SingleTonBase<XMNConfig>;
+    friend class SingletonBase<XMNConfig>;
 
 private:
     XMNConfig();

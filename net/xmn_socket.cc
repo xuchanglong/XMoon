@@ -178,7 +178,7 @@ int XMNSocket::SetNonBlocking(const int &sockfd)
 
 int XMNSocket::ReadConf()
 {
-    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
+    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
 
     /**
      * （1）获取 port 的数量。

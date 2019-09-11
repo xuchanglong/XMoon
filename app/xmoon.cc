@@ -77,7 +77,7 @@ int main(int argc, char *const *argv)
     /**
      * （2）初始化配置模块。
     */
-    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
+    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
     if (pconfig->Load("xmoon.conf") != 0)
     {
         xmn_log_init();
@@ -88,7 +88,7 @@ int main(int argc, char *const *argv)
     /**
      * （3）单例 XMNMemory 初始化。
     */
-    SingleTonBase<XMNMemory>::GetInstance();
+    SingletonBase<XMNMemory>::GetInstance();
 
     /**
      * （4）初始化日志模块。

@@ -192,7 +192,7 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
         /**
         * （2）为包体分配内存并设置相关变量。
         */
-        XMNMemory *pmemory = SingleTonBase<XMNMemory>::GetInstance();
+        XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
         char *pbuffall = (char *)pmemory->AllocMemory(msgheaderlen_ + pkglen, false);
         if (pbuffall == nullptr)
         {

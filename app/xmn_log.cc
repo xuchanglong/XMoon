@@ -234,7 +234,7 @@ void xmn_log_init()
     size_t nlen;
 
     //从配置文件中读取和日志相关的配置信息
-    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
+    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
     strplogname = pconfig->GetConfigItem("Log");
     if (strplogname == "")
     {

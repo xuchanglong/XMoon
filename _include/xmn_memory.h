@@ -17,7 +17,7 @@
 
 class XMNMemory : public NonCopyable
 {
-    friend class SingleTonBase<XMNMemory>;
+    friend class SingletonBase<XMNMemory>;
 
 private:
     ~XMNMemory();

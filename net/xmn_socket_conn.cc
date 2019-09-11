@@ -60,7 +60,7 @@ void XMNSocket::FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo)
     */
     if (pconnsockinfo->isfree)
     {
-        SingleTonBase<XMNMemory>::GetInstance()->FreeMemory((void *)pconnsockinfo->precvalldata);
+        SingletonBase<XMNMemory>::GetInstance()->FreeMemory((void *)pconnsockinfo->precvalldata);
         pconnsockinfo->isfree = false;
         pconnsockinfo->precvalldata = nullptr;
     }

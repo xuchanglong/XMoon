@@ -1,8 +1,8 @@
 /*****************************************************************************************
  * 
- *  @function 用于自动释放互斥量，防止函数结束之后忘记释放。
+ *  @function 单例模板类。
  *  @author xuchanglong
- *  @time   2019-09-05
+ *  @time   2019-09-12
  * 
  *****************************************************************************************/
 
@@ -12,7 +12,7 @@
 #include <new>
 
 template <typename T>
-class SingleTonBase
+class SingletonBase
 {
 public:
     static T *GetInstance()
@@ -46,8 +46,8 @@ private:
     };
 
 private:
-    SingleTonBase() {}
-    ~SingleTonBase() {}
+    SingletonBase() {}
+    ~SingletonBase() {}
 
 private:
     static T *pinstance_;
@@ -55,9 +55,9 @@ private:
 };
 
 template <typename T>
-T *SingleTonBase<T>::pinstance_ = nullptr;
+T *SingletonBase<T>::pinstance_ = nullptr;
 
 template <typename T>
-typename SingleTonBase<T>::DeleteT SingleTonBase<T>::delT_;
+typename SingletonBase<T>::DeleteT SingletonBase<T>::delT_;
 
 #endif

@@ -8,7 +8,7 @@
 
 class XMNCRC32 : public NonCopyable
 {
-    friend class SingleTonBase<XMNCRC32>;
+    friend class SingletonBase<XMNCRC32>;
 
 private:
     XMNCRC32();
