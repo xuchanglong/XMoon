@@ -1,8 +1,5 @@
 #include "xmn_memory.h"
 
-XMNMemory *XMNMemory::pinstance_ = nullptr;
-XMNMemory::DeleteXMNMemory XMNMemory::deletememory;
-
 XMNMemory::XMNMemory()
 {
     ;

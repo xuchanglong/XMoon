@@ -21,7 +21,7 @@ public:
     int GetCRC(unsigned char *buffer, unsigned int dwSize);
 
 public:
-    unsigned int crc32_table[256];
+    unsigned int crc32_table[0xff];
 };
 
 #endif

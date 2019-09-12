@@ -4,9 +4,6 @@
 
 #include "xmn_crc32.h"
 
-XMNCRC32 *XMNCRC32::pinstance_ = nullptr;
-XMNCRC32::DeleteXMNCRC32 XMNCRC32::delXMNCRC32;
-
 XMNCRC32::XMNCRC32()
 {
 	InitCRC32Table();
