@@ -218,7 +218,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     /**
      * （2）创建线程池。
     */
-    XMNConfig *pconfig = XMNConfig::GetInstance();
+    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
     size_t threadpoolsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
 
     /**

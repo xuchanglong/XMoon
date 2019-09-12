@@ -503,8 +503,3 @@ int XMNSocket::EpollProcessEvents(int timer)
 
     return 0;
 }
-
-size_t XMNSocket::RecvMsgListSize()
-{
-    return recvmsglist_.size();
-}

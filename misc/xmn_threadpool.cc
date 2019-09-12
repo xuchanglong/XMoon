@@ -256,3 +256,8 @@ char *XMNThreadPool::PutOutRecvMsgList()
 
     return pbuf;
 }
+
+size_t XMNThreadPool::RecvMsgListSize()
+{
+    return recvmsglist_.size();
+}

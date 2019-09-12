@@ -88,7 +88,7 @@ int main(int argc, char *const *argv)
     /**
      * （3）单例 XMNMemory 初始化。
     */
-    XMNMemory::GetInstance();
+    SingleTonBase<XMNMemory>::GetInstance();
 
     /**
      * （4）初始化日志模块。

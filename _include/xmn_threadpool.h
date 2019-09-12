@@ -102,6 +102,15 @@ private:
     */
     char *PutOutRecvMsgList();
 
+    /**
+     * @function    获取消息的数量
+     * @paras   none 。
+     * @return  消息的数量
+     * @author  xuchanglong
+     * @time    2019-09-12
+    */
+    size_t RecvMsgListSize();
+
 private:
     /**
      * 线程池中线程的数量。

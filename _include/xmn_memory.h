@@ -13,64 +13,15 @@
 #include <new>
 
 #include "base/noncopyable.h"
+#include "base/singletonbase.h"
 
 class XMNMemory : public NonCopyable
 {
-public:
+    friend class SingleTonBase<XMNMemory>;
+
+private:
     ~XMNMemory();
-
-private:
     XMNMemory();
-
-public:
-    /**
-     * @function    单例的生成器。
-     * @paras       none 。
-     * @return      单例的指针。
-     * @author      xuchanglong
-     * @time        2019-08-31      
-     */
-    static XMNMemory *GetInstance()
-    {
-        if (pinstance_ == nullptr)
-        {
-            if (pinstance_ == nullptr)
-            {
-                try
-                {
-                    pinstance_ = new XMNMemory();
-                }
-                catch (const std::exception &e)
-                {
-                    return nullptr;
-                }
-            }
-        }
-        return pinstance_;
-    }
-
-private:
-    /**
-     * @function    单例的销毁类。
-     * @author      xuchanglong
-     * @time        2019-08-01        
-     */
-    class DeleteXMNMemory
-    {
-    public:
-        ~DeleteXMNMemory()
-        {
-            if (XMNMemory::pinstance_)
-            {
-                delete XMNMemory::pinstance_;
-                XMNMemory::pinstance_ = nullptr;
-            }
-        }
-    };
-
-public:
-    static XMNMemory *pinstance_;
-    static DeleteXMNMemory deletememory;
 
 public:
     /**
