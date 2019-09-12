@@ -1,9 +1,6 @@
 ﻿#include "xmn_config.h"
 #include <fstream>
 
-XMNConfig *XMNConfig::pinstance_ = nullptr;
-XMNConfig::DeleteXMNConfig XMNConfig::delxmnconfig;
-
 XMNConfig::XMNConfig()
 {
     ;

@@ -77,8 +77,8 @@ int main(int argc, char *const *argv)
     /**
      * （2）初始化配置模块。
     */
-    XMNConfig *p_config = XMNConfig::GetInstance();
-    if (p_config->Load("xmoon.conf") != 0)
+    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
+    if (pconfig->Load("xmoon.conf") != 0)
     {
         xmn_log_init();
         xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", "xmoon.conf");
@@ -121,7 +121,7 @@ int main(int argc, char *const *argv)
     /**
      * （8）创建守护进程。
     */
-    strdaemoncontext = p_config->GetConfigItem("Daemon", "0");
+    strdaemoncontext = pconfig->GetConfigItem("Daemon", "0");
     if (strdaemoncontext.compare("1"))
     {
         int r = xmn_daemon();

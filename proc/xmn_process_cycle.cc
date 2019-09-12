@@ -99,7 +99,7 @@ void xmn_master_process_cycle()
     /**
    * （3）创建 worker 子进程。
   */
-    XMNConfig *pconfig = XMNConfig::GetInstance();
+    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
     size_t iworkerprocesssum = atoi(pconfig->GetConfigItem("WorkderProcess", "4").c_str());
     xmn_start_worker_process(iworkerprocesssum);
 

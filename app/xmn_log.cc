@@ -234,14 +234,14 @@ void xmn_log_init()
     size_t nlen;
 
     //从配置文件中读取和日志相关的配置信息
-    XMNConfig *p_config = XMNConfig::GetInstance();
-    strplogname = p_config->GetConfigItem("Log");
+    XMNConfig *pconfig = SingleTonBase<XMNConfig>::GetInstance();
+    strplogname = pconfig->GetConfigItem("Log");
     if (strplogname == "")
     {
         //没读到，就要给个缺省的路径文件名了
         strplogname = XMN_ERROR_LOG_PATH; //"logs/error.log" ,logs目录需要提前建立出来
     }
-    g_xmn_log.log_level = atoi(p_config->GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); //缺省日志等级为6【注意】 ，如果读失败，就给缺省日志等级
+    g_xmn_log.log_level = atoi(pconfig->GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); //缺省日志等级为6【注意】 ，如果读失败，就给缺省日志等级
     //nlen = strlen((const char *)plogname);
 
     //只写打开|追加到末尾|文件不存在则创建【这个需要跟第三参数指定文件访问权限】

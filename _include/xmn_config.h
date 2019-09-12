@@ -14,58 +14,15 @@
 
 #include "xmn_global.h"
 #include "base/noncopyable.h"
+#include "base/singletonbase.h"
 
 class XMNConfig : public NonCopyable
 {
+    friend class SingleTonBase<XMNConfig>;
+
 private:
     XMNConfig();
     ~XMNConfig();
-
-public:
-    /**
-     * @function    单例的生成器。
-     * @paras       none 。
-     * @return      单例的指针。
-     * @author      xuchanglong
-     * @time        2019-08-01        
-     */
-    static XMNConfig *GetInstance()
-    {
-        if (pinstance_ == nullptr)
-        {
-            if (pinstance_ == nullptr)
-            {
-                try
-                {
-                    pinstance_ = new XMNConfig();
-                }
-                catch (const std::exception &e)
-                {
-                    return nullptr;
-                }
-            }
-        }
-        return pinstance_;
-    }
-
-private:
-    /**
-     * @function    单例的销毁类。
-     * @author      xuchanglong
-     * @time        2019-08-01        
-     */
-    class DeleteXMNConfig
-    {
-    public:
-        ~DeleteXMNConfig()
-        {
-            if (XMNConfig::pinstance_)
-            {
-                delete XMNConfig::pinstance_;
-                XMNConfig::pinstance_ = nullptr;
-            }
-        }
-    };
 
 public:
     /**
@@ -98,15 +55,11 @@ public:
     std::string ClearSpace(const std::string &kstr);
 
 private:
-    static XMNConfig *pinstance_;
-    static DeleteXMNConfig delxmnconfig;
-
-private:
     /**
      * 配置文件中所有条目的信息的集合。
      */
     std::vector<ConfigItem *> vconfig_item_set_;
-/**
+    /**
  * 测试接口,正常使用时禁止使用。
  */
 public:
