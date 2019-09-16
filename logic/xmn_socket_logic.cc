@@ -1,10 +1,13 @@
 #include "xmn_socket_logic.h"
 #include "xmn_func.h"
 
-using pmsghandler = int (*)(XMNConnSockInfo *pconnsockinfo,
-                            XMNMsgHeader *pmsgheader,
-                            char *ppkgbody,
-                            size_t pkgbodylen);
+/**
+ * TODO：此处为什么函数指针必须是 XMNSocketLogic 作用域下的。
+*/
+using pmsghandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
+                                            XMNMsgHeader *pmsgheader,
+                                            char *ppkgbody,
+                                            size_t pkgbodylen);
 
 static const pmsghandler statushandler[] =
     {
@@ -14,8 +17,7 @@ static const pmsghandler statushandler[] =
         nullptr,
         nullptr,
         &XMNSocketLogic::HandleRegister,
-        &XMNSocketLogic::HandleLogin
-};
+        &XMNSocketLogic::HandleLogin};
 
 #define TOTAL_COMMANDS (sizeof(statushandler) / sizeof(pmsghandler))
 
