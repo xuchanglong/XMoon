@@ -232,7 +232,7 @@ public:
     */
     size_t RecvMsgListSize();
 
-     /**
+    /**
      * @function    处理收到的数据包。
      * @paras   数据包。
      * @return   none 。
@@ -353,6 +353,17 @@ private:
     */
     void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
 
+protected:
+    /**
+     * 消息头的大小。
+    */
+    size_t msgheaderlen_;
+
+    /**
+     * 包头的大小。
+    */
+    size_t pkgheaderlen_;
+
 private:
     /**
      *  监听的 port 的数量。
@@ -403,16 +414,6 @@ private:
      * 用于存储 epoll_wait() 返回的发生的事件。
     */
     struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
-
-    /**
-     * 包头的大小。
-    */
-    size_t pkgheaderlen_;
-    
-    /**
-     * 消息头的大小。
-    */
-    size_t msgheaderlen_;
 };
 
 #endif

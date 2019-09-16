@@ -41,7 +41,7 @@ int main()
 
     XMNPkgHeader *ppkgheaser = (XMNPkgHeader *)sendbuf;
     ppkgheaser->pkglen = htons(pkgheaderlen + loginfolen);
-    ppkgheaser->msgCode = htons(1);
+    ppkgheaser->msgcode = htons(1);
     ppkgheaser->crc32 = htonl(123);
 
     LoginInfo *ploginfo = (LoginInfo *)(sendbuf + pkgheaderlen);

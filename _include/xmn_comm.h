@@ -56,7 +56,7 @@ struct XMNPkgHeader
     /**
      * 消息类型的代码，用于区别不同的命令（消息）。
     */
-    unsigned short msgCode;
+    unsigned short msgcode;
 
     /**
      * CRC32 校验，用于防止接收到的数据和 client 发送的数据不符的问题。
