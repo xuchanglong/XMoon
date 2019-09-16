@@ -8,7 +8,7 @@
 
 #include <string>
 #include "signal.h"
-#include "xmn_socket.h"
+#include "xmn_socket_logic.h"
 #include "xmn_threadpool.h"
 
 /**
@@ -106,9 +106,9 @@ extern bool g_isdaemonized;
 extern sig_atomic_t g_xmn_reap;
 
 /**
- * xmn socket 对象。
+ * 逻辑处理对象。
 */
-extern XMNSocket g_socket;
+extern XMNSocketLogic g_socket;
 
 /**
  * 线程池对象。

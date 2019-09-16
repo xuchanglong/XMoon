@@ -232,6 +232,15 @@ public:
     */
     size_t RecvMsgListSize();
 
+     /**
+     * @function    处理收到的数据包。
+     * @paras   数据包。
+     * @return   none 。
+     * @author  xuchanglong
+     * @time    2019-09-15
+    */
+    virtual void ThreadRecvProcFunc(char *pmsgbuf);
+
 private:
     /**
      * @function    读取配置文件中的内容。

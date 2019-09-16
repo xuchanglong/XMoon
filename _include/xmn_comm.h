@@ -45,6 +45,7 @@ enum RecvStatus
  * 使得结构体中各个成员紧密的挨在一起，保证所有的系统收发的包头的字节数是一样的。
 */
 #pragma pack(1)
+
 struct XMNPkgHeader
 {
     /**
@@ -62,5 +63,7 @@ struct XMNPkgHeader
     */
     int crc32;
 };
+
 #pragma pack()
+
 #endif

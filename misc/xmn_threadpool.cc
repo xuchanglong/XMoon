@@ -126,12 +126,13 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 开始业务处理。
         */
-        xmn_log_stderr(0, "业务逻辑开始执行，pid = %d", pid);
-        sleep(5);
+        //xmn_log_stderr(0, "业务逻辑开始执行，pid = %d", pid);
+        //sleep(5);
+        g_socket.ThreadRecvProcFunc(pmsg);
         /**
          * 业务处理结束。
         */
-        xmn_log_stderr(0, "业务逻辑执行结束，pid = %d", pid);
+        //xmn_log_stderr(0, "业务逻辑执行结束，pid = %d", pid);
 
         /**
          * 正在运行的线程数 - 1 。

@@ -256,3 +256,8 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     pconnsockinfo->precvalldata = nullptr;
     return;
 }
+
+void XMNSocket::ThreadRecvProcFunc(char *pmsgbuf)
+{
+    ;
+}
