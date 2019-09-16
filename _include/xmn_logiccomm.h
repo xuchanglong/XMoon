@@ -1,0 +1,4 @@
+#ifndef XMOON__INCLUDE_XMN_LOGICCOMM_H_
+#define XMOON__INCLUDE_XMN_LOGICCOMM_H_
+
+#endif
