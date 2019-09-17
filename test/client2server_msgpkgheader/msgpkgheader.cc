@@ -1,20 +1,16 @@
 #include "xmn_comm.h"
-#include "unistd.h"
+#include "xmn_logiccomm.h"
+#include "xmn_crc32.h"
 
+#include "unistd.h"
 #include <sys/socket.h>
 #include "sys/types.h"
 #include "arpa/inet.h"
 #include <iostream>
 #include <cstring>
 
-#define SERVERIP "192.168.6.129"
+#define SERVERIP "127.0.0.1"
 #define SERVERPORT 59002
-
-struct LoginInfo
-{
-    char username[100];
-    char password[100];
-};
 
 int connectserver(int &clientfd, const std::string &strserverip, const size_t &port);
 void senddata(int clientfd, char *buf, const size_t &buflen);
@@ -22,6 +18,9 @@ void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int
 
 int main()
 {
+    /**
+     * （1）连接 server 。
+    */
     size_t senddatacount = 0;
     int clientfd = 0;
     int r = connectserver(clientfd, SERVERIP, SERVERPORT);
@@ -35,18 +34,28 @@ int main()
         return 1;
     }
 
-    int pkgheaderlen = sizeof(XMNPkgHeader);
-    int loginfolen = sizeof(LoginInfo);
+    /**
+     * （2）组合向 server 发送的数据。
+    */
+    XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
+
+    size_t pkgheaderlen = sizeof(XMNPkgHeader);
+    size_t loginfolen = sizeof(Logininfo);
     char *sendbuf = new char[pkgheaderlen + loginfolen];
 
-    XMNPkgHeader *ppkgheaser = (XMNPkgHeader *)sendbuf;
-    ppkgheaser->pkglen = htons(pkgheaderlen + loginfolen);
-    ppkgheaser->msgcode = htons(1);
-    ppkgheaser->crc32 = htonl(123);
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)sendbuf;
+    ppkgheader->pkglen = htons(pkgheaderlen + loginfolen);
+    ppkgheader->msgcode = htons(6);
 
-    LoginInfo *ploginfo = (LoginInfo *)(sendbuf + pkgheaderlen);
+    Logininfo *ploginfo = (Logininfo *)(sendbuf + pkgheaderlen);
     std::strcpy(ploginfo->username, "xuchanglong");
     std::strcpy(ploginfo->password, "123456");
+    ppkgheader->crc32 = pcrc32->GetCRC((unsigned char *)ploginfo, loginfolen);
+    ppkgheader->crc32 = htonl(ppkgheader->crc32);
+
+    /**
+     * （3）循环发送数据。
+    */
     while (true)
     {
         senddata(clientfd, sendbuf, pkgheaderlen + loginfolen);
@@ -60,15 +69,14 @@ int main()
 int connectserver(int &clientfd, const std::string &strserverip, const size_t &port)
 {
     int r = 0;
+
     /**
-     * TODO：这里需要添加第 3 个参数普遍选择 IPPROTO_IP 的原因。
-    */
-    /**
-     * 创建连接 socket 。
+     * （1）创建连接 socket 。
     */
     clientfd = socket(AF_INET, SOCK_STREAM, 0);
+
     /**
-     * 设置收发的超时时间。
+     * （2）设置收发的超时时间。
     */
     struct timeval sendtimeout = {3, 0};
     struct timeval recvtimeout = {3, 0};
@@ -82,8 +90,9 @@ int connectserver(int &clientfd, const std::string &strserverip, const size_t &p
         showerrorinfo("setsockopt", r, errno);
         return 3;
     }
+
     /**
-     * 连接 server 。
+     * （3）连接 server 。
     */
     struct sockaddr_in serveraddr;
     serveraddr.sin_family = AF_INET;
@@ -101,9 +110,6 @@ int connectserver(int &clientfd, const std::string &strserverip, const size_t &p
 
 void senddata(int clientfd, char *buf, const size_t &buflen)
 {
-    /**
-     * 已发送的数据。
-    */
     size_t uwrote = 0;
     int lentmp = 0;
     while (uwrote < buflen)

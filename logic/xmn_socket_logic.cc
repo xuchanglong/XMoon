@@ -2,6 +2,7 @@
 #include "xmn_func.h"
 #include "xmn_crc32.h"
 #include "netinet/in.h"
+#include <string.h>
 
 /**
  * TODO：此处为什么函数指针必须是 XMNSocketLogic 作用域下的。
@@ -17,13 +18,13 @@ using pmsghandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
 */
 static const pmsghandler msghandlerall[] =
     {
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &XMNSocketLogic::HandleRegister,
-        &XMNSocketLogic::HandleLogin,
+        nullptr,                         //【0】
+        nullptr,                         //【1】
+        nullptr,                         //【2】
+        nullptr,                         //【3】
+        nullptr,                         //【4】
+        &XMNSocketLogic::HandleRegister, //【5】
+        &XMNSocketLogic::HandleLogin,    //【6】
 };
 
 #define TOTAL_COMMANDS (sizeof(msghandlerall) / sizeof(pmsghandler))
@@ -71,6 +72,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pmsgbuf;
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + msgheaderlen_);
     char *ppkgbody = nullptr;
+    unsigned short msgcode = 0;
     /**
      * 拷贝连接块信息，防止在处理该消息时，该连接已经断开并且该连接块被其他新的连接所使用。
     */
@@ -120,7 +122,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     /**
      * 判断消息码的范围。
     */
-    unsigned short msgcode = ntohs(ppkgheader->msgcode);
+    msgcode = ntohs(ppkgheader->msgcode);
     if (msgcode >= TOTAL_COMMANDS)
     {
         xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgCode = %d 消息码不对!", msgcode);

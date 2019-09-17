@@ -4,8 +4,8 @@ CFLAGS := -g -Wall
 
 all:$(TARGET)
 
-$(TARGET):msgpkgheader.cc 
-	g++ -o $@ $< -I $(INCLUDE) $(CFLAGS)
+$(TARGET):msgpkgheader.cc ../../misc/xmn_crc32.cc
+	g++ -o $@ $^  -I $(INCLUDE) $(CFLAGS)
 
 .PHONY:clean
 clean:
