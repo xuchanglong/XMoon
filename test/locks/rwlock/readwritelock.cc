@@ -10,11 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <bits/pthreadtypes.h>
+#include <unistd.h>
+#include <string.h>
 
 static pthread_rwlock_t rwlock; //读写锁对象
 
-#define WORK_SIZE 1024
-char work_area[WORK_SIZE];
+#define WORKSIZE 1024
+char work_area[WORKSIZE];
 int time_to_exit;
 
 void *thread_function_read_o(void *arg);  //读线程1
@@ -28,7 +30,7 @@ int main(int argc, char *argv[])
     pthread_t a_thread, b_thread, c_thread, d_thread;
     void *thread_result;
 
-    res = pthread_rwlock_init(&rwlock, NULL); //初始化读写锁
+    res = pthread_rwlock_init(&rwlock, nullptr); //初始化读写锁
     if (res != 0)
     {
         perror("rwlock initialization failed");
@@ -143,7 +145,7 @@ void *thread_function_write_o(void *arg)
     {
         pthread_rwlock_wrlock(&rwlock);
         printf("this is write thread one.\nInput some text. Enter 'end' to finish\n");
-        fgets(work_area, WORK_SIZE, stdin);
+        fgets(work_area, WORKSIZE, stdin);
         pthread_rwlock_unlock(&rwlock);
         sleep(15);
     }
@@ -158,7 +160,7 @@ void *thread_function_write_t(void *arg)
     {
         pthread_rwlock_wrlock(&rwlock); //获取写入锁
         printf("this is write thread two.\nInput some text. Enter 'end' to finish\n");
-        fgets(work_area, WORK_SIZE, stdin); //写入
+        fgets(work_area, WORKSIZE, stdin); //写入
         pthread_rwlock_unlock(&rwlock);     //解锁
         sleep(20);
     }
