@@ -85,6 +85,7 @@ int main(int argc, char *const *argv)
         exitcode = 1;
         goto lblexit;
     }
+    
     /**
      * （3）单例 XMNMemory 初始化。
     */

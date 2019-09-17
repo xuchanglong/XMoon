@@ -23,7 +23,8 @@ static const pmsghandler msghandlerall[] =
         nullptr,
         nullptr,
         &XMNSocketLogic::HandleRegister,
-        &XMNSocketLogic::HandleLogin};
+        &XMNSocketLogic::HandleLogin,
+};
 
 #define TOTAL_COMMANDS (sizeof(msghandlerall) / sizeof(pmsghandler))
 
@@ -70,33 +71,38 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pmsgbuf;
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + msgheaderlen_);
     char *ppkgbody = nullptr;
-    XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmsgheader->pconnsockinfo;
+    /**
+     * 拷贝连接块信息，防止在处理该消息时，该连接已经断开并且该连接块被其他新的连接所使用。
+    */
+    XMNConnSockInfo *pconnsockinfo = new XMNConnSockInfo;
+    memcpy(pconnsockinfo, pmsgheader->pconnsockinfo, sizeof(XMNConnSockInfo) * 1);
+
     size_t pkglen = ntohs(ppkgheader->pkglen);
     size_t pkgbodylen = pkglen - pkgheaderlen_;
 
     /**
      * （2）CRC32 校验。
     */
-    /**
-     * 没有包体的校验码应该为 0 。
-    */
     if (pkglen == pkgheaderlen_)
     {
+        /**
+         * 没有包体的校验码应该为 0 。
+        */
         if (ppkgheader->crc32 != 0)
         {
-            return;
+            goto lblexit;
         }
         ppkgbody = nullptr;
     }
     else
     {
         ppkgbody = pmsgbuf + msgheaderlen_ + pkgheaderlen_;
-        ppkgheader->crc32 = ntohl(ppkgheader->crc32);
+        int crc32src = ntohl(ppkgheader->crc32);
         int crc32 = SingletonBase<XMNCRC32>::GetInstance()->GetCRC((unsigned char *)ppkgbody, pkgbodylen);
-        if (crc32 != ppkgheader->crc32)
+        if (crc32 != crc32src)
         {
             xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc 中 crc32 校验失败，丢弃数据。");
-            return;
+            goto lblexit;
         }
     }
 
@@ -109,17 +115,16 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     */
     if (pconnsockinfo->currsequence != pmsgheader->currsequence)
     {
-        return;
+        goto lblexit;
     }
     /**
      * 判断消息码的范围。
     */
-    ppkgheader->msgcode = ntohs(ppkgheader->msgcode);
-    unsigned short msgcode = ppkgheader->msgcode;
+    unsigned short msgcode = ntohs(ppkgheader->msgcode);
     if (msgcode >= TOTAL_COMMANDS)
     {
-        xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的msgCode=%d消息码不对!", msgcode);
-        return;
+        xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgCode = %d 消息码不对!", msgcode);
+        goto lblexit;
     }
 
     /**
@@ -129,9 +134,12 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     if (msghandlerall[msgcode] == nullptr)
     {
         xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgcode = %d 消息码找不到对应的处理函数。", msgcode);
-        return;
+        goto lblexit;
     }
     (this->*msghandlerall[msgcode])(pconnsockinfo, pmsgheader, (char *)ppkgbody, pkgbodylen);
 
+lblexit:
+    delete pconnsockinfo;
+    pconnsockinfo = nullptr;
     return;
 }
