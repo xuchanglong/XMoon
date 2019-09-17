@@ -99,7 +99,7 @@ void *thread_function_read_o(void *arg)
     while (strncmp("end", work_area, 3) != 0)
     {
         printf("this is thread read one.");
-        printf("the characters is %s", work_area);
+        printf("the characters is %s \n", work_area);
         pthread_rwlock_unlock(&rwlock);
         sleep(2);
         pthread_rwlock_rdlock(&rwlock);
@@ -117,12 +117,12 @@ void *thread_function_read_o(void *arg)
 
 void *thread_function_read_t(void *arg)
 {
-    printf("thread read one try to get lock\n");
+    printf("thread read two try to get lock\n");
     pthread_rwlock_rdlock(&rwlock);
     while (strncmp("end", work_area, 3) != 0)
     {
         printf("this is thread read two.");
-        printf("the characters is %s", work_area);
+        printf("the characters is %s \n", work_area);
         pthread_rwlock_unlock(&rwlock);
         sleep(5);
         pthread_rwlock_rdlock(&rwlock);
