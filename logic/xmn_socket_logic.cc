@@ -1,7 +1,9 @@
 #include "comm/xmn_socket_logic.h"
+#include "comm/xmn_socket_logic_comm.h"
+#include "xmn_memory.h"
 #include "xmn_func.h"
 #include "xmn_crc32.h"
-#include "comm/xmn_socket_logic_comm.h"
+#include "xmn_lockmutex.hpp"
 #include "netinet/in.h"
 #include <string.h>
 
@@ -72,11 +74,11 @@ int XMNSocketLogic::HandleRegister(
      * 很可能造成这个用户购买成功了 A，又购买成功了 B。
      * 所以根据上述考虑，同一个连接多个逻辑进行加锁处理。
     */
-
+    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
     /**
      * （3）获取发送来的所有数据。
     */
-
+    RegisterInfo *pregisterinfo = (RegisterInfo *)ppkgbody;
     /**
      * （4）各种业务处理。
     */
@@ -88,6 +90,20 @@ int XMNSocketLogic::HandleRegister(
     /**
      * （5）组合回复的数据。
     */
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
+    char *psenddata = (char *)pmemory->AllocMemory(msgheaderlen_ + pkgheaderlen_ + sizeof(RegisterInfo), false);
+    // a、消息头。
+    XMNMsgHeader *pmsgheader_send = (XMNMsgHeader *)psenddata;
+    memcpy(pmsgheader_send, pmsgheader, sizeof(XMNMsgHeader));
+    //b、包头
+    XMNPkgHeader *ppkgheader_send = (XMNPkgHeader *)(psenddata + msgheaderlen_);
+    ppkgheader_send->pkglen = htons(pkgheaderlen_ + sizeof(RegisterInfo));
+    ppkgheader_send->msgcode = htons(CMD_LOGIC_REGISTER);
+    //c、包体
+    char *ppkgbody_send = psenddata + msgheaderlen_ + pkgheaderlen_;
+    memcpy(ppkgbody_send, pregisterinfo, sizeof(RegisterInfo));
+    ppkgheader_send->crc32 = htonl(pcrc32->GetCRC((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
 
     /**
      * （6）回复数据。

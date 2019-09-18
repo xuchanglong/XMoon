@@ -45,7 +45,7 @@ int main()
 
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)sendbuf;
     ppkgheader->pkglen = htons(pkgheaderlen + loginfolen);
-    ppkgheader->msgcode = htons(6);
+    ppkgheader->msgcode = htons(CMD_LOGIC_REGISTER);
 
     Logininfo *ploginfo = (Logininfo *)(sendbuf + pkgheaderlen);
     std::strcpy(ploginfo->username, "xuchanglong");
