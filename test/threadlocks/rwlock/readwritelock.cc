@@ -18,12 +18,12 @@
  * 4、不加锁
  * 5、linux 下的 api
  * （1）创建和销毁
- * pthread_rwlock_init()、
- * pthread_rwlock_destroy()
+ * 初始化：pthread_rwlock_init()
+ * 销毁：pthread_rwlock_destroy()
  * （2）加锁和解锁
- * pthread_rwlock_rdlock()、
- * pthread_rwlock_wrlock()、
- * pthread_rwlock_unlock()
+ * 读线程加锁：pthread_rwlock_rdlock()
+ * 写线程加锁：pthread_rwlock_wrlock()
+ * 读/写线程解锁：pthread_rwlock_unlock()
  *****************************************************************************************/
 #include <pthread.h>
 #include <iostream>
