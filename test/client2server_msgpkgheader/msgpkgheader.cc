@@ -1,5 +1,5 @@
-#include "xmn_comm.h"
-#include "xmn_logiccomm.h"
+#include "comm/xmn_socket_comm.h"
+#include "comm/xmn_socket_logic_comm.h"
 #include "xmn_crc32.h"
 
 #include "unistd.h"

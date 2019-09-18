@@ -1,4 +1,4 @@
-#include "xmn_socket.h"
+#include "comm/xmn_socket.h"
 #include "xmn_config.h"
 #include "xmn_func.h"
 #include "xmn_macro.h"
@@ -249,6 +249,7 @@ int XMNSocket::EpollInit()
         pconnsock_pool_[conn_count].fd = -1;
         pconnsock_pool_[conn_count].instance = 1;
         pconnsock_pool_[conn_count].currsequence = 0;
+        pconnsock_pool_[conn_count].logicprocmutex = PTHREAD_MUTEX_INITIALIZER;
 
         next = &pconnsock_pool_[conn_count];
     } while (conn_count);

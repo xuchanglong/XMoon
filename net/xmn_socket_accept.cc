@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "xmn_socket.h"
+#include "comm/xmn_socket.h"
 #include "xmn_macro.h"
 #include "xmn_func.h"
 

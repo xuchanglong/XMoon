@@ -1,7 +1,7 @@
 #ifndef XMOON__INCLUDE_XMNSOCKETLOGIC_H_
 #define XMOON__INCLUDE_XMNSOCKETLOGIC_H_
 
-#include "xmn_socket.h"
+#include "comm/xmn_socket.h"
 
 class XMNSocketLogic : public XMNSocket
 {

@@ -1,8 +1,8 @@
-#include "xmn_socket.h"
+#include "comm/xmn_socket.h"
 #include "xmn_macro.h"
 #include "xmn_func.h"
 #include "xmn_memory.h"
-#include "xmn_comm.h"
+#include "comm/xmn_socket_comm.h"
 #include "xmn_lockmutex.hpp"
 #include "xmn_global.h"
 

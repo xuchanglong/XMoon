@@ -11,7 +11,7 @@
 #include "xmn_config.h"
 #include "xmn_func.h"
 #include "xmn_macro.h"
-#include "xmn_socket_logic.h"
+#include "comm/xmn_socket_logic.h"
 #include "xmn_memory.h"
 #include "xmn_threadpool.h"
 

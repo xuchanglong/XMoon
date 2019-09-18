@@ -8,7 +8,7 @@
 
 #include <string>
 #include "signal.h"
-#include "xmn_socket_logic.h"
+#include "comm/xmn_socket_logic.h"
 #include "xmn_threadpool.h"
 
 /**

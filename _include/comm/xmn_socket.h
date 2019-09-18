@@ -14,7 +14,7 @@
 #include <sys/socket.h>
 
 #include "base/noncopyable.h"
-#include "xmn_comm.h"
+#include "comm/xmn_socket_comm.h"
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -143,6 +143,11 @@ struct XMNConnSockInfo
      * 标记 precvalldata 是否需要释放。
     */
     bool isfree;
+
+    /**
+     * 业务逻辑处理的互斥量。
+    */
+    pthread_mutex_t logicprocmutex;
 };
 
 /****************************************************

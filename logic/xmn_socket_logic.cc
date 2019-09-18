@@ -1,6 +1,7 @@
-#include "xmn_socket_logic.h"
+#include "comm/xmn_socket_logic.h"
 #include "xmn_func.h"
 #include "xmn_crc32.h"
+#include "comm/xmn_socket_logic_comm.h"
 #include "netinet/in.h"
 #include <string.h>
 
@@ -51,6 +52,46 @@ int XMNSocketLogic::HandleRegister(
     size_t pkgbodylen)
 {
     xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
+    /**
+     * （1）判断数据包的合法性。
+     */
+    if ((pconnsockinfo == nullptr) || (pmsgheader == nullptr) || (ppkgbody == nullptr))
+    {
+        return -1;
+    }
+    if (pkgbodylen != sizeof(RegisterInfo))
+    {
+        return -2;
+    }
+
+    /*
+     * （2）对该业务逻辑处理进行加锁。
+     * 解释：对于同一个用户，可能同时发送来多个请求过来，造成多个线程同时为该 用户服务。
+     * 比如以网游为例，用户要在商店中买A物品，又买B物品，而用户的钱 只够买A或者B，不够同时买A和B呢？
+     * 那如果用户发送购买命令过来买了一次A，又买了一次B，如果是两个线程来执行同一个用户的这两次不同的购买命令，
+     * 很可能造成这个用户购买成功了 A，又购买成功了 B。
+     * 所以根据上述考虑，同一个连接多个逻辑进行加锁处理。
+    */
+
+    /**
+     * （3）获取发送来的所有数据。
+    */
+
+    /**
+     * （4）各种业务处理。
+    */
+
+    /**
+     * ------------------------------------------------------------------
+    */
+
+    /**
+     * （5）组合回复的数据。
+    */
+
+    /**
+     * （6）回复数据。
+    */
     return 0;
 }
 

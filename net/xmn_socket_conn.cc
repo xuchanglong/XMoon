@@ -1,6 +1,6 @@
 #include <string.h>
 #include "xmn_func.h"
-#include "xmn_socket.h"
+#include "comm/xmn_socket.h"
 #include "xmn_memory.h"
 
 XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
