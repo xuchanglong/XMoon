@@ -3,6 +3,27 @@
  * @notice      在任意时刻，如果有一个线程在写数据，将阻塞所有其他线程的任何操作。
  * @author      xuchanglong
  * @time        2019-09-17  
+ * @notice
+ * 1、读写锁有3种状态：
+ * （1）读加锁
+ * （2）写加锁
+ * （3）不加锁
+ * 2、读加锁
+ * （1）不堵塞其他读线程。
+ * （2）堵塞其他写线程。
+ * （3）当堵塞了写线程时，后面的读线程也会被堵塞。这么做的目的是防止该资源被读线程长期占用。
+ * 3、写加锁
+ * （1）堵塞其他的读线程。
+ * （2）堵塞其他的写线程。
+ * 4、不加锁
+ * 5、linux 下的 api
+ * （1）创建和销毁
+ * pthread_rwlock_init()、
+ * pthread_rwlock_destroy()
+ * （2）加锁和解锁
+ * pthread_rwlock_rdlock()、
+ * pthread_rwlock_wrlock()、
+ * pthread_rwlock_unlock()
  *****************************************************************************************/
 #include <pthread.h>
 #include <iostream>
@@ -14,13 +35,13 @@ void *thread_func_read_two(void *arg);
 void *thread_func_write_one(void *arg);
 void *thread_func_write_two(void *arg);
 
-using threadfunc = void *(*)(void *arg);
+using ThreadFunc = void *(*)(void *arg);
 
 static pthread_rwlock_t rwlock;
 static char workarea[1024];
 static bool isexitall = false;
 
-static const threadfunc threadfuncsum[] =
+static const ThreadFunc threadfuncsum[] =
     {
         thread_func_read_one,
         thread_func_read_two,
@@ -28,7 +49,7 @@ static const threadfunc threadfuncsum[] =
         thread_func_write_two,
 };
 
-#define threadsum (sizeof(threadfuncsum) / sizeof(threadfunc))
+#define threadsum (sizeof(threadfuncsum) / sizeof(ThreadFunc))
 
 int main()
 {
