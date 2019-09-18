@@ -6,6 +6,8 @@
  *****************************************************************************************/
 #include <pthread.h>
 #include <iostream>
+#include <string.h>
+#include <unistd.h>
 
 void *thread_func_read_one(void *arg);
 void *thread_func_read_two(void *arg);
@@ -15,7 +17,7 @@ void *thread_func_write_two(void *arg);
 using threadfunc = void *(*)(void *arg);
 
 static pthread_rwlock_t rwlock;
-static char wordarea[1024];
+static char workarea[1024];
 static bool isexitall = false;
 
 static const threadfunc threadfuncsum[] =
@@ -81,7 +83,7 @@ void *thread_func_read_one(void *arg)
     std::cout << "read thread one start run." << std::endl;
     while (strncmp("end", workarea, 3) != 0)
     {
-        pthread_rwlock_lock(&rwlock);
+        pthread_rwlock_rdlock(&rwlock);
         std::cout << "read thread one get rwlock.";
         std::cout << "workarea is :" << workarea << std::endl;
         pthread_rwlock_unlock(&rwlock);
@@ -96,7 +98,7 @@ void *thread_func_read_two(void *arg)
     std::cout << "read thread two start run." << std::endl;
     while (strncmp("end", workarea, 3) != 0)
     {
-        pthread_rwlock_lock(&rwlock);
+        pthread_rwlock_rdlock(&rwlock);
         std::cout << "read thread two get rwlock.";
         std::cout << "workarea is :" << workarea << std::endl;
         pthread_rwlock_unlock(&rwlock);
@@ -111,7 +113,7 @@ void *thread_func_write_one(void *arg)
     std::cout << "write thread one start run." << std::endl;
     while (!isexitall)
     {
-        pthread_rwlock_lock(&rwlock);
+        pthread_rwlock_wrlock(&rwlock);
         std::cout << "write thread one get rwlock.";
         std::cout << "please input data:";
         std::cin >> workarea;
@@ -127,7 +129,7 @@ void *thread_func_write_two(void *arg)
     std::cout << "write thread two start run." << std::endl;
     while (!isexitall)
     {
-        pthread_rwlock_lock(&rwlock);
+        pthread_rwlock_wrlock(&rwlock);
         std::cout << "write thread two get rwlock.";
         std::cout << "please input data:";
         std::cin >> workarea;
