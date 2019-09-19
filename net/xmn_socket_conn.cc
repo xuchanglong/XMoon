@@ -103,7 +103,7 @@ void XMNSocket::FreeConnSockInfoPool()
 
 XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
 {
-    XMNLockMutex connsockpoolmutex(&connsockpoolmutex);
+    XMNLockMutex connsockpoolmutex(&connsock_pool_mutex_);
     XMNConnSockInfo *pconnsockinfo = nullptr;
     if (pool_free_connsock_count_)
     {
@@ -133,24 +133,20 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
 
 void XMNSocket::PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo)
 {
-    /**
-     * （1）释放存放完整数据包的内存。
-    */
-    if (pconnsockinfo->isfree)
-    {
-        SingletonBase<XMNMemory>::GetInstance()->FreeMemory((void *)pconnsockinfo->precvalldata);
-        pconnsockinfo->isfree = false;
-        pconnsockinfo->precvalldata = nullptr;
-    }
-
-    /**
-     * （2）将连接插入空闲连接链表中。
-    */
-    pconnsockinfo->next = pfree_connsock_list_head_;
-
-    ++pconnsockinfo->currsequence;
-
-    pfree_connsock_list_head_ = pconnsockinfo;
+    XMNLockMutex connsockinfomutex(&connsock_pool_mutex_);
+    pconnsockinfo->ClearConnSockInfo();
+    connsock_pool_free_.push_back(pconnsockinfo);
     ++pool_free_connsock_count_;
+    return;
+}
+
+void XMNSocket::PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo)
+{
+    XMNLockMutex connsockinfomutex(&connsock_pool_recy_mutex_);
+
+    pconnsockinfo->putinrecylisttime = time(nullptr);
+    ++pconnsockinfo->currsequence;
+    recyconnsock_pool_.push_back(pconnsockinfo);
+    ++pool_recyconnsock_count_;
     return;
 }

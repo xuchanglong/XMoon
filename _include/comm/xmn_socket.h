@@ -177,13 +177,23 @@ public:
 
     /**************************************************************************************
      * 
-     * 与发包相关的变量。
+     ***************** 与发包相关的变量 *****************
      * 
     **************************************************************************************/
     /**
      * 存放最终需要发送的所有数据，即：消息头 + 包头 + 包体。
     */
     char *psendalldata;
+
+    /**************************************************************************************
+     * 
+     ***************** 和连接回收相关的变量 *****************
+     * 
+    **************************************************************************************/
+    /**
+     * 连接放入回收链表时的时间。
+    */
+    time_t putinrecylisttime;
 };
 
 /****************************************************
@@ -375,6 +385,11 @@ private:
     */
     void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
 
+    /**************************************************************************************
+     * 
+     ***************** 和连接池相关的函数 *****************
+     * 
+    **************************************************************************************/
     /**
      * @function    初始化连接池。
      * @paras   none 。
@@ -397,7 +412,7 @@ private:
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   isockfd accept 返回的 socket 。
      * @return 绑定好的连接池中的一个连接。
-     *                   nullptr 连接池中的连接为空。
+     *         nullptr 连接池中的连接为空。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -413,13 +428,13 @@ private:
     void PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo);
 
     /**
-     * @function    将连接归还至空闲链表中。
+     * @function    将连接放入回收链表中。
      * @paras   pconnsockinfo   待归还的连接。
      * @return none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
-    void PutInConnSockInfo2FreeList(XMNConnSockInfo *pconnsockinfo);
+    void PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
@@ -503,10 +518,15 @@ private:
     std::stomic<size_t> pool_recyconnsock_count_;
 
     /**
-     * 连接池操作的临界。
+     * 有关连接池操作的临界。
     */
-    pthread_mutex_t connsock_poll_mutex_;
+    pthread_mutex_t connsock_pool_mutex_;
 
+    /**
+     * 有关回收连接列表操作的列表。
+    */
+    pthread_mutex_t connsock_pool_recy_mutex_;
+    
     /**
      * 用于存储 epoll_wait() 返回的发生的事件。
     */
