@@ -1,44 +1,40 @@
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <iostream>
 
 static pthread_spinlock_t spinlock;
-static int test_value = 0;
+static int value = 0;
 
-int UDP_first_thread()
+void *FirstThreadFunc(void *arg)
 {
-    int i, ret;
-
-    printf("UDP_first_thread begin\n");
-    for (i = 0; i < 10; i++)
+    std::cout << "first thread begin run." << std::endl;
+    while (true)
     {
         pthread_spin_lock(&spinlock);
-        test_value++;
-        printf("test_value %d\n", test_value);
-        sleep(5);
+        std::cout << "first thread get spinlock." << std::endl;
+        value++;
+        std::cout << "value is " << value << std::endl;
+        sleep(6);
         pthread_spin_unlock(&spinlock);
+        std::cout << std::endl;
     }
-    printf("UDP_first_thread end\n");
-    return ret;
+    return nullptr;
 }
 
-int UDP_second_thread()
+void *SecondThreadFunc(void *arg)
 {
-    int i, ret;
-
-    printf("UDP_second_thread begin\n");
-    for (i = 0; i < 10; i++)
+    std::cout << "second thread begin run." << std::endl;
+    while (true)
     {
         pthread_spin_lock(&spinlock);
-        test_value--;
-        printf("test_value %d\n", test_value);
+        std::cout << "second thread get spinlock." << std::endl;
+        value--;
+        std::cout << "value is " << value << std::endl;
         sleep(3);
         pthread_spin_unlock(&spinlock);
+        std::cout << std::endl;
     }
-    printf("UDP_second_thread end\n");
-    return ret;
+    return nullptr;
 }
 
 int main(int argC, char *arg[])
@@ -48,26 +44,23 @@ int main(int argC, char *arg[])
     pthread_t tid1, tid2;
 
     pthread_spin_init(&spinlock, 0);
-    //----------------创建UDP服务端线程----------------
-    err = pthread_create(&tid1, NULL, UDP_first_thread, NULL);
+
+    err = pthread_create(&tid1, nullptr, FirstThreadFunc, nullptr);
     if (err != 0)
     {
-        perror(" fail to create thread ");
-        return -1;
+        std::cout << "thread creation failed." << std::endl;
+        return 1;
     }
-    sleep(1);
 
-    err = pthread_create(&tid1, NULL, UDP_second_thread, NULL);
+    err = pthread_create(&tid2, nullptr, SecondThreadFunc, nullptr);
     if (err != 0)
     {
-        perror(" fail to create thread ");
-        return -1;
+        std::cout << "thread creation failed." << std::endl;
+        return 2;
     }
 
-    pthread_join(tid1, NULL);
-    pthread_join(tid2, NULL);
-
-    printf("main end\n");
+    pthread_join(tid1, nullptr);
+    pthread_join(tid2, nullptr);
 
     return 0;
 }
