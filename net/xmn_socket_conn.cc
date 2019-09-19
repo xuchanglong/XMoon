@@ -1,6 +1,8 @@
 #include "comm/xmn_socket.h"
 #include "xmn_func.h"
 #include "xmn_memory.h"
+#include "xmn_lockmutex.hpp"
+#include <pthread.h>
 
 #include <string.h>
 
@@ -25,13 +27,49 @@ XMNConnSockInfo::~XMNConnSockInfo()
 
 void XMNConnSockInfo::InitConnSockInfo()
 {
+    /**
+     * 序号 + 1，用于判断消息是否过期。
+    */
     ++currsequence;
+
+    /**
+     * 收包状态机变为初始化状态。
+    */
     recvstat = PKG_HD_INIT;
     precvdatastart = dataheader;
     recvdatalen = sizeof(XMNPkgHeader);
+
+    /**
+     * 其他变量初始化。
+    */
     precvalldata = nullptr;
     psendalldata = nullptr;
     eventtype = 0;
+}
+
+void XMNConnSockInfo::ClearConnSockInfo()
+{
+    /**
+     * 序号 + 1，用于判断消息是否过期。
+    */
+    ++currsequence;
+
+    /**
+     * 释放内存。
+    */
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    if (precvalldata != nullptr)
+    {
+        pmemory->FreeMemory((void *)precvalldata);
+        precvalldata = nullptr;
+    }
+
+    if (psendalldata != nullptr)
+    {
+        pmemory->FreeMemory((void *)psendalldata);
+        psendalldata = nullptr;
+    }
+    
 }
 
 void XMNSocket::InitConnSockInfoPool()
@@ -60,55 +98,36 @@ void XMNSocket::FreeConnSockInfoPool()
         pconnsockinfo->~XMNConnSockInfo();
         pmemory->FreeMemory((void *)pconnsockinfo);
     }
+    
 }
 
 XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
 {
-    /**
-     * （1）从连接池中取出未用的连接。
-    */
-    XMNConnSockInfo *pconnsockinfo = pfree_connsock_list_head_;
-    if (pconnsockinfo == nullptr)
+    XMNLockMutex connsockpoolmutex(&connsockpoolmutex);
+    XMNConnSockInfo *pconnsockinfo = nullptr;
+    if (pool_free_connsock_count_)
     {
-        xmn_log_stderr(errno, "PutOutConnSockInfofromPool 空闲链表为空！");
-        return nullptr;
+        /**
+         * 控线连接池中有连接。
+        */
+        pconnsockinfo = connsock_pool_free_.front();
+        connsock_pool_free_.pop_front();
+        --pool_free_connsock_count_;
     }
-    /**
-     * 更新指向空闲链表的首节点。
-    */
-    pfree_connsock_list_head_ = pconnsockinfo->next;
-    /**
-     * 连接池中未用的节点数量 - 1 。
-    */
-    --pool_free_connsock_count_;
-
-    /**
-     * （2）对取出的节点进行清空和赋值操作。
-    */
-    /**
-     * 保存有用的信息。
-    */
-    uint64_t currsequence = pconnsockinfo->currsequence;
-    unsigned int instance = pconnsockinfo->instance;
-    /**
-     * 赋值。
-    */
-    memset(pconnsockinfo, 0, sizeof(struct XMNConnSockInfo) * 1);
+    else
+    {
+        /**
+         * 空闲连接池中无连接，在创建一个连接。
+        */
+        XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+        pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(sizeof(XMNConnSockInfo));
+        pconnsockinfo = new(pconnsockinfo)XMNConnSockInfo();
+        connsock_pool_.push_back(pconnsockinfo);
+        ++pool_connsock_count_;
+    }
+    pconnsockinfo->InitConnSockInfo();
     pconnsockinfo->fd = fd;
-    pconnsockinfo->recvstat = PKG_HD_INIT;
-    pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
-    pconnsockinfo->recvdatalen = pkgheaderlen_;
-
-    /**
-     * 将保留的信息重新赋值。
-     * 这些保留信息的值都是为了判定 epoll_wait 返回的 epoll_event 是否为过期事件。
-    */
-    pconnsockinfo->instance = !instance;
-    pconnsockinfo->currsequence = currsequence;
-    /**
-     * 每次取节点时该值都加1。
-    */
-    ++pconnsockinfo->currsequence;
+    
     return pconnsockinfo;
 }
 

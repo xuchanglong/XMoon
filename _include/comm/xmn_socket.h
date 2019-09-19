@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <atomic>
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -395,7 +396,7 @@ private:
     /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   isockfd accept 返回的 socket 。
-     * @ return 绑定好的连接池中的一个连接。
+     * @return 绑定好的连接池中的一个连接。
      *                   nullptr 连接池中的连接为空。
      * @author  xuchanglong
      * @time    2019-09-19
@@ -405,7 +406,7 @@ private:
     /**
      * @function    将连接归还至连接池中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @ return none 。
+     * @return none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -414,7 +415,7 @@ private:
     /**
      * @function    将连接归还至空闲链表中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @ return none 。
+     * @return none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -423,7 +424,7 @@ private:
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
      * @paras   pthreadinfo 线程的信息。
-     * @ return nullptr .
+     * @return nullptr .
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -466,25 +467,45 @@ private:
     */
     int epoll_handle_;
 
+    /**************************************************************************************
+     * 
+     * 与连接池相关的变量。
+     * 
+    **************************************************************************************/
     /**
      * 连接池列表。
     */
     std::list<XMNConnSockInfo *> connsock_pool_;
 
     /**
-     * 连接池中空闲连接的列表。
+     * 空闲连接的列表。
     */
     std::list<XMNConnSockInfo *> connsock_pool_free_;
 
     /**
+     * 待回收的连接的列表。
+    */
+    std::list<XMNConnSockInfo *> recyconnsock_pool_;
+
+    /**
      * 连接池中所有连接的数量。
     */
-    size_t pool_connsock_count_;
+    std::atomic<size_t> pool_connsock_count_;
 
     /**
      * 连接池中可用连接的数量。
     */
-    size_t pool_free_connsock_count_;
+    std::atomic<size_t> pool_free_connsock_count_;
+
+    /**
+     * 待回收的连接的数量。
+    */
+    std::stomic<size_t> pool_recyconnsock_count_;
+
+    /**
+     * 连接池操作的临界。
+    */
+    pthread_mutex_t connsock_poll_mutex_;
 
     /**
      * 用于存储 epoll_wait() 返回的发生的事件。
