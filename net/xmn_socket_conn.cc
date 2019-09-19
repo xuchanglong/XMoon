@@ -6,6 +6,12 @@
 
 #include <string.h>
 
+/**************************************************************************************
+ * 
+ ***************** XMNConnSockInfo 相关函数 **************** 
+ * 
+**************************************************************************************/
+
 XMNConnSockInfo::XMNConnSockInfo()
 {
     memset(this, 0, sizeof(struct XMNConnSockInfo));
@@ -72,6 +78,11 @@ void XMNConnSockInfo::ClearConnSockInfo()
     
 }
 
+/**************************************************************************************
+ * 
+ ***************** XMNSocket 相关函数 **************** 
+ * 
+**************************************************************************************/
 void XMNSocket::InitConnSockInfoPool()
 {
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
@@ -148,5 +159,24 @@ void XMNSocket::PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo)
     ++pconnsockinfo->currsequence;
     recyconnsock_pool_.push_back(pconnsockinfo);
     ++pool_recyconnsock_count_;
+    return;
+}
+
+void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
+{
+    return nullptr;
+}
+
+void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
+{
+    /**
+     * 先回收连接的目的是防止 close 失败导致连接无法回收。
+    */
+    PutInConnSockInfo2Pool(pconnsockinfo);
+    if (close(pconnsockinfo->fd) == -1)
+    {
+        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", fd);
+    }
+
     return;
 }

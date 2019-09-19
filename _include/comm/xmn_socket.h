@@ -137,7 +137,7 @@ public:
 
     /**************************************************************************************
      * 
-     * 与收包相关的变量。
+     ***************** 与收包相关的变量 **************** 
      * 
     **************************************************************************************/
     /**
@@ -344,15 +344,6 @@ private:
     void EventAcceptHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
-     * @function    关闭已经建立的连接。
-     * @paras   pfd 待关闭的连接。
-     * @return  none 。
-     * @author  xuchanglong
-     * @time    2019-08-29
-    */
-    void CloseConnection(XMNConnSockInfo *pfd);
-
-    /**
      * @function    设置数据来时读处理的函数。
     */
     void WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
@@ -421,7 +412,7 @@ private:
     /**
      * @function    将连接归还至连接池中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @return none 。
+     * @return  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -430,7 +421,7 @@ private:
     /**
      * @function    将连接放入回收链表中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @return none 。
+     * @return  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -439,11 +430,20 @@ private:
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
      * @paras   pthreadinfo 线程的信息。
-     * @return nullptr .
+     * @return  nullptr .
      * @author  xuchanglong
      * @time    2019-09-19
     */
     static void *ConnSockInfoRecycleThread(void *pthreadinfo);
+
+    /**
+     * @function    关闭已经建立的连接。
+     * @paras   pfd 待关闭的连接。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-08-29
+    */
+    void CloseConnection(XMNConnSockInfo *pfd);
 
 protected:
     /**
@@ -484,7 +484,7 @@ private:
 
     /**************************************************************************************
      * 
-     * 与连接池相关的变量。
+     ***************** 与连接池相关的变量 **************** 
      * 
     **************************************************************************************/
     /**
@@ -515,7 +515,7 @@ private:
     /**
      * 待回收的连接的数量。
     */
-    std::stomic<size_t> pool_recyconnsock_count_;
+    std::atomic<size_t> pool_recyconnsock_count_;
 
     /**
      * 有关连接池操作的临界。

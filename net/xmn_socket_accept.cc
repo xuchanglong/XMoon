@@ -160,19 +160,3 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
 
     return;
 }
-
-void XMNSocket::CloseConnection(XMNConnSockInfo *pfd)
-{
-    /**
-     * 先回收连接的目的是防止 close 失败导致连接无法回收。
-    */
-    int fd = pfd->fd;
-    PutInConnSockInfo2Pool(pfd);
-    pfd->fd = -1;
-    if (close(fd) == -1)
-    {
-        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", fd);
-    }
-
-    return;
-}
