@@ -4,6 +4,36 @@
 
 #include <string.h>
 
+XMNConnSockInfo::XMNConnSockInfo()
+{
+    memset(this, 0, sizeof(struct XMNConnSockInfo));
+    int r = pthread_mutex_init(&logicprocmutex, nullptr);
+    if (r != 0)
+    {
+        xmn_log_stderr(0, "XMNConnSockInfo::XMNConnSockInfo() 调用 pthread_mutex_init 失败，错误代码：%d", r);
+    }
+}
+
+XMNConnSockInfo::~XMNConnSockInfo()
+{
+    int r = pthread_mutex_destroy(&logicprocmutex);
+    if (r != 0)
+    {
+        xmn_log_stderr(0, "XMNConnSockInfo::~XMNConnSockInfo() 调用 pthread_mutex_destroy 失败，错误代码：%d", r);
+    }
+}
+
+void XMNConnSockInfo::InitConnSockInfo()
+{
+    ++currsequence;
+    recvstat = PKG_HD_INIT;
+    precvdatastart = dataheader;
+    recvdatalen = sizeof(XMNPkgHeader);
+    precvalldata = nullptr;
+    psendalldata = nullptr;
+    eventtype = 0;
+}
+
 void XMNSocket::InitConnSockInfoPool()
 {
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
@@ -66,8 +96,8 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
     memset(pconnsockinfo, 0, sizeof(struct XMNConnSockInfo) * 1);
     pconnsockinfo->fd = fd;
     pconnsockinfo->recvstat = PKG_HD_INIT;
-    pconnsockinfo->pdataheaderstart = pconnsockinfo->dataheader;
-    pconnsockinfo->recvlen = pkgheaderlen_;
+    pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+    pconnsockinfo->recvdatalen = pkgheaderlen_;
 
     /**
      * 将保留的信息重新赋值。

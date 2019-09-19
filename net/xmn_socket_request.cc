@@ -14,7 +14,7 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
     /**
      * 从接收缓冲区中取数据。
     */
-    ssize_t recvcount = RecvData(pconnsockinfo, pconnsockinfo->pdataheaderstart, pconnsockinfo->recvlen);
+    ssize_t recvcount = RecvData(pconnsockinfo, pconnsockinfo->precvdatastart, pconnsockinfo->recvdatalen);
     if (recvcount <= 0)
     {
         return;
@@ -46,8 +46,8 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
         else
         {
             pconnsockinfo->recvstat = PKG_HD_RECVING;
-            pconnsockinfo->pdataheaderstart = pconnsockinfo->dataheader + recvcount;
-            pconnsockinfo->recvlen = pkgheaderlen_ - recvcount;
+            pconnsockinfo->precvdatastart = pconnsockinfo->dataheader + recvcount;
+            pconnsockinfo->recvdatalen = pkgheaderlen_ - recvcount;
         }
     }
     /**
@@ -58,15 +58,15 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
         /**
          * 包头接收完毕。
         */
-        if (pconnsockinfo->recvlen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
             WaitRequestHandlerHeader(pconnsockinfo);
         }
         else
         {
             pconnsockinfo->recvstat = PKG_HD_RECVING;
-            pconnsockinfo->pdataheaderstart = pconnsockinfo->pdataheaderstart + recvcount;
-            pconnsockinfo->recvlen = pkgheaderlen_ - recvcount;
+            pconnsockinfo->precvdatastart = pconnsockinfo->precvdatastart + recvcount;
+            pconnsockinfo->recvdatalen = pkgheaderlen_ - recvcount;
         }
     }
     /**
@@ -74,15 +74,15 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
     */
     else if (pconnsockinfo->recvstat == PKG_BD_INIT)
     {
-        if (pconnsockinfo->recvlen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
             WaitRequestHandlerBody(pconnsockinfo);
         }
         else
         {
             pconnsockinfo->recvstat = PKG_BD_RECVING;
-            pconnsockinfo->pdataheaderstart = pconnsockinfo->pdataheaderstart + recvcount;
-            pconnsockinfo->recvlen = pkgheaderlen_ - recvcount;
+            pconnsockinfo->precvdatastart = pconnsockinfo->precvdatastart + recvcount;
+            pconnsockinfo->recvdatalen = pkgheaderlen_ - recvcount;
         }
     }
     /**
@@ -90,15 +90,15 @@ void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
     */
     else if (pconnsockinfo->recvstat == PKG_BD_RECVING)
     {
-        if (pconnsockinfo->recvlen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
             WaitRequestHandlerBody(pconnsockinfo);
         }
         else
         {
             pconnsockinfo->recvstat = PKG_BD_RECVING;
-            pconnsockinfo->pdataheaderstart = pconnsockinfo->pdataheaderstart + recvcount;
-            pconnsockinfo->recvlen = pkgheaderlen_ - recvcount;
+            pconnsockinfo->precvdatastart = pconnsockinfo->precvdatastart + recvcount;
+            pconnsockinfo->recvdatalen = pkgheaderlen_ - recvcount;
         }
     }
 
@@ -178,14 +178,14 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
     if (pkglen < pkgheaderlen_)
     {
         pconnsockinfo->recvstat = PKG_HD_INIT;
-        pconnsockinfo->pdataheaderstart = pconnsockinfo->dataheader;
-        pconnsockinfo->recvlen = pkgheaderlen_;
+        pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+        pconnsockinfo->recvdatalen = pkgheaderlen_;
     }
     else if (pkglen > PKG_MAX_LEN)
     {
         pconnsockinfo->recvstat = PKG_HD_INIT;
-        pconnsockinfo->pdataheaderstart = pconnsockinfo->dataheader;
-        pconnsockinfo->recvlen = pkgheaderlen_;
+        pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+        pconnsockinfo->recvdatalen = pkgheaderlen_;
     }
     else
     {
@@ -228,8 +228,8 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
         else
         {
             pconnsockinfo->recvstat = PKG_BD_INIT;
-            pconnsockinfo->pdataheaderstart = pbuffall + pkgheaderlen_;
-            pconnsockinfo->recvlen = pkglen - pkgheaderlen_;
+            pconnsockinfo->precvdatastart = pbuffall + pkgheaderlen_;
+            pconnsockinfo->recvdatalen = pkglen - pkgheaderlen_;
         }
     }
 
@@ -251,8 +251,8 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     */
     pconnsockinfo->isfree = false;
     pconnsockinfo->recvstat = PKG_HD_INIT;
-    pconnsockinfo->pdataheaderstart = pconnsockinfo->dataheader;
-    pconnsockinfo->recvlen = pkgheaderlen_;
+    pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+    pconnsockinfo->recvdatalen = pkgheaderlen_;
     pconnsockinfo->precvalldata = nullptr;
     return;
 }
