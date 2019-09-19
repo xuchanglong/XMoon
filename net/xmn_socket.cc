@@ -232,16 +232,24 @@ int XMNSocket::EpollInit()
     }
 
     /**
+     * （2）连接池初始化。
+    */
+    InitConnSockInfoPool();
+    
+    /**
      * （2）创建指定数量的连接池和空闲连接的单向链表。
     */
+    /*
     pool_connsock_count_ = worker_connection_count_;
     pconnsock_pool_ = new XMNConnSockInfo[pool_connsock_count_];
     memset(pconnsock_pool_, 0, sizeof(XMNConnSockInfo) * pool_connsock_count_);
     size_t conn_count = pool_connsock_count_;
     XMNConnSockInfo *next = nullptr;
+    */
     /**
      * 从数组末尾向头部进行链表的串联。
     */
+    /*
     do
     {
         --conn_count;
@@ -253,11 +261,14 @@ int XMNSocket::EpollInit()
 
         next = &pconnsock_pool_[conn_count];
     } while (conn_count);
+    */
     /**
      * 赋值空闲链表的头指针，使其指向数组的第一个元素。
     */
+    /*
     pfree_connsock_list_head_ = next;
     pool_free_connsock_count_ = pool_connsock_count_;
+    */
 
     /**
      * （3）循环遍历所有监听 socket ，为每个 socket 绑定一个连接池中的连接，用于记录相关信息。
@@ -269,10 +280,10 @@ int XMNSocket::EpollInit()
         /**
          * 从连接池中取出空闲节点。
         */
-        pconnsockinfo = GetConnSockInfo((*it)->fd);
+        pconnsockinfo = PutOutConnSockInfofromPool((*it)->fd);
         if (pconnsockinfo == nullptr)
         {
-            xmn_log_stderr(errno, "EpollInit 中 GetConnSockInfo() 执行失败！");
+            xmn_log_stderr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
             return -2;
         }
         /**

@@ -8,13 +8,14 @@
 #ifndef XMOON__INCLUDE_XMN_SOCKET_H_
 #define XMOON__INCLUDE_XMN_SOCKET_H_
 
+#include "base/noncopyable.h"
+#include "comm/xmn_socket_comm.h"
+
 #include <vector>
+#include <list>
 #include <cstddef>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-
-#include "base/noncopyable.h"
-#include "comm/xmn_socket_comm.h"
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -59,6 +60,22 @@ struct XMNListenSockInfo
 */
 struct XMNConnSockInfo
 {
+public:
+    XMNConnSockInfo();
+    ~XMNConnSockInfo();
+
+public:
+    /**
+     * 将该连接的状态恢复至初始状态。
+    */
+    void InitConnSockInfo();
+
+    /**
+     * 释放连接关联的资源的内存。
+    */
+    void ClearConnSockInfo();
+
+public:
     /**
      * 指向下一个该类型的对象。
     */
@@ -312,25 +329,6 @@ private:
     void WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
-     * @function    从连接池中取出一个连接，该连接与 fd 对应的 socket 进行绑定。
-     * @paras   fd  待绑定的 socket 。
-     * @return  非0 绑定好的连接。
-     *                  nullptr 池已空。
-     * @author  xuchanglong
-     * @time    2019-08-26
-    */
-    XMNConnSockInfo *GetConnSockInfo(const int &fd);
-
-    /**
-     * @function    回收指定的连接至连接池中。
-     * @paras   pconnsockinfo   待回收的连接。
-     * @return  none 。
-     * @author  xuchanglong
-     * @time    2019-08-29
-    */
-    void FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo);
-
-    /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
      *                  pbuff   保存接收到的数据。
@@ -357,6 +355,61 @@ private:
      * @time    2019-09-01
     */
     void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
+
+    /**
+     * @function    初始化连接池。
+     * @paras   none 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    void InitConnSockInfoPool();
+
+    /**
+     * @function    释放连接池所占的内存。
+     * @paras   none 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    void FreeConnSockInfoPool();
+
+    /**
+     * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
+     * @paras   isockfd accept 返回的 socket 。
+     * @ return 绑定好的连接池中的一个连接。
+     *                   nullptr 连接池中的连接为空。
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    XMNConnSockInfo *PutOutConnSockInfofromPool(const int &kSockfd);
+
+    /**
+     * @function    将连接归还至连接池中。
+     * @paras   pconnsockinfo   待归还的连接。
+     * @ return none 。
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    void PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    将连接归还至空闲链表中。
+     * @paras   pconnsockinfo   待归还的连接。
+     * @ return none 。
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    void PutInConnSockInfo2FreeList(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    定时将到时的连接归还至空闲连接池中。
+     * @paras   pthreadinfo 线程的信息。
+     * @ return nullptr .
+     * @author  xuchanglong
+     * @time    2019-09-19
+    */
+    static void *ConnSockInfoRecycleThread(void *pthreadinfo);
 
 protected:
     /**
@@ -396,14 +449,14 @@ private:
     int epoll_handle_;
 
     /**
-     * 连接池首地址。
+     * 连接池列表。
     */
-    XMNConnSockInfo *pconnsock_pool_;
+    std::list<XMNConnSockInfo *> connsock_pool_;
 
     /**
-     * 连接池中空闲连接链的表头。
+     * 连接池中空闲连接的列表。
     */
-    XMNConnSockInfo *pfree_connsock_list_head_;
+    std::list<XMNConnSockInfo *> connsock_pool_free_;
 
     /**
      * 连接池中所有连接的数量。

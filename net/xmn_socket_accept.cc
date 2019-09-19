@@ -105,7 +105,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         /**
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
         */
-        pconnsockinfo_new = GetConnSockInfo(linkfd);
+        pconnsockinfo_new = PutOutConnSockInfofromPool(linkfd);
         if (pconnsockinfo_new == nullptr)
         {
             /**
@@ -167,7 +167,7 @@ void XMNSocket::CloseConnection(XMNConnSockInfo *pfd)
      * 先回收连接的目的是防止 close 失败导致连接无法回收。
     */
     int fd = pfd->fd;
-    FreeConnSockInfo(pfd);
+    PutInConnSockInfo2Pool(pfd);
     pfd->fd = -1;
     if (close(fd) == -1)
     {

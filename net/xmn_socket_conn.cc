@@ -1,9 +1,38 @@
-#include <string.h>
-#include "xmn_func.h"
 #include "comm/xmn_socket.h"
+#include "xmn_func.h"
 #include "xmn_memory.h"
 
-XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
+#include <string.h>
+
+void XMNSocket::InitConnSockInfoPool()
+{
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    size_t connsockinfolen = sizeof(XMNConnSockInfo);
+    for (size_t i = 0; i < worker_connection_count_; i++)
+    {
+        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(connsockinfolen, false);
+        pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
+        connsock_pool_.push_back(pconnsockinfo);
+        connsock_pool_free_.push_back(pconnsockinfo);
+    }
+    pool_connsock_count_ = connsock_pool_.size();
+    pool_free_connsock_count_ = connsock_pool_free_.size();
+}
+
+void XMNSocket::FreeConnSockInfoPool()
+{
+    XMNConnSockInfo *pconnsockinfo = nullptr;
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    while (!connsock_pool_.empty())
+    {
+        pconnsockinfo = connsock_pool_.front();
+        connsock_pool_.pop_front();
+        pconnsockinfo->~XMNConnSockInfo();
+        pmemory->FreeMemory((void *)pconnsockinfo);
+    }
+}
+
+XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
 {
     /**
      * （1）从连接池中取出未用的连接。
@@ -11,7 +40,7 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
     XMNConnSockInfo *pconnsockinfo = pfree_connsock_list_head_;
     if (pconnsockinfo == nullptr)
     {
-        xmn_log_stderr(errno, "GetConnSockInfo 空闲链表为空！");
+        xmn_log_stderr(errno, "PutOutConnSockInfofromPool 空闲链表为空！");
         return nullptr;
     }
     /**
@@ -53,7 +82,7 @@ XMNConnSockInfo *XMNSocket::GetConnSockInfo(const int &fd)
     return pconnsockinfo;
 }
 
-void XMNSocket::FreeConnSockInfo(XMNConnSockInfo *pconnsockinfo)
+void XMNSocket::PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * （1）释放存放完整数据包的内存。
