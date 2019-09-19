@@ -61,7 +61,7 @@ int main()
         senddata(clientfd, sendbuf, pkgheaderlen + loginfolen);
         senddatacount++;
         std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
-        sleep(2);
+        sleep(1);
     }
     return 0;
 }
