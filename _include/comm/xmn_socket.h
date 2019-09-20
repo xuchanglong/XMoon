@@ -490,12 +490,12 @@ private:
     /**
      *  监听的 port 的数量。
     */
-    int listenport_count_;
+    size_t listenport_count_;
 
     /**
      * 保存待监听的 port 。
     */
-    int *pportsum_;
+    size_t *pportsum_;
 
     /**
      * 监听的 port 以及其对应的监听 socket 的 vector。

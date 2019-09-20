@@ -89,10 +89,14 @@ void XMNSocket::InitConnSockInfoPool()
 {
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
     size_t connsockinfolen = sizeof(XMNConnSockInfo);
+    /**
+     * 为连接池创建 worker_connection_count_ 个连接，后续可以再增加。
+    */
     for (size_t i = 0; i < worker_connection_count_; i++)
     {
         XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(connsockinfolen, false);
         pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
+        pconnsockinfo->InitConnSockInfo();
         connsock_pool_.push_back(pconnsockinfo);
         connsock_pool_free_.push_back(pconnsockinfo);
     }
@@ -120,7 +124,7 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
     if (pool_free_connsock_count_)
     {
         /**
-         * 控线连接池中有连接。
+         * 空闲连接池中有连接。
         */
         pconnsockinfo = connsock_pool_free_.front();
         connsock_pool_free_.pop_front();
@@ -129,10 +133,10 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
     else
     {
         /**
-         * 空闲连接池中无连接，在创建一个连接。
+         * 空闲连接池中无连接，再创建一个连接。
         */
         XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-        pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(sizeof(XMNConnSockInfo));
+        pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(sizeof(XMNConnSockInfo), false);
         pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
         connsock_pool_.push_back(pconnsockinfo);
         ++pool_connsock_count_;
@@ -193,7 +197,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 /**
                  * 有到达等待时间的连接则回收。
                 */
-                pthis->recyconnsock_pool_.erase(pconnsockinfo);
+                pthis->recyconnsock_pool_.erase(it);
                 --pthis->pool_recyconnsock_count_;
                 pthis->PutInConnSockInfo2Pool(pconnsockinfo);
             }
@@ -208,7 +212,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 for (it = pthis->recyconnsock_pool_.begin(); it != pthis->recyconnsock_pool_.end(); it++)
                 {
                     pconnsockinfo = *it;
-                    pthis->recyconnsock_pool_.erase(pconnsockinfo);
+                    pthis->recyconnsock_pool_.erase(it);
                     --pthis->pool_recyconnsock_count_;
                     pthis->PutInConnSockInfo2Pool(pconnsockinfo);
                 }
@@ -229,7 +233,7 @@ void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
     PutInConnSockInfo2Pool(pconnsockinfo);
     if (close(pconnsockinfo->fd) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", fd);
+        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", pconnsockinfo->fd);
     }
 
     return;

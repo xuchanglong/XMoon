@@ -15,17 +15,17 @@
 
 XMNSocket::XMNSocket()
 {
+    msgheaderlen_ = sizeof(XMNMsgHeader);
+    pkgheaderlen_ = sizeof(XMNPkgHeader);
     listenport_count_ = 0;
     pportsum_ = nullptr;
     worker_connection_count_ = 0;
     epoll_handle_ = 0;
-    pconnsock_pool_ = nullptr;
-    pfree_connsock_list_head_ = nullptr;
     pool_connsock_count_ = 0;
     pool_free_connsock_count_ = 0;
+    pool_recyconnsock_count_ = 0;
+    recyconnsockinfowaittime_ = 0;
     memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
-    pkgheaderlen_ = sizeof(XMNPkgHeader);
-    msgheaderlen_ = sizeof(XMNMsgHeader);
 }
 
 XMNSocket::~XMNSocket()
