@@ -242,7 +242,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     }
 
     /**
-     * （4）设置进程标题。
+     * （5）设置进程标题。
     */
     xmn_setproctitle(kstrProcName.c_str());
 
