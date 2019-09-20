@@ -254,18 +254,37 @@ public:
 
 public:
     /**
-     *  @function   按照配置文件创建指定数量的监听 socket 。
-     *  @paras  none 。
-     *  @return 0   操作成功。
+     * @function   按照配置文件创建指定数量的监听 socket 。
+     * @paras  none 。
+     * @return 0   操作成功。
      *                  1   配置文件中端口号数量 <= 0 。
      *                  -1  sokcet 创建失败。
      *                  -2  setsockopt 设置失败。
      *                  -3  SetNonBlocking 设置失败。
      *                  -4  bind 绑定失败。
      *                  -5  listen  监听失败。
-     *  @time   2019-08-25
+     * @author  xuchanglong
+     * @time   2019-08-25
     */
     virtual int Initialize();
+
+    /**
+     * @function    部分内容需要在 worker 进程中初始化。
+     * @paras   none 。
+     * @return 
+     * @author xuchanglong
+     * @time    2019-09-21
+    */
+    virtual int InitializeWorker();
+
+    /**
+     * @function    worker 进程中初始化的内容需要在 worker 中释放。
+     * @paras   none 。
+     * @return 
+     * @author xuchanglong
+     * @time    2019-09-21
+    */
+    virtual int EndWorker();
 
 public:
     /**
@@ -345,7 +364,7 @@ private:
      *                  -5  listen  监听失败。
      *  @time   2019-08-25
     */
-    int OpenListenSocket(const int *const pport, const size_t &listenportcount);
+    int OpenListenSocket(const size_t *const pport, const size_t &listenportcount);
 
     /**
      *  @function   关闭监听 socket 。
@@ -512,6 +531,11 @@ private:
     */
     int epoll_handle_;
 
+    /**
+     * 用于存储 epoll_wait() 返回的发生的事件。
+    */
+    struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
+
     /**************************************************************************************
      * 
      ***************** 与连接池相关的变量 **************** 
@@ -562,10 +586,15 @@ private:
     */
     int recyconnsockinfowaittime_;
 
+    /**************************************************************************************
+     * 
+     ***************** 与发送消息相关的变量 **************** 
+     * 
+    **************************************************************************************/
     /**
-     * 用于存储 epoll_wait() 返回的发生的事件。
+     * 保存各个 worker 进程的
     */
-    struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
+    std::vector<ThreadInfo *> vthreadinfo;
 };
 
 #endif

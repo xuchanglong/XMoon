@@ -58,7 +58,40 @@ int XMNSocket::Initialize()
     return OpenListenSocket(pportsum_, listenport_count_);
 }
 
-int XMNSocket::OpenListenSocket(const int *const pport, const size_t &listenportcount)
+int XMNSocket::InitializeWorker()
+{
+    /**
+     * （1）初始化互斥量。
+     * 1、与连接池操作相关的互斥量。
+     * 2、与回收连接池相关的互斥量。
+     * 3、与发送消息相关的互斥量。
+    */
+    if (pthread_mutex_init(&connsock_pool_mutex_, nullptr) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_mutex_) 执行失败。");
+        return -1;
+    }
+    if (pthread_mutex_init(&connsock_pool_recy_mutex_, nullptr) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
+        return -1;
+    }
+
+    /**
+     * （2）创建回收连接的线程。
+    */
+    ThreadInfo *pthreadinfo = nullptr;
+    vthreadinfo.push_back(pthreadinfo = new ThreadInfo(this));
+    pthread_create(&pthreadinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo);
+    return 0;
+}
+
+int XMNSocket::EndWorker()
+{
+    return 0;
+}
+
+int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenportcount)
 {
     int exitcode = 0;
     int r = 0;
@@ -192,7 +225,7 @@ int XMNSocket::ReadConf()
     /**
      * （2）获取所有的 port 。
     */
-    pportsum_ = new int[listenport_count_];
+    pportsum_ = new size_t[listenport_count_];
     std::string str;
     std::stringstream s;
     for (size_t i = 0; i < listenport_count_; i++)

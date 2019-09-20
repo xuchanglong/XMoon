@@ -227,7 +227,13 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     g_threadpool.Create(threadpoolsize);
 
     /**
-     * （3）初始化 epoll ，并向 epoll 添加监听事件。
+     * （3）socket 相关变量初始化。
+    */
+    g_socket.InitializeWorker();
+
+    /**
+     * （4）初始化 epoll ，并向 epoll 添加监听事件。
+     * TODO：这里需要判断该函数的返回值。
     */
     int r = g_socket.EpollInit();
     if (r != 0)
