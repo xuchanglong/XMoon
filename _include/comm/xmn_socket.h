@@ -219,6 +219,36 @@ struct XMNMsgHeader
 class XMNSocket : public NonCopyable
 {
 public:
+    /**
+     * 保存单个线程的信息。
+    */
+    class ThreadInfo : public NonCopyable
+    {
+    public:
+        ThreadInfo() = delete;
+        ThreadInfo(XMNSocket *pthis) : pthis_(pthis)
+        {
+            isrunning_ = false;
+            threadhandle_ = 0;
+        }
+        ~ThreadInfo(){};
+
+    public:
+        /**
+         * 该线程所在的线程池的首地址。
+        */
+        XMNSocket *pthis_;
+        /**
+         * 该线程是否在运行。
+        */
+        bool isrunning_;
+        /**
+         * 该线程的描述符。
+        */
+        pthread_t threadhandle_;
+    };
+
+public:
     XMNSocket();
     virtual ~XMNSocket();
 
@@ -526,7 +556,12 @@ private:
      * 有关回收连接列表操作的列表。
     */
     pthread_mutex_t connsock_pool_recy_mutex_;
-    
+
+    /**
+     * 待回收的连接的等待时间。
+    */
+    int recyconnsockinfowaittime_;
+
     /**
      * 用于存储 epoll_wait() 返回的发生的事件。
     */

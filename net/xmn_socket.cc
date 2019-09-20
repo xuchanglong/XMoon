@@ -216,6 +216,16 @@ int XMNSocket::ReadConf()
     {
         return 3;
     }
+
+    /**
+     * （4）获取连接回收的等待时间。
+    */
+    g_socket.recyconnsockinfowaittime_ = atoi(pconfig->GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
+    if (g_socket.recyconnsockinfowaittime_ <= 0)
+    {
+        return 4;
+    }
+
     return 0;
 }
 
@@ -235,7 +245,7 @@ int XMNSocket::EpollInit()
      * （2）连接池初始化。
     */
     InitConnSockInfoPool();
-    
+
     /**
      * （2）创建指定数量的连接池和空闲连接的单向链表。
     */

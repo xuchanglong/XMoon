@@ -38,6 +38,7 @@ pid_t g_xmn_pid_parent = -1;
 int g_xmn_process_type = XMN_PROCESS_MASTER;
 
 sig_atomic_t g_xmn_reap = 0;
+bool g_isquit = false;
 
 int main(int argc, char *const *argv)
 {

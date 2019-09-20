@@ -115,4 +115,9 @@ extern XMNSocketLogic g_socket;
 */
 extern XMNThreadPool g_threadpool;
 
+/**
+ * 程序退出标志。
+*/
+extern  bool g_isquit;
+
 #endif
