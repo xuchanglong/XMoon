@@ -126,7 +126,7 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const s
             xmn_log_stderr(0,"XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
-        xmn_log_stderr(0,"connsockinfo put in recylist.");
+        //xmn_log_stderr(0,"connsockinfo put in recylist.");
         PutInConnSockInfo2RecyList(pconnsockinfo);
         return 0;
     }

@@ -200,7 +200,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 --pthis->pool_recyconnsock_count_;
                 pthis->PutInConnSockInfo2Pool(pconnsockinfo);
                 
-                xmn_log_stderr(0,"connsockinfo is recycled.");
+                //xmn_log_stderr(0,"connsockinfo is recycled.");
             }
             pthread_mutex_unlock(&pthis->connsock_pool_recy_mutex_);
         }
