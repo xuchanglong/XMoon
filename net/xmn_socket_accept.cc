@@ -152,6 +152,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         int r = EpollOperationEvent(linkfd,
                                     EPOLL_CTL_ADD,
                                     EPOLLIN | EPOLLRDHUP,
+                                    0,
                                     pconnsockinfo_new);
         if (r != 0)
         {

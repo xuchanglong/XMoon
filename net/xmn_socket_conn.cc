@@ -181,12 +181,12 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
         if (pthis->pool_recyconnsock_count_)
         {
             time_t curtime = time(nullptr);
-            pthread_mutex_lock(&pthis->connsock_pool_mutex_);
+            pthread_mutex_lock(&pthis->connsock_pool_recy_mutex_);
             std::list<XMNConnSockInfo *>::iterator it;
             for (it = pthis->recyconnsock_pool_.begin(); it != pthis->recyconnsock_pool_.end(); it++)
             {
                 pconnsockinfo = *it;
-                if (!g_isquit && (curtime - pconnsockinfo->putinrecylisttime) > pthis->recyconnsockinfowaittime_)
+                if (!g_isquit && (curtime - pconnsockinfo->putinrecylisttime) < pthis->recyconnsockinfowaittime_)
                 {
                     /**
                      * 没有到时间 ，继续等待。
@@ -199,14 +199,16 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 pthis->recyconnsock_pool_.erase(it);
                 --pthis->pool_recyconnsock_count_;
                 pthis->PutInConnSockInfo2Pool(pconnsockinfo);
+                
+                xmn_log_stderr(0,"connsockinfo is recycled.");
             }
-            pthread_mutex_unlock(&pthis->connsock_pool_mutex_);
+            pthread_mutex_unlock(&pthis->connsock_pool_recy_mutex_);
         }
         if (g_isquit)
         {
             if (pthis->pool_recyconnsock_count_)
             {
-                pthread_mutex_lock(&pthis->connsock_pool_mutex_);
+                pthread_mutex_lock(&pthis->connsock_pool_recy_mutex_);
                 std::list<XMNConnSockInfo *>::iterator it;
                 for (it = pthis->recyconnsock_pool_.begin(); it != pthis->recyconnsock_pool_.end(); it++)
                 {
@@ -215,7 +217,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                     --pthis->pool_recyconnsock_count_;
                     pthis->PutInConnSockInfo2Pool(pconnsockinfo);
                 }
-                pthread_mutex_unlock(&pthis->connsock_pool_mutex_);
+                pthread_mutex_unlock(&pthis->connsock_pool_recy_mutex_);
             }
             break;
         }

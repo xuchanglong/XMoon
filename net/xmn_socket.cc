@@ -556,7 +556,7 @@ int XMNSocket::EpollProcessEvents(int timer)
     XMNConnSockInfo *pconnsockinfo = nullptr;
     uint32_t events_type;
     //int instance = 0;
-    for (size_t i = 0; i < ieventcount; ++i)
+    for (size_t i = 0; i < eventcount; ++i)
     {
         /**
          *  获取该事件对应的连接的相关信息。
