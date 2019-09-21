@@ -74,7 +74,7 @@ int XMNSocket::InitializeWorker()
     if (pthread_mutex_init(&connsock_pool_recy_mutex_, nullptr) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
-        return -1;
+        return -2;
     }
 
     /**
@@ -88,6 +88,31 @@ int XMNSocket::InitializeWorker()
 
 int XMNSocket::EndWorker()
 {
+    /**
+     * （1）终止线程。
+     * 在执行该函数之前，全局变量 g_is
+    */
+    std::vector<ThreadInfo *>::iterator it;
+    for (it = vthreadinfo.begin(); it != vthreadinfo.end(); it++)
+    {
+        pthread_join((*it)->threadhandle_, nullptr);
+    }
+    for (it = vthreadinfo.begin(); it != vthreadinfo.end(); it++)
+    {
+        delete (*it);
+        (*it) = nullptr;
+    }
+
+    /**
+     * （2）回收线程池。
+    */
+    FreeConnSockInfoPool();
+
+    /**
+     * （3）销毁所有的互斥量。
+    */
+    pthread_mutex_destroy(&connsock_pool_mutex_);
+    pthread_mutex_destroy(&connsock_pool_recy_mutex_);
     return 0;
 }
 
@@ -342,6 +367,7 @@ int XMNSocket::EpollInit()
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
         pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
+        /*
         if (EpollAddEvent(
                 (*it)->fd,     //socekt句柄
                 1, 0,          //读，写【只关心读事件，所以参数2：readevent=1,而参数3：writeevent=0】
@@ -352,10 +378,19 @@ int XMNSocket::EpollInit()
         {
             return -3;
         }
+        */
+        if (EpollOperationEvent((*it)->fd,
+                                EPOLL_CTL_ADD, EPOLLIN | EPOLLRDHUP,
+                                0,
+                                pconnsockinfo) != 0)
+        {
+            return -3;
+        }
     }
     return 0;
 }
 
+/*
 int XMNSocket::EpollAddEvent(const int &fd,
                              const int &readevent, const int &writeevent,
                              const uint32_t &otherflag,
@@ -367,11 +402,6 @@ int XMNSocket::EpollAddEvent(const int &fd,
 
     if (readevent == 1)
     {
-        /**
-         * EPOLLIN  读事件。例如：三次握手。
-         * EPOLLRDHUP   客户端断开连接事件。
-         * EPOLLERR/EPOLLRDHUP 实际上是通过触发读写事件进行读写操作recv write来检测连接异常
-        */
         ev.events = EPOLLIN | EPOLLRDHUP;
 
         //https://blog.csdn.net/q576709166/article/details/8649911
@@ -403,10 +433,54 @@ int XMNSocket::EpollAddEvent(const int &fd,
 
     return 0;
 }
+*/
+
+int XMNSocket::EpollOperationEvent(const int &fd,
+                                   const uint32_t &eventtype,
+                                   const uint32_t &flag,
+                                   const int &bcaction,
+                                   XMNConnSockInfo *pconnsockinfo)
+{
+    /**
+     * （1）epoll_event 变量赋值。
+    */
+    struct epoll_event ev;
+    memset(&ev, 0, sizeof(struct epoll_event));
+    if (eventtype == EPOLL_CTL_ADD)
+    {
+        ev.events = flag;
+        ev.data.ptr = (void *)pconnsockinfo;
+        pconnsockinfo->eventtype = flag;
+        //ev.data.fd = fd;
+    }
+    else if (eventtype == EPOLL_CTL_MOD)
+    {
+        /* code */
+    }
+    else if (eventtype == EPOLL_CTL_DEL)
+    {
+        /* code */
+    }
+    else
+    {
+        return -1;
+    }
+
+    /**
+     * （2）epoll_ctl()函数的调用。
+    */
+    if (epoll_ctl(epoll_handle_, eventtype, fd, &ev) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
+        return -2;
+    }
+
+    return 0;
+}
 
 int XMNSocket::EpollProcessEvents(int timer)
 {
-    int ieventcount = 0;
+    int eventcount = 0;
     /**
      * （1）取出发生的事件信息。
     */
@@ -424,7 +498,7 @@ int XMNSocket::EpollProcessEvents(int timer)
      * （2）有事件发生。
      * （3）有信号发生。                                                                 
     */
-    ieventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
+    eventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
 
     /**
      * TODO：这里有惊群效应，后续对该问题进行处理。
@@ -435,7 +509,7 @@ int XMNSocket::EpollProcessEvents(int timer)
     /**
      * 对事件进行过滤。
     */
-    if (ieventcount == -1)
+    if (eventcount == -1)
     {
         /**
          * 信号所致。不是错误，但是得记录。
@@ -454,7 +528,7 @@ int XMNSocket::EpollProcessEvents(int timer)
             return -2;
         }
     }
-    else if (ieventcount == 0)
+    else if (eventcount == 0)
     {
         /**
          * 正常超时返回。
@@ -480,60 +554,60 @@ int XMNSocket::EpollProcessEvents(int timer)
      * 执行到这里说明收到了事件。
     */
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    int instance = 0;
+    uint32_t events_type;
+    //int instance = 0;
     for (size_t i = 0; i < ieventcount; ++i)
     {
         /**
          *  获取该事件对应的连接的相关信息。
         */
         pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + i)->data.ptr;
+        /*
         instance = (uintptr_t)pconnsockinfo & 1;
         pconnsockinfo = (XMNConnSockInfo *)((uintptr_t)pconnsockinfo & (uintptr_t)~1);
-
+        */
         /**
          * 处理过期事件。
         */
+        /*
         if (pconnsockinfo->fd == -1)
         {
-            /**
-             * 来了3个事件，
-             * 第1个事件关闭连接，fd == -1 。
-             * 第2个事件正常处理。
-             * 第3个事件则是第1个连接的事件，为过期事件。
-            */
+            //来了3个事件，
+            //第1个事件关闭连接，fd == -1 。
+            //第2个事件正常处理。
+            //第3个事件则是第1个连接的事件，为过期事件。
             xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 fd == -1 的过期事件 %p", pconnsockinfo);
             continue;
         }
-
+        
         if (pconnsockinfo->instance != instance)
         {
-            /**
-             * 来了3个事件。
-             * 第1个事件关闭连接，fd == -1。
-             * 第2个事件建立连接，该新连接恰好用到了线程池中第1个事件释放的连接。
-             * 第3个事件是第1个事件对应的连接的事件，为过期事件。
-             * 判断的原理就是每次从连接池中获取连接时，instance 都会取反。
-            */
+            //来了3个事件。
+            //第1个事件关闭连接，fd == -1。
+            //第2个事件建立连接，该新连接恰好用到了线程池中第1个事件释放的连接。
+            //第3个事件是第1个事件对应的连接的事件，为过期事件。
+            //判断的原理就是每次从连接池中获取连接时，instance 都会取反。
             xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 instance 改变的过期事件 %p", pconnsockinfo);
             continue;
         }
+        */
         /**
          * 程序走到这里，可以认为事件是非过期事件。
          * 确定事件类型，根据不同的类型来调用不同的处理函数。
         */
-        uint32_t events_type = wait_events_[i].events;
+        events_type = wait_events_[i].events;
         /**
          * TODO：正常关闭连接，具体代码是不是这么写，后续确认！
         */
+        /*
         if (events_type & (EPOLLERR | EPOLLHUP))
         {
-            /**
-             * 加上读写标记方便后续处理。
-             * EPOLLIN  表示指定的 epoll_event 对应的连接有可读数据。
-             * EPOLLOUT 表示指定的 epoll_event 对应的连接是可写的。
-            */
+            //加上读写标记方便后续处理。
+            //EPOLLIN  表示指定的 epoll_event 对应的连接有可读数据。
+            //EPOLLOUT 表示指定的 epoll_event 对应的连接是可写的。
             events_type |= EPOLLIN | EPOLLOUT;
         }
+        */
         /**
          * 读事件。触发条件，
          * （1）客户端新连入。

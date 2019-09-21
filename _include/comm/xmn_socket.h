@@ -307,12 +307,33 @@ public:
      * @author  xuchanglong
      * @time    2019-08-27
     */
+    /*
     int EpollAddEvent(const int &fd,
                       const int &readevent,
                       const int &writeevent,
                       const uint32_t &otherflag,
                       const uint32_t &eventtype,
                       XMNConnSockInfo *pconnsockinfo);
+    */
+
+    /**
+     * @function    向 epoll 中增加、删除、修改事件。
+     * @paras   fd  被 epoll 监控的 socket 。
+     *          eventtype   事件类型，包括：增、删、改。
+     *          flag    标志。若事件类型为增加时,
+     *                        EPOLLIN：可读。
+     *                        EPOLLRDHUP：TCP连接的远端关闭或者半关闭。
+     *          bcaction    补充动作，用于补充flag标记的不足  :  0：增加   1：去掉
+     *          pconnsockinfo   连接池中对应的指针。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-08-27
+    */
+    int EpollOperationEvent(const int &fd,
+                            const uint32_t &eventtype,
+                            const uint32_t &flag,
+                            const int &bcaction,
+                            XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    epoll 等待接收和处理事件。

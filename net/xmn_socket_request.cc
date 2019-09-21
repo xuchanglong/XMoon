@@ -120,7 +120,12 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const s
         /**
          * 客户端已正常关闭，即：完成了 4 次挥手。
         */
-        CloseConnection(pconnsockinfo);
+        if (close(pconnsockinfo->fd) == -1)
+        {
+            xmn_log_stderr(0,"XMNSocket::RecvData 中 close 执行失败。");
+        }
+        //CloseConnection(pconnsockinfo);
+        PutInConnSockInfo2RecyList(pconnsockinfo);
         return 0;
     }
     else if (n < 0)
@@ -160,7 +165,13 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const s
         {
             xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了未知错误。");
         }
-        CloseConnection(pconnsockinfo);
+        
+        if (close(pconnsockinfo->fd) == -1)
+        {
+            xmn_log_stderr(0,"XMNSocket::RecvData 中 close 执行失败。");
+        }
+        //CloseConnection(pconnsockinfo);
+        PutInConnSockInfo2RecyList(pconnsockinfo);
         return -1;
     }
 

@@ -14,7 +14,6 @@
  ***************** XMNConnSockInfo 相关函数 **************** 
  * 
 **************************************************************************************/
-
 XMNConnSockInfo::XMNConnSockInfo()
 {
     memset(this, 0, sizeof(struct XMNConnSockInfo));

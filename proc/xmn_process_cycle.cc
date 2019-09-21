@@ -199,6 +199,11 @@ static int xmn_worker_process_cycle(const size_t &inum, const std::string &strpr
      * （3）子进程退出，销毁线程池。
     */
     g_threadpool.Destroy();
+
+    /**
+     * （4）socket 中关于子进程部分的变量的销毁。
+    */
+    g_socket.EndWorker();
     return 0;
 }
 
@@ -224,12 +229,19 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     /**
      * TODO：这里需要判断该函数的返回值。
     */
-    g_threadpool.Create(threadpoolsize);
+    if (g_threadpool.Create(threadpoolsize))
+    {
+        return -2;
+    }
 
     /**
      * （3）socket 相关变量初始化。
+     * TODO：这里需要判断该函数的返回值。
     */
-    g_socket.InitializeWorker();
+    if (g_socket.InitializeWorker() != 0)
+    {
+        return -3;
+    }
 
     /**
      * （4）初始化 epoll ，并向 epoll 添加监听事件。
@@ -238,7 +250,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     int r = g_socket.EpollInit();
     if (r != 0)
     {
-        return -2;
+        return -4;
     }
 
     /**
