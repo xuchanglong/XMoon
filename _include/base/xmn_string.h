@@ -1,12 +1,15 @@
 #ifndef XMOON__INCLUDE_BASE_XMN_STRING_H_
 #define XMOON__INCLUDE_BASE_XMN_STRING_H_
+
+using size_t = unsigned long; 
+
 //===========================  内存比较函数  ===========================//
 /**
  * @function    内存比较函数。
  * @paras   cs、ct 待比较的内存。
  *          count   待比较的字节数量。
  * @return  0   二者指定字节数的内存相同。
- *          非0 二者指定字节数的内存不相同。
+ *          非0 二者指定字节数的内存不相同。s
  * @author  xuchanglong
  * @time    2019-09-19
 */
