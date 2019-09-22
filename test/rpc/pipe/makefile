@@ -7,4 +7,4 @@ $(TARGET):main.cc
 
 .PHONY:clean
 clean:
-	rm -rf $(TARGET) 
+	rm -rf $(TARGET)  
