@@ -158,7 +158,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     }
 
     /**
-     * 分别不同的进程对信号进行的处理。
+     * 分别对不同的进程的信号进行的处理。
     */
     if (g_xmn_process_type == XMN_PROCESS_MASTER)
     {
@@ -196,7 +196,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     {
         xmn_log_info(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->psigname, action);
     }
-    
+
     /**
      * 对信号进行处理。
     */
@@ -227,6 +227,9 @@ void XMNProcessGetStatus()
 
     while (true)
     {
+        /**
+         * WNOHANG 无子进程退出时不堵塞。
+        */
         pid = waitpid(-1, &status, WNOHANG);
         /**
          * 没有子进程退出。
@@ -249,7 +252,7 @@ void XMNProcessGetStatus()
                 continue;
             }
             /**
-             * 该父进程已经不存在子进程了。
+             * 该子进程已经不存在。
             */
             else if (err == ECHILD && one)
             {
