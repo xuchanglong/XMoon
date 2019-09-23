@@ -53,7 +53,7 @@ int XMNSocketLogic::HandleRegister(
     char *ppkgbody,
     size_t pkgbodylen)
 {
-    xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
+    //xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
     /**
      * （1）判断数据包的合法性。
      */

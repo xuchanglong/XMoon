@@ -484,7 +484,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
         {
             return -3;
         }
-        
+
         pconnsockinfo->eventtype = ev.events;
     }
     else if (eventtype == EPOLL_CTL_DEL)
@@ -658,6 +658,7 @@ int XMNSocket::EpollProcessEvents(int timer)
             /**
              * TODO：后续补充可写情况的代码。
             */
+            xmn_log_stderr(0, "收到可写事件。");
         }
     }
 
