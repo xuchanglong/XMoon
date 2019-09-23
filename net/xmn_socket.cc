@@ -455,7 +455,37 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     }
     else if (eventtype == EPOLL_CTL_MOD)
     {
-        /* code */
+        /**
+         * 恢复标记。
+        */
+        ev.events = pconnsockinfo->eventtype;
+        if (bcaction == 0)
+        {
+            /**
+             * 增加该标记。
+            */
+            ev.events |= flag;
+        }
+        else if (bcaction == 1)
+        {
+            /**
+             * 删除该标记。
+            */
+            ev.events ^= ~flag;
+        }
+        else if (bcaction == 2)
+        {
+            /**
+             * 覆盖该标记。
+            */
+            ev.events = flag;
+        }
+        else
+        {
+            return -3;
+        }
+        
+        pconnsockinfo->eventtype = ev.events;
     }
     else if (eventtype == EPOLL_CTL_DEL)
     {
@@ -469,6 +499,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     /**
      * （2）epoll_ctl()函数的调用。
     */
+    //ev.data.ptr = (void *)pconnsockinfo;
     if (epoll_ctl(epoll_handle_, eventtype, fd, &ev) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");

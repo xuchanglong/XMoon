@@ -106,8 +106,13 @@ int XMNSocketLogic::HandleRegister(
     ppkgheader_send->crc32 = htonl(pcrc32->GetCRC((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
 
     /**
-     * （6）回复数据。
+     * （6）将可写事件加入 epoll 红黑树中。
     */
+    if (EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
+    {
+        xmn_log_stderr(0,"XMNSocketLogic::HandleRegister() 中 EpollOperationEvent 执行失败。");
+    }
+
     return 0;
 }
 
