@@ -380,7 +380,8 @@ int XMNSocket::EpollInit()
         }
         */
         if (EpollOperationEvent((*it)->fd,
-                                EPOLL_CTL_ADD, EPOLLIN | EPOLLRDHUP,
+                                EPOLL_CTL_ADD, 
+                                EPOLLIN | EPOLLRDHUP,
                                 0,
                                 pconnsockinfo) != 0)
         {
@@ -449,9 +450,8 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     if (eventtype == EPOLL_CTL_ADD)
     {
         ev.events = flag;
-        ev.data.ptr = (void *)pconnsockinfo;
+        //ev.data.ptr = (void *)pconnsockinfo;
         pconnsockinfo->eventtype = flag;
-        //ev.data.fd = fd;
     }
     else if (eventtype == EPOLL_CTL_MOD)
     {
@@ -499,7 +499,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     /**
      * （2）epoll_ctl()函数的调用。
     */
-    //ev.data.ptr = (void *)pconnsockinfo;
+    ev.data.ptr = (void *)pconnsockinfo;
     if (epoll_ctl(epoll_handle_, eventtype, fd, &ev) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
@@ -585,7 +585,7 @@ int XMNSocket::EpollProcessEvents(int timer)
      * 执行到这里说明收到了事件。
     */
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    uint32_t events_type;
+    uint32_t flags;
     //int instance = 0;
     for (size_t i = 0; i < eventcount; ++i)
     {
@@ -626,7 +626,7 @@ int XMNSocket::EpollProcessEvents(int timer)
          * 程序走到这里，可以认为事件是非过期事件。
          * 确定事件类型，根据不同的类型来调用不同的处理函数。
         */
-        events_type = wait_events_[i].events;
+        flags = wait_events_[i].events;
         /**
          * TODO：正常关闭连接，具体代码是不是这么写，后续确认！
         */
@@ -644,21 +644,21 @@ int XMNSocket::EpollProcessEvents(int timer)
          * （1）客户端新连入。
          * （2）已连接发送了数据。
         */
-        if (events_type & EPOLLIN)
+        if (flags & EPOLLIN)
         {
-            (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
+           (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
         }
         /**
          * 写事件。server 可以向 client 发送数据了。
          * 注意：对方关闭连接时也执行这部分代码，
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
-        if (events_type & EPOLLOUT)
+        if (flags & EPOLLOUT)
         {
             /**
              * TODO：后续补充可写情况的代码。
             */
-            xmn_log_stderr(0, "收到可写事件。");
+            //xmn_log_stderr(0, "收到可写事件。");
         }
     }
 

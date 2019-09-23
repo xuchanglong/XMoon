@@ -40,17 +40,18 @@ int main()
     XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
 
     size_t pkgheaderlen = sizeof(XMNPkgHeader);
-    size_t loginfolen = sizeof(Logininfo);
-    char *sendbuf = new char[pkgheaderlen + loginfolen];
+    size_t registerinfolen = sizeof(RegisterInfo);
+    char *sendbuf = new char[pkgheaderlen + registerinfolen];
 
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)sendbuf;
-    ppkgheader->pkglen = htons(pkgheaderlen + loginfolen);
+    ppkgheader->pkglen = htons(pkgheaderlen + registerinfolen);
     ppkgheader->msgcode = htons(CMD_LOGIC_REGISTER);
 
-    Logininfo *ploginfo = (Logininfo *)(sendbuf + pkgheaderlen);
-    std::strcpy(ploginfo->username, "xuchanglong");
-    std::strcpy(ploginfo->password, "123456");
-    ppkgheader->crc32 = pcrc32->GetCRC((unsigned char *)ploginfo, loginfolen);
+    RegisterInfo *pregisterinfo = (RegisterInfo *)(sendbuf + pkgheaderlen);
+    pregisterinfo->type = 0;
+    std::strcpy(pregisterinfo->username, "xuchanglong");
+    std::strcpy(pregisterinfo->password, "123456");
+    ppkgheader->crc32 = pcrc32->GetCRC((unsigned char *)pregisterinfo, registerinfolen);
     ppkgheader->crc32 = htonl(ppkgheader->crc32);
 
     /**
@@ -58,7 +59,7 @@ int main()
     */
     while (true)
     {
-        senddata(clientfd, sendbuf, pkgheaderlen + loginfolen);
+        senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
         std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
         sleep(1);
