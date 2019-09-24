@@ -57,13 +57,14 @@ int main()
     /**
      * （3）循环发送数据。
     */
-    while (true)
+    if (true)
     {
         senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
         std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
         sleep(1);
     }
+    close(clientfd);
     return 0;
 }
 

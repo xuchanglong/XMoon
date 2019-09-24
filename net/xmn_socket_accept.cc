@@ -140,7 +140,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         /**
          * 标记该连接是可写的。
         */
-        pconnsockinfo_new->w_ready = 1;
+        //pconnsockinfo_new->w_ready = 1;
         /**
          *  设置数据来时读处理函数。
         */

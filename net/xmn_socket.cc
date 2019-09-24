@@ -141,7 +141,7 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
         /**
          *  创建连接 socket 。
         */
-        psocksum[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+        psocksum[i] = socket(AF_INET, SOCK_STREAM, 0);
         if (psocksum[i] <= 0)
         {
             xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket create listen socket failed.");
@@ -380,7 +380,7 @@ int XMNSocket::EpollInit()
         }
         */
         if (EpollOperationEvent((*it)->fd,
-                                EPOLL_CTL_ADD, 
+                                EPOLL_CTL_ADD,
                                 EPOLLIN | EPOLLRDHUP,
                                 0,
                                 pconnsockinfo) != 0)
@@ -646,7 +646,14 @@ int XMNSocket::EpollProcessEvents(int timer)
         */
         if (flags & EPOLLIN)
         {
-           (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
+            if (pconnsockinfo->rhandler)
+            {
+                (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
+            }
+            else
+            {
+                xmn_log_stderr(0, "nullptr %d %d", eventcount, flags);
+            }
         }
         /**
          * 写事件。server 可以向 client 发送数据了。
