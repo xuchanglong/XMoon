@@ -1,6 +1,7 @@
 #include "xmn_threadpool.h"
 #include "xmn_func.h"
 #include "xmn_global.h"
+#include "xmn_memory.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -67,13 +68,14 @@ lbcheck:
 
 void *XMNThreadPool::ThreadFunc(void *pthreaddata)
 {
-    int r = 0;
     if (pthreaddata == nullptr)
     {
         return nullptr;
     }
+    int r = 0;
     ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
     XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
     char *pmsg = nullptr;
 
     size_t pid = pthread_self();
@@ -129,6 +131,8 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         //xmn_log_stderr(0, "业务逻辑开始执行，pid = %d", pid);
         //sleep(5);
         g_socket.ThreadRecvProcFunc(pmsg);
+
+        pmemory->FreeMemory((void *)pmsg);
         /**
          * 业务处理结束。
         */
