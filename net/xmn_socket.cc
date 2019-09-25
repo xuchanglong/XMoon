@@ -2,6 +2,8 @@
 #include "xmn_config.h"
 #include "xmn_func.h"
 #include "xmn_macro.h"
+#include "xmn_lockmutex.hpp"
+
 #include "sys/socket.h"
 #include "sys/types.h"
 #include "sys/ioctl.h"
@@ -89,7 +91,7 @@ int XMNSocket::InitializeWorker()
     if (sem_init(&senddata_pool_sem_, 0, 0) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::InitializeWorker()中sem_init()执行失败。");
-        return -4
+        return -4;
     }
 
     /**
@@ -99,11 +101,11 @@ int XMNSocket::InitializeWorker()
     */
     ThreadInfo *pthreadinfo_recysockinfo = nullptr;
     vthreadinfo.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
-    pthread_create(&pthreadinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recysockinfo);
+    pthread_create(&pthreadinfo_recysockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recysockinfo);
 
     ThreadInfo *pthreadinfo_senddata = nullptr;
     vthreadinfo.push_back(pthreadinfo_senddata = new ThreadInfo(this));
-    pthread_create(&pthreadinfo->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
+    pthread_create(&pthreadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
     return 0;
 }
 
@@ -679,7 +681,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
             /**
              * TODO：后续补充可写情况的代码。
             */
-            //xmn_log_stderr(0, "收到可写事件。");
+            xmn_log_stderr(0, "收到可写事件。");
         }
     }
 
