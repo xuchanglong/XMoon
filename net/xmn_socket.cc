@@ -88,7 +88,7 @@ int XMNSocket::InitializeWorker()
     */
     if (sem_init(&senddata_pool_sem_, 0, 0) != 0)
     {
-        xmn_log_stderr(0,"XMNSocket::InitializeWorker()中sem_init()执行失败。");
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker()中sem_init()执行失败。");
         return -4
     }
 
@@ -688,6 +688,14 @@ int XMNSocket::EpollProcessEvents(const int &timer)
 
 int XMNSocket::MsgSend(char *psenddata)
 {
+    XMNLockMutex lockmutex_senddata(&senddata_pool_mutex_);
+    senddata_pool_.push_back(psenddata);
+    ++pool_senddata_count_;
+    
+    if (sem_post(&senddata_pool_sem_) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::MsgSend()中sem_post()执行失败。");
+    }
     return 0;
 }
 
