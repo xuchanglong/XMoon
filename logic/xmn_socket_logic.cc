@@ -136,11 +136,12 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + msgheaderlen_);
     char *ppkgbody = nullptr;
     unsigned short msgcode = 0;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
     /**
      * 拷贝连接块信息，防止在处理该消息时，该连接已经断开并且该连接块被其他新的连接所使用。
     */
-    XMNConnSockInfo *pconnsockinfo = new XMNConnSockInfo;
-    memcpy(pconnsockinfo, pmsgheader->pconnsockinfo, sizeof(XMNConnSockInfo) * 1);
+    //XMNConnSockInfo *pconnsockinfo = new XMNConnSockInfo;
+    //memcpy(pconnsockinfo, pmsgheader->pconnsockinfo, sizeof(XMNConnSockInfo) * 1);
 
     size_t pkglen = ntohs(ppkgheader->pkglen);
     size_t pkgbodylen = pkglen - pkgheaderlen_;
@@ -178,6 +179,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
      * 如果 client 发来了数据包，server 激活线程池中一个线程去处理，在这个过程中 client 与 server 断开了连接，
      * 那么该消息就不必处理。
     */
+    pconnsockinfo = pmsgheader->pconnsockinfo;
     if (pconnsockinfo->currsequence != pmsgheader->currsequence)
     {
         goto lblexit;
@@ -204,7 +206,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     (this->*msghandlerall[msgcode])(pconnsockinfo, pmsgheader, (char *)ppkgbody, pkgbodylen);
 
 lblexit:
-    delete pconnsockinfo;
-    pconnsockinfo = nullptr;
+    //delete pconnsockinfo;
+    //pconnsockinfo = nullptr;
     return;
 }

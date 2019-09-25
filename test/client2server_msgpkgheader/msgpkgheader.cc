@@ -57,7 +57,7 @@ int main()
     /**
      * （3）循环发送数据。
     */
-    if (true)
+    while (true)
     {
         senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
