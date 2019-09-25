@@ -17,6 +17,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <atomic>
+#include <semaphore.h>
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -356,6 +357,11 @@ public:
     */
     size_t RecvMsgListSize();
 
+    /**************************************************************************************
+     * 
+     ***************** 线程相关操作 *****************
+     * 
+    **************************************************************************************/
     /**
      * @function    处理收到的数据包。
      * @paras   数据包。
@@ -502,7 +508,7 @@ private:
 
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
-     * @paras   pthreadinfo 线程的信息。
+     * @paras   pthreadinfo 线程的相关信息。
      * @return  nullptr .
      * @author  xuchanglong
      * @time    2019-09-19
@@ -517,6 +523,29 @@ private:
      * @time    2019-08-29
     */
     void CloseConnection(XMNConnSockInfo *pfd);
+
+    /**************************************************************************************
+     * 
+     ***************** 发送数据相关的函数 *****************
+     * 
+    **************************************************************************************/
+    /**
+     * @function    发送数据。
+     * @paras   psenddata   待发送的数据。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-09-25
+    */
+    int MsgSend(char *psenddata);
+
+    /**
+     * @function    发送数据线程。
+     * @paras   pthreadinfo   线程的相关信息。
+     * @return  nullptr   操作成功。
+     * @author  xuchanglong
+     * @time    2019-09-25
+    */
+    static void *SendDataThread(void *pthreadinfo);
 
 protected:
     /**
@@ -560,6 +589,11 @@ private:
     */
     struct epoll_event wait_events_[XMN_EPOLL_WAIT_MAX_EVENTS];
 
+    /**
+     * 保存每个 worker 进程专用的供 socket 类使用的线程的信息。
+    */
+    std::vector<ThreadInfo *> vthreadinfo;
+
     /**************************************************************************************
      * 
      ***************** 与连接池相关的变量 **************** 
@@ -571,9 +605,24 @@ private:
     std::list<XMNConnSockInfo *> connsock_pool_;
 
     /**
+     * 连接池中所有连接的数量。
+    */
+    std::atomic<size_t> pool_connsock_count_;
+
+    /**
+     * 有关连接池操作的互斥量。
+    */
+    pthread_mutex_t connsock_pool_mutex_;
+
+    /**
      * 空闲连接的列表。
     */
     std::list<XMNConnSockInfo *> connsock_pool_free_;
+
+    /**
+     * 空闲连接池中可用连接的数量。
+    */
+    std::atomic<size_t> pool_free_connsock_count_;
 
     /**
      * 待回收的连接的列表。
@@ -581,27 +630,12 @@ private:
     std::list<XMNConnSockInfo *> recyconnsock_pool_;
 
     /**
-     * 连接池中所有连接的数量。
-    */
-    std::atomic<size_t> pool_connsock_count_;
-
-    /**
-     * 连接池中可用连接的数量。
-    */
-    std::atomic<size_t> pool_free_connsock_count_;
-
-    /**
      * 待回收的连接的数量。
     */
     std::atomic<size_t> pool_recyconnsock_count_;
 
     /**
-     * 有关连接池操作的临界。
-    */
-    pthread_mutex_t connsock_pool_mutex_;
-
-    /**
-     * 有关回收连接列表操作的列表。
+     * 有关回收连接到空闲列表操作的互斥量。
     */
     pthread_mutex_t connsock_pool_recy_mutex_;
 
@@ -616,9 +650,24 @@ private:
      * 
     **************************************************************************************/
     /**
-     * 保存各个 worker 进程的
+     * 保存待发送的数据的数据池。
     */
-    std::vector<ThreadInfo *> vthreadinfo;
+    std::list<char *> senddata_pool_;
+
+    /**
+     * 保存待发送的数据的数据池中数据的数量。
+    */
+    std::atomic<size_t> pool_senddata_count_;
+
+    /**
+     * 有关保存待发送的数据的数据池的操作的互斥量。
+    */
+    pthread_mutex_t senddata_pool_mutex_;
+
+    /**
+     * 与发送消息相关的信号量。
+    */
+    sem_t senddata_pool_sem_;
 };
 
 #endif

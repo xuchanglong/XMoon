@@ -24,6 +24,7 @@ XMNSocket::XMNSocket()
     pool_connsock_count_ = 0;
     pool_free_connsock_count_ = 0;
     pool_recyconnsock_count_ = 0;
+    pool_senddata_count_ = 0;
     recyconnsockinfowaittime_ = 0;
     memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
 }
@@ -62,9 +63,9 @@ int XMNSocket::InitializeWorker()
 {
     /**
      * （1）初始化互斥量。
-     * 1、与连接池操作相关的互斥量。
-     * 2、与回收连接池相关的互斥量。
-     * 3、与发送消息相关的互斥量。
+     * a、与连接池操作相关的互斥量。
+     * b、与回收连接池相关的互斥量。
+     * c、与发送消息相关的互斥量。
     */
     if (pthread_mutex_init(&connsock_pool_mutex_, nullptr) != 0)
     {
@@ -76,13 +77,33 @@ int XMNSocket::InitializeWorker()
         xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
         return -2;
     }
+    if (pthread_mutex_init(&senddata_pool_mutex_, nullptr) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_pool_mutex_) 执行失败。");
+        return -3;
+    }
 
     /**
-     * （2）创建回收连接的线程。
+     * （2）初始化信号量。
     */
-    ThreadInfo *pthreadinfo = nullptr;
-    vthreadinfo.push_back(pthreadinfo = new ThreadInfo(this));
-    pthread_create(&pthreadinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo);
+    if (sem_init(&senddata_pool_sem_, 0, 0) != 0)
+    {
+        xmn_log_stderr(0,"XMNSocket::InitializeWorker()中sem_init()执行失败。");
+        return -4
+    }
+
+    /**
+     * （3）创建线程。
+     * a、创建用于回收连接的线程。
+     * b、创建用于发送数据的线程。
+    */
+    ThreadInfo *pthreadinfo_recysockinfo = nullptr;
+    vthreadinfo.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
+    pthread_create(&pthreadinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recysockinfo);
+
+    ThreadInfo *pthreadinfo_senddata = nullptr;
+    vthreadinfo.push_back(pthreadinfo_senddata = new ThreadInfo(this));
+    pthread_create(&pthreadinfo->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
     return 0;
 }
 
@@ -663,4 +684,14 @@ int XMNSocket::EpollProcessEvents(const int &timer)
     }
 
     return 0;
+}
+
+int XMNSocket::MsgSend(char *psenddata)
+{
+    return 0;
+}
+
+void *XMNSocket::SendDataThread(void *pthreadinfo)
+{
+    return nullptr;
 }
