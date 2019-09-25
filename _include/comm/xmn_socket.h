@@ -11,13 +11,15 @@
 #include "base/noncopyable.h"
 #include "comm/xmn_socket_comm.h"
 
-#include <vector>
-#include <list>
 #include <cstddef>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <atomic>
 #include <semaphore.h>
+
+#include <atomic>
+#include <vector>
+#include <list>
+#include <queue>
 
 using CXMNSocket = class XMNSocket;
 using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -80,6 +82,7 @@ public:
 public:
     /**
      * 指向下一个该类型的对象。
+     * 暂时无用。
     */
     XMNConnSockInfo *next;
 
@@ -183,9 +186,20 @@ public:
      * 
     **************************************************************************************/
     /**
-     * 存放最终需要发送的所有数据，即：消息头 + 包头 + 包体。
+     * 保存整个消息的头指针，即：消息头 + 包头 + 包体，用于释放消息。
     */
-    char *psendalldata;
+    char *psendalldataforfree;
+
+    /**
+     * 保存最终需要发送的所有数据，即：包头 + 包体。
+    */
+    char *psenddata;
+
+    /**
+     * 记录该消息需要由 epoll_wait 来驱动发送的次数。
+     * TODO：更准确的注释内容后续补充。
+    */
+    std::atomic<size_t> throwepollsendcount;
 
     /**************************************************************************************
      * 
@@ -356,7 +370,6 @@ public:
      * @time    2019-09-06
     */
     size_t RecvMsgListSize();
-
     /**************************************************************************************
      * 
      ***************** 线程相关操作 *****************
@@ -370,6 +383,16 @@ public:
      * @time    2019-09-15
     */
     virtual void ThreadRecvProcFunc(char *pmsgbuf);
+
+protected:
+    /**
+     * @function    发送数据。
+     * @paras   psenddata   待发送的数据。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-09-25
+    */
+    int PutInSendDataQueue(char *psenddata);
 
 private:
     /**
@@ -530,22 +553,24 @@ private:
      * 
     **************************************************************************************/
     /**
-     * @function    发送数据。
-     * @paras   psenddata   待发送的数据。
-     * @return  0   操作成功。
-     * @author  xuchanglong
-     * @time    2019-09-25
-    */
-    int MsgSend(char *psenddata);
-
-    /**
-     * @function    发送数据线程。
+     * @function    发送数据线程，每次循环只发送一次数据。
      * @paras   pthreadinfo   线程的相关信息。
      * @return  nullptr   操作成功。
      * @author  xuchanglong
      * @time    2019-09-25
     */
     static void *SendDataThread(void *pthreadinfo);
+
+    /**
+     * @function    从存储待发送的数据的数据池中获得消息。
+     * @paras   none 。
+     * @return  非 nullptr  待发送的消息。
+     *          nullptr 数据池中不存在消息。
+     * @author  xuchanglong
+     * @time    2019-09-25
+    */
+    char *PutOutSendDataFromQueue();
+
 
 protected:
     /**
@@ -650,24 +675,24 @@ private:
      * 
     **************************************************************************************/
     /**
-     * 保存待发送的数据的数据池。
+     * 发送消息队列。
     */
-    std::list<char *> senddata_pool_;
+    std::queue<char *> senddata_queue_;
 
     /**
-     * 保存待发送的数据的数据池中数据的数量。
+     * 发送消息队列中消息的数量。
     */
-    std::atomic<size_t> pool_senddata_count_;
+    std::atomic<size_t> queue_senddata_count_;
 
     /**
-     * 有关保存待发送的数据的数据池的操作的互斥量。
+     * 有关发送消息队列的相关操作的互斥量。
     */
-    pthread_mutex_t senddata_pool_mutex_;
+    pthread_mutex_t senddata_queue_mutex_;
 
     /**
-     * 与发送消息相关的信号量。
+     * 与发送消息操作相关的信号量。
     */
-    sem_t senddata_pool_sem_;
+    sem_t senddata_queue_sem_;
 };
 
 #endif

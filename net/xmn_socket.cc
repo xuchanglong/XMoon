@@ -3,17 +3,19 @@
 #include "xmn_func.h"
 #include "xmn_macro.h"
 #include "xmn_lockmutex.hpp"
+#include "xmn_memory.h"
 
 #include "sys/socket.h"
 #include "sys/types.h"
 #include "sys/ioctl.h"
 #include "linux/sockios.h"
 #include "arpa/inet.h"
-#include <cstdio>
 #include "errno.h"
 #include "unistd.h"
-#include <sstream>
 #include <errno.h>
+
+#include <cstdio>
+#include <sstream>
 
 XMNSocket::XMNSocket()
 {
@@ -26,7 +28,7 @@ XMNSocket::XMNSocket()
     pool_connsock_count_ = 0;
     pool_free_connsock_count_ = 0;
     pool_recyconnsock_count_ = 0;
-    pool_senddata_count_ = 0;
+    queue_senddata_count_ = 0;
     recyconnsockinfowaittime_ = 0;
     memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
 }
@@ -79,7 +81,7 @@ int XMNSocket::InitializeWorker()
         xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
         return -2;
     }
-    if (pthread_mutex_init(&senddata_pool_mutex_, nullptr) != 0)
+    if (pthread_mutex_init(&senddata_queue_mutex_, nullptr) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_pool_mutex_) 执行失败。");
         return -3;
@@ -88,7 +90,7 @@ int XMNSocket::InitializeWorker()
     /**
      * （2）初始化信号量。
     */
-    if (sem_init(&senddata_pool_sem_, 0, 0) != 0)
+    if (sem_init(&senddata_queue_sem_, 0, 0) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::InitializeWorker()中sem_init()执行失败。");
         return -4;
@@ -678,30 +680,131 @@ int XMNSocket::EpollProcessEvents(const int &timer)
         */
         if (flags & EPOLLOUT)
         {
-            /**
-             * TODO：后续补充可写情况的代码。
-            */
-            xmn_log_stderr(0, "收到可写事件。");
+            if (flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+            {
+                /**
+                 * server 挂了一个可写通知，但是 client 却关闭了，则此处会被执行。
+                 * EPOLLERR：对应的连接发生了错误。
+                 * EPOLLHUP：对应的连接被挂起。
+                 * EPOLLRDHUP：表示TCP连接，远端处于关闭或者办关闭的状态。
+                */
+                xmn_log_stderr(0, " XMNSocket::EpollProcessEvents()中flags & EPOLLOUT成立，\
+但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，flags的值为%d。",
+                               flags);
+                --pconnsockinfo->throwepollsendcount;
+            }
+            else
+            {
+                (this->*(pconnsockinfo->whandler))(pconnsockinfo);
+            }
+
+            //xmn_log_stderr(0, "收到可写事件。");
         }
     }
 
     return 0;
 }
 
-int XMNSocket::MsgSend(char *psenddata)
+int XMNSocket::PutInSendDataQueue(char *psenddata)
 {
-    XMNLockMutex lockmutex_senddata(&senddata_pool_mutex_);
-    senddata_pool_.push_back(psenddata);
-    ++pool_senddata_count_;
-    
-    if (sem_post(&senddata_pool_sem_) != 0)
+    XMNLockMutex lockmutex_senddata(&senddata_queue_mutex_);
+    senddata_queue_.push(psenddata);
+    ++queue_senddata_count_;
+
+    if (sem_post(&senddata_queue_sem_) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::MsgSend()中sem_post()执行失败。");
     }
     return 0;
 }
 
+char *XMNSocket::PutOutSendDataFromQueue()
+{
+    XMNLockMutex lockmutex_senddata(&senddata_queue_mutex_);
+    char *psenddata = nullptr;
+    if (queue_senddata_count_ != 0)
+    {
+        psenddata = senddata_queue_.front();
+        senddata_queue_.pop();
+        --queue_senddata_count_;
+        return psenddata;
+    }
+    return nullptr;
+}
+
 void *XMNSocket::SendDataThread(void *pthreadinfo)
 {
+    if (pthreadinfo == nullptr)
+    {
+        xmn_log_stderr(0, "XMNSocket::SendDataThread() 中形参 pthreadinfo 为 nullptr 。");
+        return nullptr;
+    }
+
+    /**
+     * （1）定义变量。
+    */
+    ThreadInfo *pthreadinfo_new = (ThreadInfo *)pthreadinfo;
+    XMNSocket *psocket = pthreadinfo_new->pthis_;
+    XMNMsgHeader *pmsgheader = nullptr;
+    XMNPkgHeader *ppkgheader = nullptr;
+    char *psenddata = nullptr;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
+    XMNMemory *pmemory = (XMNMemory *)SingletonBase<XMNMemory>::GetInstance();
+
+    while (!g_isquit)
+    {
+        /**
+         * （2）等待待发送的消息。
+        */
+        if (sem_wait(&psocket->senddata_queue_sem_) != 0)
+        {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            xmn_log_stderr(0, "XMNSocket::SendDataThread() 中 sem_wait 执行失败。");
+            continue;
+        }
+        if (!g_isquit)
+        {
+            break;
+        }
+        /**
+         * 将发送消息队列中的消息发送完毕。
+        */
+        while (true)
+        {
+            psenddata = psocket->PutOutSendDataFromQueue();
+            if (psenddata == nullptr)
+            {
+                break;
+            }
+
+            pmsgheader = (XMNMsgHeader *)psenddata;
+            ppkgheader = (XMNPkgHeader *)(psenddata + psocket->msgheaderlen_);
+            pconnsockinfo = pmsgheader->pconnsockinfo;
+
+            /**
+             * （3）判断消息是否过期。
+            */
+            if (pconnsockinfo->currsequence != pmsgheader->currsequence)
+            {
+                pmemory->FreeMemory(psenddata);
+                psenddata = nullptr;
+                continue;
+            }
+
+            /**
+             * （4）发送消息。
+            */
+            if (pconnsockinfo->throwepollsendcount > 0)
+            {
+                /**
+                 * 说明该消息是靠 epoll 驱动发送的，所以程序不能再向下执行了。
+                */
+                continue;
+            }
+        }
+    }
     return nullptr;
 }

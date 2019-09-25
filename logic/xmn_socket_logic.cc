@@ -108,11 +108,13 @@ int XMNSocketLogic::HandleRegister(
     /**
      * （6）将可写标志加入 epoll 红黑树中。
     */
+    PutInSendDataQueue(psenddata);
+    /*
     if (EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
     {
         xmn_log_stderr(0,"XMNSocketLogic::HandleRegister() 中 EpollOperationEvent 执行失败。");
     }
-
+    */
     xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
     return 0;
 }

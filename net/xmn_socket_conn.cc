@@ -51,8 +51,10 @@ void XMNConnSockInfo::InitConnSockInfo()
      * 其他变量初始化。
     */
     precvalldata = nullptr;
-    psendalldata = nullptr;
+    psendalldataforfree = nullptr;
+    psenddata = nullptr;
     eventtype = 0;
+    throwepollsendcount = 0;
 }
 
 void XMNConnSockInfo::ClearConnSockInfo()
@@ -72,11 +74,16 @@ void XMNConnSockInfo::ClearConnSockInfo()
         precvalldata = nullptr;
     }
 
-    if (psendalldata != nullptr)
+    if (psendalldataforfree != nullptr)
     {
-        pmemory->FreeMemory((void *)psendalldata);
-        psendalldata = nullptr;
+        pmemory->FreeMemory((void *)psendalldataforfree);
+        psendalldataforfree = nullptr;
     }
+
+    /**
+     * 其他变量清零。
+    */
+    throwepollsendcount = 0;
 }
 
 /**************************************************************************************
@@ -196,10 +203,18 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 /**
                  * 有到达等待时间的连接则回收。
                 */
+                if (pconnsockinfo->throwepollsendcount != 0)
+                {
+                    /**
+                     * 这种情况不应该发生，记录一下，以备寻找错误。
+                    */
+                    xmn_log_stderr(0, "XMNSocket::ConnSockInfoRecycleThread() 连接回收了throwepollsendcount!=0，不应该发生。");
+                }
+
                 pthis->recyconnsock_pool_.erase(it);
                 --pthis->pool_recyconnsock_count_;
                 pthis->PutInConnSockInfo2Pool(pconnsockinfo);
-                
+
                 //xmn_log_stderr(0,"connsockinfo is recycled.");
             }
             pthread_mutex_unlock(&pthis->connsock_pool_recy_mutex_);
