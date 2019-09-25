@@ -96,6 +96,7 @@ public:
      * 位域，失效的标志位。
      * 0    有效
      * 1    失效
+     * 暂时无用。
     */
     unsigned int instance : 1;
 
@@ -256,13 +257,13 @@ public:
     /**
      * @function   按照配置文件创建指定数量的监听 socket 。
      * @paras  none 。
-     * @return 0   操作成功。
-     *                  1   配置文件中端口号数量 <= 0 。
-     *                  -1  sokcet 创建失败。
-     *                  -2  setsockopt 设置失败。
-     *                  -3  SetNonBlocking 设置失败。
-     *                  -4  bind 绑定失败。
-     *                  -5  listen  监听失败。
+     * @return  0   操作成功。
+     *          1   配置文件中端口号数量 <= 0 。
+     *          -1  sokcet 创建失败。
+     *          -2  setsockopt 设置失败。
+     *          -3  SetNonBlocking 设置失败。
+     *          -4  bind 绑定失败。
+     *          -5  listen  监听失败。
      * @author  xuchanglong
      * @time   2019-08-25
     */
@@ -271,7 +272,9 @@ public:
     /**
      * @function    部分内容需要在 worker 进程中初始化。
      * @paras   none 。
-     * @return 
+     * @return  0   操作成功。
+     *          -1  connsock_pool_mutex_    初始化失败。
+     *          -2  connsock_pool_recy_mutex_   初始化失败。
      * @author xuchanglong
      * @time    2019-09-21
     */
@@ -280,8 +283,8 @@ public:
     /**
      * @function    worker 进程中初始化的内容需要在 worker 中释放。
      * @paras   none 。
-     * @return 
-     * @author xuchanglong
+     * @return  0 操作成功。
+     * @author  xuchanglong
      * @time    2019-09-21
     */
     virtual int EndWorker();
@@ -298,11 +301,11 @@ public:
     /**
      * @function    向 epoll 中增加事件。
      * @paras   fd  被 epoll 监控的 socket 。
-     *                  readevent   表示添加的事件是否是读事件，1是，0反之。
-     *                  writeevent  表示添加的事件是否是写事件，1是，0反之。
-     *                  otherflag   其他标记。
-     *                  eventtype   事件类型，包括：增、删、改。
-     *                  pconnsockinfo   连接池中对应的指针。
+     *          readevent   表示添加的事件是否是读事件，1是，0反之。
+     *          writeevent  表示添加的事件是否是写事件，1是，0反之。
+     *          otherflag   其他标记。
+     *          eventtype   事件类型，包括：增、删、改。
+     *          pconnsockinfo   连接池中对应的指针。
      * @return  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-27
@@ -321,8 +324,8 @@ public:
      * @paras   fd  被 epoll 监控的 socket 。
      *          eventtype   事件类型，包括：增、删、改。
      *          flag    标志。若事件类型为增加时,
-     *                        EPOLLIN：可读。
-     *                        EPOLLRDHUP：TCP连接的远端关闭或者半关闭。
+     *                  EPOLLIN：可读。
+     *                  EPOLLRDHUP：TCP连接的远端关闭或者半关闭。
      *          bcaction    补充动作，用于补充flag标记的不足  :  0：增加   1：去掉
      *          pconnsockinfo   连接池中对应的指针。
      * @return  0   操作成功。
@@ -342,7 +345,7 @@ public:
      * @author  xuchanglong
      * @time    2019-08-28
     */
-    int EpollProcessEvents(int timer);
+    int EpollProcessEvents(const int &timer);
 
     /**
      * @function    返回消息链表中元素的数量。
@@ -356,7 +359,7 @@ public:
     /**
      * @function    处理收到的数据包。
      * @paras   数据包。
-     * @return   none 。
+     * @return  none 。
      * @author  xuchanglong
      * @time    2019-09-15
     */
@@ -365,9 +368,9 @@ public:
 private:
     /**
      * @function    读取配置文件中的内容。
-     * @paras   0   操作成功。
-     *                  1  读取 port 数量失败。
-     *                  2  读取 各个port 失败。
+     * @paras   0  操作成功。
+     *          1  读取 port 数量失败。
+     *          2  读取 各个port 失败。
      * @author  xuchanglong
      * @time    2019-08-26
     */
@@ -378,11 +381,11 @@ private:
      *  @paras  pport  要监听的端口号的数组。
      *                  listenportcount   监听端口号的数量。
      *  @return 0   操作成功。
-     *                     -1  sokcet 创建失败。
-     *                  -2  setsockopt 设置失败。
-     *                  -3  SetNonBlocking 设置失败。
-     *                  -4  bind 绑定失败。
-     *                  -5  listen  监听失败。
+     *          -1  sokcet 创建失败。
+     *          -2  setsockopt 设置失败。
+     *          -3  SetNonBlocking 设置失败。
+     *          -4  bind 绑定失败。
+     *          -5  listen  监听失败。
      *  @time   2019-08-25
     */
     int OpenListenSocket(const size_t *const pport, const size_t &listenportcount);
@@ -472,8 +475,8 @@ private:
     /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   isockfd accept 返回的 socket 。
-     * @return 绑定好的连接池中的一个连接。
-     *         nullptr 连接池中的连接为空。
+     * @return  绑定好的连接池中的一个连接。
+     *          nullptr 连接池中的连接为空。
      * @author  xuchanglong
      * @time    2019-09-19
     */

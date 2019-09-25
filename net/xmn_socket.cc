@@ -509,7 +509,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     return 0;
 }
 
-int XMNSocket::EpollProcessEvents(int timer)
+int XMNSocket::EpollProcessEvents(const int &timer)
 {
     int eventcount = 0;
     /**
@@ -518,12 +518,12 @@ int XMNSocket::EpollProcessEvents(int timer)
     /**
      * @function    从双向链表中获取 XMN_EPOLL_WAIT_MAX_EVENTS 个 epoll_event 对象。
      * @paras   epoll_handle_ epoll 对象，相当于事件代理。
-     *                   wait_events_   epoll_event 对象存储池。
-     *                  XMN_EPOLL_WAIT_MAX_EVENTS   wait_events_ 大小。
-     *                  timer   超时时间，若为-1，则一直堵塞，直至有事件到来。
-     * @return  >0  实际返回的 epoll_event 对象的数量，即：事件的数量。
-     *                   = 0   等待超时。
-     *                  -1  有错误发生，报错代码保存在 errno 中。
+     *          wait_events_   epoll_event 对象存储池。
+     *          XMN_EPOLL_WAIT_MAX_EVENTS   wait_events_ 大小。
+     *          timer   超时时间，若为-1，则一直堵塞，直至有事件到来。
+     * @return  > 0  实际返回的 epoll_event 对象的数量，即：事件的数量。
+     *          = 0  等待超时。
+     *          -1   有错误发生，报错代码保存在 errno 中。
      * @notice  该函数的返回条件如下：
      * （1）等待超时。
      * （2）有事件发生。
@@ -646,14 +646,7 @@ int XMNSocket::EpollProcessEvents(int timer)
         */
         if (flags & EPOLLIN)
         {
-            if (pconnsockinfo->rhandler)
-            {
-                (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
-            }
-            else
-            {
-                xmn_log_stderr(0, "nullptr %d %d", eventcount, flags);
-            }
+            (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
         }
         /**
          * 写事件。server 可以向 client 发送数据了。
