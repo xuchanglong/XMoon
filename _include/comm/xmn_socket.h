@@ -22,7 +22,7 @@
 #include <queue>
 
 using CXMNSocket = class XMNSocket;
-using xmn_event_handler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
+using XMNEventHandler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
 
 /**
  * 存放已经完成连接的 socket 的队列的大小。
@@ -127,12 +127,12 @@ public:
     /**
      * 读事件相关处理函数。
     */
-    xmn_event_handler rhandler;
+    XMNEventHandler rhandler;
 
     /**
      * 写事件相关处理函数。
     */
-    xmn_event_handler whandler;
+    XMNEventHandler whandler;
 
     /**
      * 存储该连接对应的 accept 返回的 socket 的触发事件类型。
@@ -375,6 +375,7 @@ public:
      * @time    2019-09-06
     */
     size_t RecvMsgListSize();
+    
     /**************************************************************************************
      * 
      ***************** 线程相关操作 *****************
@@ -442,7 +443,8 @@ private:
 
     //------------------------------------------ 业务处理 handler 。
     /**
-     * @function    新的连接专用的处理函数。当连接进入时，该函数会被 EpollProcessEvents 所调用。
+     * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
+     *              用于处理新建立的连接。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
      * @return  none .
      * @author  xuchanglong
@@ -451,15 +453,20 @@ private:
     void EventAcceptHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
-     * @function    设置数据来时读处理的函数。
+     * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
+     *              用于读取 client 发来的数据并做处理。
+     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-26
     */
-    void WaitRequestHandler(XMNConnSockInfo *pconnsockinfo);
+    void WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
-     *                  pbuff   保存接收到的数据。
-     *                  bufflen 接收的数据的字节数。
+     *          pbuff   保存接收到的数据。
+     *          bufflen 接收的数据的字节数。
      * @author  xuchanglong
      * @time    2019-08-31
     */
@@ -644,7 +651,7 @@ private:
     /**
      * 保存每个 worker 进程专用的供 socket 类使用的线程的信息。
     */
-    std::vector<ThreadInfo *> vthreadinfo;
+    std::vector<ThreadInfo *> vthreadinfo_;
 
     /**************************************************************************************
      * 

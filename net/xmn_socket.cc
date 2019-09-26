@@ -102,11 +102,11 @@ int XMNSocket::InitializeWorker()
      * b、创建用于发送数据的线程。
     */
     ThreadInfo *pthreadinfo_recysockinfo = nullptr;
-    vthreadinfo.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
+    vthreadinfo_.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
     pthread_create(&pthreadinfo_recysockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recysockinfo);
 
     ThreadInfo *pthreadinfo_senddata = nullptr;
-    vthreadinfo.push_back(pthreadinfo_senddata = new ThreadInfo(this));
+    vthreadinfo_.push_back(pthreadinfo_senddata = new ThreadInfo(this));
     pthread_create(&pthreadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
     return 0;
 }
@@ -123,16 +123,16 @@ int XMNSocket::EndWorker()
     }
 
     std::vector<ThreadInfo *>::iterator it;
-    for (it = vthreadinfo.begin(); it != vthreadinfo.end(); it++)
+    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); it++)
     {
         pthread_join((*it)->threadhandle_, nullptr);
     }
-    for (it = vthreadinfo.begin(); it != vthreadinfo.end(); it++)
+    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); it++)
     {
         delete (*it);
         (*it) = nullptr;
     }
-    vthreadinfo.clear();
+    vthreadinfo_.clear();
 
     /**
      * （2）回收线程池、发送消息队列。

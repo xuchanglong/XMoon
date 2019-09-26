@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-void XMNSocket::WaitRequestHandler(XMNConnSockInfo *pconnsockinfo)
+void XMNSocket::WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * 从接收缓冲区中取数据。

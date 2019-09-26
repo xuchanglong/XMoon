@@ -11,7 +11,7 @@
  * TODO：此处为什么函数指针必须是 XMNSocketLogic 作用域下的。
  * 定义一个函数指针类型，该函数指针仅仅指向符合要求的 XMNSocketLogic 的成员函数。
 */
-using pmsghandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
+using MsgHandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
                                             XMNMsgHeader *pmsgheader,
                                             char *ppkgbody,
                                             size_t pkgbodylen);
@@ -19,7 +19,7 @@ using pmsghandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
 /**
  * 保存各种业务处理函数的数据。
 */
-static const pmsghandler msghandlerall[] =
+static const MsgHandler msghandlerall[] =
     {
         nullptr,                         //【0】
         nullptr,                         //【1】
@@ -30,7 +30,7 @@ static const pmsghandler msghandlerall[] =
         &XMNSocketLogic::HandleLogin,    //【6】
 };
 
-#define TOTAL_COMMANDS (sizeof(msghandlerall) / sizeof(pmsghandler))
+#define TOTAL_COMMANDS (sizeof(msghandlerall) / sizeof(MsgHandler))
 
 XMNSocketLogic::XMNSocketLogic()
 {

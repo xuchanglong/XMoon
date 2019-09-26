@@ -144,7 +144,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         /**
          *  设置数据来时读处理函数。
         */
-        pconnsockinfo_new->rhandler = &XMNSocket::WaitRequestHandler;
+        pconnsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
         /**
         * （4）将新建立的连接加入到 epoll 的红黑树中。
         *   读写标记设置为 1 和 0 的目的是让 client 首先向 server 发送消息。
