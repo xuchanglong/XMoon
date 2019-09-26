@@ -463,6 +463,16 @@ private:
     void WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo);
 
     /**
+     * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
+     *              用于向 client 发送数据。
+     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-09-26
+    */
+    void WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo);
+
+    /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
      *          pbuff   保存接收到的数据。

@@ -760,7 +760,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     XMNConnSockInfo *pconnsockinfo = nullptr;
     XMNMemory *pmemory = (XMNMemory *)SingletonBase<XMNMemory>::GetInstance();
     int err = 0;
-    int sendsize = 0;
+    ssize_t sendsize = 0;
 
     while (!g_isquit)
     {

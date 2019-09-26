@@ -123,7 +123,7 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const s
         */
         if (close(pconnsockinfo->fd) == -1)
         {
-            xmn_log_stderr(0,"XMNSocket::RecvData 中 close 执行失败。");
+            xmn_log_stderr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
         //xmn_log_stderr(0,"connsockinfo put in recylist.");
@@ -167,13 +167,13 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const s
         {
             xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了未知错误。");
         }
-        
+
         if (close(pconnsockinfo->fd) == -1)
         {
-            xmn_log_stderr(0,"XMNSocket::RecvData 中 close 执行失败。");
+            xmn_log_stderr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
-        xmn_log_stderr(0,"connsockinfo put in recylist.");
+        xmn_log_stderr(0, "connsockinfo put in recylist.");
         PutInConnSockInfo2RecyList(pconnsockinfo);
         return -1;
     }
@@ -274,4 +274,70 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
 void XMNSocket::ThreadRecvProcFunc(char *pmsgbuf)
 {
     ;
+}
+
+void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
+{
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    /**
+     * （1）发送消息。
+    */
+    ssize_t sendsize = MsgSend(pconnsockinfo);
+
+    /**
+     * （2）对发送数据的结果进行处理。
+    */
+    if (sendsize > 0 && sendsize != pconnsockinfo->senddatalen)
+    {
+        /**
+         * 发送成功，但是没有发全，下次继续发送。
+        */
+        pconnsockinfo->psenddata = pconnsockinfo->psenddata + sendsize;
+        pconnsockinfo->senddatalen = pconnsockinfo->senddatalen - sendsize;
+        return;
+    }
+    else if (sendsize == -1)
+    {
+        /**
+         * 发送缓冲区已满不太可能，因为 epoll 驱动通知系统可以发送，
+         * 结果发送缓冲区已满，不正常。
+        */
+        xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()执行 MsgSend 时发现发送缓冲区已满的问题。");
+        return;
+    }
+    else if (sendsize > 0 && sendsize == pconnsockinfo->senddatalen)
+    {
+        /**
+         * 发送成功，包已发全。
+         * 在 epoll 红黑树中删掉该 socket 。
+        */
+        if (EpollOperationEvent(pconnsockinfo->fd,
+                                EPOLL_CTL_MOD,
+                                EPOLLOUT,
+                                1,
+                                pconnsockinfo) != 0)
+        {
+            xmn_log_stderr(0,"XMNSocket::WaitWriteRequestHandler()中EpollOperationEvent()执行失败。");
+        }
+        xmn_log_stderr(0,"XMNSocket::WaitWriteRequestHandler()发送数据完毕。");
+    }
+
+    /**
+     * （3）收尾工作。
+     * a、数据完整地发送完毕。
+     * b、对端断开连接。
+     * c、未知错误。
+    */
+    /**
+     * 增加信号量。
+    */
+    if (sem_post(&senddata_queue_sem_) != 0)
+    {
+        xmn_log_stderr(0,"XMNSocket::WaitWriteRequestHandler()执行失败。");
+    }
+    pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+    pconnsockinfo->psendalldataforfree = nullptr;
+    pconnsockinfo->psenddata = nullptr;
+    pconnsockinfo->senddatalen = 0;
+    --pconnsockinfo->throwepollsendcount;
 }
