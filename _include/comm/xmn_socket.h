@@ -196,6 +196,11 @@ public:
     char *psenddata;
 
     /**
+     * 待发送的数据的字节数量，即：psenddata（包头 + 包体）。
+    */
+    size_t senddatalen;
+
+    /**
      * 记录该消息需要由 epoll_wait 来驱动发送的次数。
      * TODO：更准确的注释内容后续补充。
     */
@@ -570,6 +575,19 @@ private:
      * @time    2019-09-25
     */
     char *PutOutSendDataFromQueue();
+
+    /**
+     * @function    向 client 发送消息。
+     * @paras   none 。
+     * @return  > 0 发送成功，返回值就是已发送的数据的字节数。
+     *          0   发送超时，对端已关闭。
+     *              发送的数据本身是0个字节。
+     *          -1  发送缓冲区已满。
+     *          -2  未知错误。
+     * @author  xuchanglong
+     * @time    2019-09-26
+    */
+    int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo);
 
 
 protected:

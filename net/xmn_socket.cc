@@ -747,9 +747,11 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     XMNSocket *psocket = pthreadinfo_new->pthis_;
     XMNMsgHeader *pmsgheader = nullptr;
     XMNPkgHeader *ppkgheader = nullptr;
-    char *psenddata = nullptr;
+    char *psendalldata = nullptr;
     XMNConnSockInfo *pconnsockinfo = nullptr;
     XMNMemory *pmemory = (XMNMemory *)SingletonBase<XMNMemory>::GetInstance();
+    int err = 0;
+    int sendsize = 0;
 
     while (!g_isquit)
     {
@@ -769,19 +771,20 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
         {
             break;
         }
+
         /**
-         * 将发送消息队列中的消息发送完毕。
+         * 将发送消息队列中的消息全部发送完毕。
         */
         while (true)
         {
-            psenddata = psocket->PutOutSendDataFromQueue();
-            if (psenddata == nullptr)
+            psendalldata = psocket->PutOutSendDataFromQueue();
+            if (psendalldata == nullptr)
             {
                 break;
             }
 
-            pmsgheader = (XMNMsgHeader *)psenddata;
-            ppkgheader = (XMNPkgHeader *)(psenddata + psocket->msgheaderlen_);
+            pmsgheader = (XMNMsgHeader *)psendalldata;
+            ppkgheader = (XMNPkgHeader *)(psendalldata + psocket->msgheaderlen_);
             pconnsockinfo = pmsgheader->pconnsockinfo;
 
             /**
@@ -789,8 +792,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             */
             if (pconnsockinfo->currsequence != pmsgheader->currsequence)
             {
-                pmemory->FreeMemory(psenddata);
-                psenddata = nullptr;
+                pmemory->FreeMemory(psendalldata);
+                psendalldata = nullptr;
                 continue;
             }
 
@@ -800,11 +803,131 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             if (pconnsockinfo->throwepollsendcount > 0)
             {
                 /**
-                 * 说明该消息是靠 epoll 驱动发送的，所以程序不能再向下执行了。
+                 * 说明该消息已经确定靠 epoll 驱动发送了，所以程序不用再向下执行了。
                 */
+                //PutInSendDataQueue(psenddata);
                 continue;
             }
+            pconnsockinfo->psendalldataforfree = psendalldata;
+            pconnsockinfo->psenddata = psendalldata + psocket->msgheaderlen_;
+            pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
+
+            xmn_log_stderr(0, "即将发送的数据大小为 %d");
+            sendsize = psocket->MsgSend(pconnsockinfo);
+            if (sendsize > 0)
+            {
+                if (sendsize == pconnsockinfo->senddatalen)
+                {
+                    /**
+                     * 全部正常发送成功。
+                    */
+                    pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                    pconnsockinfo->psendalldataforfree = nullptr;
+                    pconnsockinfo->psenddata = nullptr;
+                    pconnsockinfo->senddatalen = 0;
+                    pconnsockinfo->throwepollsendcount = 0;
+                }
+                else
+                {
+                    /**
+                     * 数据不能全部发送，说明发送缓冲区已经满了。
+                    */
+                    pconnsockinfo->psenddata = pconnsockinfo->psenddata + sendsize;
+                    pconnsockinfo->senddatalen = pconnsockinfo->senddatalen - sendsize;
+                    ++pconnsockinfo->throwepollsendcount;
+                    if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
+                    {
+                        xmn_log_stderr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
+                    }
+                    xmn_log_stderr(0,
+                                   "XMNSocket::SendDataThread()中理论发送 %d 个字节，实际发送 %d 个字节。",
+                                   pconnsockinfo->senddatalen,
+                                   sendsize);
+                }
+                continue;
+            }
+            /**
+             * 程序运行到这里说明发送数据时出现了问题。
+            */
+            else if (sendsize == 0)
+            {
+                /**
+                 * 发送端已断开连接。
+                */
+                pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                pconnsockinfo->psendalldataforfree = nullptr;
+                pconnsockinfo->psenddata = nullptr;
+                pconnsockinfo->senddatalen = 0;
+                pconnsockinfo->throwepollsendcount = 0;
+                continue;
+            }
+            else if (sendsize == -1)
+            {
+                /**
+                 * 发送缓冲区已满。
+                */
+                ++pconnsockinfo->throwepollsendcount;
+                if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
+                {
+                    xmn_log_stderr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
+                }
+                continue;
+            }
+            else
+            {
+                pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                pconnsockinfo->psendalldataforfree = nullptr;
+                pconnsockinfo->psenddata = nullptr;
+                pconnsockinfo->senddatalen = 0;
+                pconnsockinfo->throwepollsendcount = 0;
+                continue;
+            }
+            
+        }//end while (true)
+
+    }//end while (!g_isquit)
+    return nullptr;
+}
+
+int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo)
+{
+    size_t n = 0;
+    while (true)
+    {
+        n = send(pconnsockinfo->fd, pconnsockinfo->psenddata, pconnsockinfo->senddatalen);
+        /**
+         * （1）成功地发送了数据。
+        */
+        if (n > 0)
+        {
+            return n;
+        }
+        /**
+         * （2）异常处理。
+        */
+        else if (n == 0)
+        {
+            /**
+             * a、发送的数据量为0，对于本网络库该可能性理论上不存在。
+             * b、发送超时，对端已经关闭连接。
+            */
+            return 0;
+        }
+        if (errno == EAGAIN)
+        {
+            return -1;
+        }
+        else if (errno == EINTR)
+        {
+            /**
+             * send()被中断打断，下次再次运行试一下。
+            */
+            xmn_log_stderr(0, "XMNSocket::MsgSend()中send()运行被中断打断。");
+        }
+        else
+        {
+            return -2;
         }
     }
-    return nullptr;
+    return 0;
 }
