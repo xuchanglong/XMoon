@@ -117,7 +117,7 @@ int XMNSocket::EndWorker()
      * （1）终止线程。
      * 在执行该函数之前，全局变量 g_isquit 应该置为 true 。
     */
-    if (sem_post(&senddata_queue_sem_) == -1)
+    if (sem_post(&senddata_queue_sem_) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::EndWorker()中sem_post()执行失败。");
     }
@@ -303,7 +303,7 @@ int XMNSocket::ReadConf()
     /**
      * （3）获取每个 worker 进程的 epoll 连接的最大项数。
     */
-    worker_connection_count_ = atoi(pconfig->GetConfigItem("worker_connections", "1024").c_str());
+    worker_connection_count_ = atoi(pconfig->GetConfigItem("WorkerConnections", "1024").c_str());
     if (worker_connection_count_ <= 0)
     {
         return 3;
@@ -906,7 +906,7 @@ int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo)
     size_t n = 0;
     while (true)
     {
-        n = send(pconnsockinfo->fd, pconnsockinfo->psenddata, pconnsockinfo->senddatalen);
+        n = send(pconnsockinfo->fd, pconnsockinfo->psenddata, pconnsockinfo->senddatalen, 0);
         /**
          * （1）成功地发送了数据。
         */
@@ -951,7 +951,7 @@ int XMNSocket::FreeSendDataQueue()
     while (!senddata_queue_.empty())
     {
         ptmp = senddata_queue_.front();
-        senddata_queue_.pop_front();
+        senddata_queue_.pop();
         pmemory->FreeMemory(ptmp);
     }
     return 0;
