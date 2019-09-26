@@ -83,7 +83,7 @@ int XMNSocket::InitializeWorker()
     }
     if (pthread_mutex_init(&senddata_queue_mutex_, nullptr) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_pool_mutex_) 执行失败。");
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_queue_mutex_) 执行失败。");
         return -3;
     }
 
@@ -115,8 +115,13 @@ int XMNSocket::EndWorker()
 {
     /**
      * （1）终止线程。
-     * 在执行该函数之前，全局变量 g_is
+     * 在执行该函数之前，全局变量 g_isquit 应该置为 true 。
     */
+    if (sem_post(&senddata_queue_sem_) == -1)
+    {
+        xmn_log_stderr(0, "XMNSocket::EndWorker()中sem_post()执行失败。");
+    }
+
     std::vector<ThreadInfo *>::iterator it;
     for (it = vthreadinfo.begin(); it != vthreadinfo.end(); it++)
     {
@@ -127,17 +132,21 @@ int XMNSocket::EndWorker()
         delete (*it);
         (*it) = nullptr;
     }
+    vthreadinfo.clear();
 
     /**
-     * （2）回收线程池。
+     * （2）回收线程池、发送消息队列。
     */
     FreeConnSockInfoPool();
+    FreeSendDataQueue();
 
     /**
-     * （3）销毁所有的互斥量。
+     * （3）销毁所有的互斥量、信号量。
     */
     pthread_mutex_destroy(&connsock_pool_mutex_);
     pthread_mutex_destroy(&connsock_pool_recy_mutex_);
+    pthread_mutex_destroy(&senddata_queue_mutex_);
+    sem_destroy(&senddata_queue_sem_);
     return 0;
 }
 
@@ -767,7 +776,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             xmn_log_stderr(0, "XMNSocket::SendDataThread() 中 sem_wait 执行失败。");
             continue;
         }
-        if (!g_isquit)
+        if (g_isquit)
         {
             break;
         }
@@ -794,6 +803,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             {
                 pmemory->FreeMemory(psendalldata);
                 psendalldata = nullptr;
+                pconnsockinfo->psenddata = nullptr;
+                pconnsockinfo->senddatalen = 0;
+                pconnsockinfo->throwepollsendcount = 0;
                 continue;
             }
 
@@ -812,7 +824,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             pconnsockinfo->psenddata = psendalldata + psocket->msgheaderlen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
-            xmn_log_stderr(0, "即将发送的数据大小为 %d");
+            xmn_log_stderr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
             sendsize = psocket->MsgSend(pconnsockinfo);
             if (sendsize > 0)
             {
@@ -882,10 +894,10 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 pconnsockinfo->throwepollsendcount = 0;
                 continue;
             }
-            
-        }//end while (true)
 
-    }//end while (!g_isquit)
+        } //end while (true)
+
+    } //end while (!g_isquit)
     return nullptr;
 }
 
@@ -928,6 +940,19 @@ int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo)
         {
             return -2;
         }
+    }
+    return 0;
+}
+
+int XMNSocket::FreeSendDataQueue()
+{
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    char *ptmp = nullptr;
+    while (!senddata_queue_.empty())
+    {
+        ptmp = senddata_queue_.front();
+        senddata_queue_.pop_front();
+        pmemory->FreeMemory(ptmp);
     }
     return 0;
 }

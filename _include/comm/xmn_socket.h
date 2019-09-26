@@ -587,7 +587,16 @@ private:
      * @author  xuchanglong
      * @time    2019-09-26
     */
-    int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo);
+    int MsgSend(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    释放发送队列中的消息。
+     * @paras   none 。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-09-26
+    */
+    int FreeSendDataQueue();
 
 
 protected:
