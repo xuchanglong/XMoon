@@ -20,15 +20,15 @@ XMNConfig::~XMNConfig()
 int XMNConfig::Load(const std::string &kstrConfigFilePath)
 {
     /**
-     * 打开文件。
+     * （1）打开文件。
      */
     std::ifstream fin(kstrConfigFilePath, std::ios::in);
 
     /**
-     * 循环读取每一行，过滤掉注释等，将配置信息加载到 vconfig_item_set_ 。
+     * （2）循环读取每一行，过滤掉注释等信息，将配置信息加载到 vconfig_item_set_ 。
      * 检测流上的文件结束符，若检测到，则返回非0，反之则返回0。
      */
-    std::string strbuftmp;
+    std::string strbuftmp = "";
     while (getline(fin, strbuftmp))
     {
         /**

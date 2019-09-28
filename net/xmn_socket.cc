@@ -57,6 +57,7 @@ int XMNSocket::Initialize()
     {
         return r;
     }
+    
     /**
      * 开启指定的端口号。
     */

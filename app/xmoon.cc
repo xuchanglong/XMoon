@@ -17,9 +17,9 @@
 
 /**
  * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
- * @paras           none 。
- * @author          xuchanglong
- * @time            2019-08-14
+ * @paras   none 。
+ * @author  xuchanglong
+ * @time    2019-08-14
 */
 static void freeresource();
 
@@ -45,11 +45,11 @@ int main(int argc, char *const *argv)
     /**
      *  （1）变量初始化。 
      */
-    std::string strdaemoncontext;
+    std::string strdaemoncontext = "";
     int exitcode = 0;
     g_xmn_pid = getpid();
     g_xmn_pid_parent = getppid();
-    std::string configfilename = "xmoon.conf";
+    const std::string configfilename = "xmoon.conf";
     //g_argv = (char **)argv;
 
     /**
