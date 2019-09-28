@@ -12,9 +12,9 @@
  * 定义一个函数指针类型，该函数指针仅仅指向符合要求的 XMNSocketLogic 的成员函数。
 */
 using MsgHandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
-                                            XMNMsgHeader *pmsgheader,
-                                            char *ppkgbody,
-                                            size_t pkgbodylen);
+                                           XMNMsgHeader *pmsgheader,
+                                           char *ppkgbody,
+                                           size_t pkgbodylen);
 
 /**
  * 保存各种业务处理函数的数据。

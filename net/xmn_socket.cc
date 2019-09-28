@@ -619,7 +619,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
      * 执行到这里说明收到了事件。
     */
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    uint32_t flags;
+    uint32_t eventstmp;
     //int instance = 0;
     for (size_t i = 0; i < eventcount; ++i)
     {
@@ -660,7 +660,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
          * 程序走到这里，可以认为事件是非过期事件。
          * 确定事件类型，根据不同的类型来调用不同的处理函数。
         */
-        flags = wait_events_[i].events;
+        eventstmp = wait_events_[i].events;
         /**
          * TODO：正常关闭连接，具体代码是不是这么写，后续确认！
         */
@@ -678,7 +678,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
          * （1）客户端新连入。
          * （2）已连接发送了数据。
         */
-        if (flags & EPOLLIN)
+        if (eventstmp & EPOLLIN)
         {
             (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
         }
@@ -687,9 +687,9 @@ int XMNSocket::EpollProcessEvents(const int &timer)
          * 注意：对方关闭连接时也执行这部分代码，
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
-        if (flags & EPOLLOUT)
+        if (eventstmp & EPOLLOUT)
         {
-            if (flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+            if (eventstmp & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 /**
                  * server 挂了一个可写通知，但是 client 却关闭了，则此处会被执行。
@@ -697,9 +697,9 @@ int XMNSocket::EpollProcessEvents(const int &timer)
                  * EPOLLHUP：对应的连接被挂起。
                  * EPOLLRDHUP：表示TCP连接，远端处于关闭或者办关闭的状态。
                 */
-                xmn_log_stderr(0, " XMNSocket::EpollProcessEvents()中flags & EPOLLOUT成立，\
-但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，flags的值为%d。",
-                               flags);
+                xmn_log_stderr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
+但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为%d。",
+                               eventstmp);
                 --pconnsockinfo->throwepollsendcount;
             }
             else
