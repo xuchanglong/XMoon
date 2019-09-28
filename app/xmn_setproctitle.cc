@@ -1,7 +1,7 @@
 ﻿/*****************************************************************************************
  * @function    设置进程名称的标题的模块。
- * @author       xuchanglong
- * @time            2019-08-17
+ * @author      xuchanglong
+ * @time        2019-08-17
 *****************************************************************************************/
 
 #include <stdio.h>
@@ -14,16 +14,17 @@
 void xmn_setproctitle_init()
 {
     g_penvmem = new char[g_envmemlen];
-    memset(g_penvmem, 0, g_envmemlen);
+    memset(g_penvmem, '\0', g_envmemlen);
 
     char *ptmp = g_penvmem;
+
     /**
      * 搬迁环境变量至新位置。
     */
-    for (int i = 0; environ[i]; i++)
+    for (size_t i = 0; environ[i]; i++)
     {
         size_t size = strlen(environ[i]) + 1;
-        strcpy(ptmp, environ[i]);
+        memcpy(ptmp, environ[i], size);
         environ[i] = ptmp;
         ptmp += size;
     }
@@ -32,35 +33,37 @@ void xmn_setproctitle_init()
 
 int xmn_setproctitle(const std::string &strtitle)
 {
-    size_t ititlelen = strtitle.size();
+    size_t titlelen = strtitle.size();
 
     /**
-     * 计算命令行和环境变量所占内存的字节数。
+     * （1）计算命令行和环境变量所占内存的字节数。
     */
     size_t sum = g_argvmemlen + g_envmemlen;
+
     /**
-     * 防止因为标题长度过长导致内存越界。
+     * （2）防止因为标题长度过长导致内存越界。
     */
-    if (ititlelen >= sum)
+    if (titlelen >= sum)
     {
         return -1;
     }
+
     /**
-     * 设置命令行参数只有1个，因为在读取命令行参数时是以是否为空来判断的。
+     * （3）设置命令行参数只有 1 个，因为在读取命令行参数时是以是否为空来判断的。
     */
     g_argv[1] = nullptr;
 
     /**
-     * 设置标题。
+     * （4）设置标题。
     */
     char *ptmp = g_argv[0];
-    strcpy(ptmp, strtitle.c_str());
-    ptmp += ititlelen;
+    memcpy(ptmp, strtitle.c_str(), titlelen + 1);
+    ptmp += titlelen + 1;
 
     /**
      *  清空剩余内存。
     */
-    size_t len = sum - ititlelen;
-    memset(ptmp, 0, len);
+    size_t len = sum - titlelen;
+    memset(ptmp, '\0', len);
     return 0;
 }

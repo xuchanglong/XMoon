@@ -3,17 +3,17 @@
  * @author      xuchanglong
  * @time        2019-08-14
 *****************************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
 #include "xmn_config.h"
 #include "xmn_func.h"
 #include "xmn_macro.h"
 #include "comm/xmn_socket_logic.h"
 #include "xmn_memory.h"
 #include "xmn_threadpool.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 /**
  * @function    释放为搬迁环境变量而申请的内存以及关闭日志文件句柄。
@@ -49,7 +49,8 @@ int main(int argc, char *const *argv)
     int exitcode = 0;
     g_xmn_pid = getpid();
     g_xmn_pid_parent = getppid();
-    g_argv = (char **)argv;
+    std::string configfilename = "xmoon.conf";
+    //g_argv = (char **)argv;
 
     /**
      * 统计 argv 和 env 所占的内存。
@@ -79,14 +80,14 @@ int main(int argc, char *const *argv)
      * （2）初始化配置模块。
     */
     XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    if (pconfig->Load("xmoon.conf") != 0)
+    if (pconfig->Load(configfilename) != 0)
     {
         xmn_log_init();
-        xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", "xmoon.conf");
+        xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", configfilename.c_str());
         exitcode = 1;
         goto lblexit;
     }
-    
+
     /**
      * （3）单例 XMNMemory 初始化。
     */

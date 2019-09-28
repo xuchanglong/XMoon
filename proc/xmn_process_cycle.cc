@@ -79,12 +79,12 @@ void xmn_master_process_cycle()
 
     if (sigprocmask(SIG_BLOCK, &set, nullptr) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "xmn_master_process_cycle()中sigprocmask函数执行失败！");
+        xmn_log_info(XMN_LOG_ALERT, errno, "xmn_master_process_cycle()中 sigprocmask 函数执行失败！");
     }
 
     /**
-    * （2）设置 master 进程标题。
-   */
+     * （2）设置 master 进程标题。
+    */
     size_t lenall = 0;
     lenall = g_strmasterprocessname.size();
     std::string strtemp = "";
@@ -93,12 +93,12 @@ void xmn_master_process_cycle()
         strtemp = g_argv[i];
         g_strmasterprocessname += " " + strtemp;
     }
-    xmn_setproctitle(g_strmasterprocessname.c_str());
+    xmn_setproctitle(g_strmasterprocessname);
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功", g_strmasterprocessname, g_xmn_pid);
 
     /**
-   * （3）创建 worker 子进程。
-  */
+     * （3）创建 worker 子进程。
+    */
     XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
     size_t iworkerprocesssum = atoi(pconfig->GetConfigItem("WorkerProcesses", "4").c_str());
     xmn_start_worker_process(iworkerprocesssum);
@@ -109,8 +109,8 @@ void xmn_master_process_cycle()
     sigemptyset(&set);
 
     /**
-    * （5）开始 master 进程循环。
-   */
+     * （5）开始 master 进程循环。
+    */
     while (true)
     {
         sigsuspend(&set);
@@ -256,7 +256,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     /**
      * （5）设置进程标题。
     */
-    xmn_setproctitle(kstrProcName.c_str());
+    xmn_setproctitle(kstrProcName);
 
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", kstrProcName.c_str(), g_xmn_pid);
     return 0;
