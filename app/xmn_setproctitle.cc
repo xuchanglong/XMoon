@@ -11,7 +11,7 @@
 
 #include "xmn_global.h"
 
-void xmn_setproctitle_init()
+void XMNSetProcTitleInit()
 {
     g_penvmem = new char[g_envmemlen];
     memset(g_penvmem, '\0', g_envmemlen);
@@ -31,9 +31,9 @@ void xmn_setproctitle_init()
     return;
 }
 
-int xmn_setproctitle(const std::string &strtitle)
+int XMNSetProcTitle(const std::string &kstrTitle)
 {
-    size_t titlelen = strtitle.size();
+    const size_t TitleLen = kstrTitle.size();
 
     /**
      * （1）计算命令行和环境变量所占内存的字节数。
@@ -43,7 +43,7 @@ int xmn_setproctitle(const std::string &strtitle)
     /**
      * （2）防止因为标题长度过长导致内存越界。
     */
-    if (titlelen >= sum)
+    if (TitleLen >= sum)
     {
         return -1;
     }
@@ -57,13 +57,13 @@ int xmn_setproctitle(const std::string &strtitle)
      * （4）设置标题。
     */
     char *ptmp = g_argv[0];
-    memcpy(ptmp, strtitle.c_str(), titlelen + 1);
-    ptmp += titlelen + 1;
+    memcpy(ptmp, kstrTitle.c_str(), TitleLen + 1);
+    ptmp += TitleLen + 1;
 
     /**
-     *  清空剩余内存。
+     *  （5）清空剩余内存。
     */
-    size_t len = sum - titlelen;
+    size_t len = sum - TitleLen;
     memset(ptmp, '\0', len);
     return 0;
 }

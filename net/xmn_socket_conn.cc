@@ -36,19 +36,19 @@ XMNConnSockInfo::~XMNConnSockInfo()
 void XMNConnSockInfo::InitConnSockInfo()
 {
     /**
-     * 序号 + 1，用于判断消息是否过期。
+     * （1）序号 + 1，用于判断消息是否过期。
     */
     ++currsequence;
 
     /**
-     * 收包状态机变为初始化状态。
+     * （2）收包状态机变为初始化状态。
     */
-    recvstat = PKG_HD_INIT;
+    recvstatus = PKG_HD_INIT;
     precvdatastart = dataheader;
     recvdatalen = sizeof(XMNPkgHeader);
 
     /**
-     * 其他变量初始化。
+     * （3）其他变量初始化。
     */
     precvalldata = nullptr;
     psendalldataforfree = nullptr;
@@ -94,13 +94,14 @@ void XMNConnSockInfo::ClearConnSockInfo()
 void XMNSocket::InitConnSockInfoPool()
 {
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-    size_t connsockinfolen = sizeof(XMNConnSockInfo);
+    const size_t kConnSockInfoLen = sizeof(XMNConnSockInfo);
+
     /**
      * 为连接池创建 worker_connection_count_ 个连接，后续可以再增加。
     */
-    for (size_t i = 0; i < worker_connection_count_; i++)
+    for (size_t i = 0; i < worker_connection_count_; ++i)
     {
-        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(connsockinfolen, false);
+        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(kConnSockInfoLen, false);
         pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
         pconnsockinfo->InitConnSockInfo();
         connsock_pool_.push_back(pconnsockinfo);
@@ -123,7 +124,7 @@ void XMNSocket::FreeConnSockInfoPool()
     }
 }
 
-XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
+XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &kSockfd)
 {
     XMNLockMutex connsockpoolmutex(&connsock_pool_mutex_);
     XMNConnSockInfo *pconnsockinfo = nullptr;
@@ -148,7 +149,7 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &fd)
         ++pool_connsock_count_;
     }
     pconnsockinfo->InitConnSockInfo();
-    pconnsockinfo->fd = fd;
+    pconnsockinfo->fd = kSockfd;
 
     return pconnsockinfo;
 }

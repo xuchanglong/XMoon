@@ -17,10 +17,9 @@
 #include <cstdio>
 #include <sstream>
 
-XMNSocket::XMNSocket()
+XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
+                         kPkgHeaderLen_(sizeof(XMNPkgHeader))
 {
-    msgheaderlen_ = sizeof(XMNMsgHeader);
-    pkgheaderlen_ = sizeof(XMNPkgHeader);
     listenport_count_ = 0;
     pportsum_ = nullptr;
     worker_connection_count_ = 0;
@@ -57,7 +56,7 @@ int XMNSocket::Initialize()
     {
         return r;
     }
-    
+
     /**
      * 开启指定的端口号。
     */
@@ -151,7 +150,7 @@ int XMNSocket::EndWorker()
     return 0;
 }
 
-int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenportcount)
+int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListenPortCount)
 {
     int exitcode = 0;
     int r = 0;
@@ -159,10 +158,11 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
     /**
      * 存放创建的监听 socket 。
     */
-    int *psocksum = new int[listenportcount]();
+    int *psocksum = new int[kListenPortCount]();
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
+
     /**
      * 0,0,0,0 该地址代表本机所有 IP 。
     */
@@ -171,7 +171,7 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
     /**
      * 对每一个 port 创建一个 socket 。
     */
-    for (size_t i = 0; i < listenportcount; i++)
+    for (size_t i = 0; i < kListenPortCount; i++)
     {
         /**
          *  创建连接 socket 。
@@ -188,7 +188,7 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
          * 设置 server 关闭之后可以立刻重启 server 的功能，即：地址重用功能。
         */
         int reuseaddr = 1;
-        r = setsockopt(psocksum[i], SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(reuseaddr));
+        r = setsockopt(psocksum[i], SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(int));
         if (r != 0)
         {
             xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket setsockopt failed.");
@@ -210,8 +210,8 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
         /**
          * 绑定 IP 和 port 。
         */
-        addr.sin_port = htons(pport[i]);
-        r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(addr));
+        addr.sin_port = htons(kpPort[i]);
+        r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(struct sockaddr));
         if (r != 0)
         {
             xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket bind failed.");
@@ -235,15 +235,16 @@ int XMNSocket::OpenListenSocket(const size_t *const pport, const size_t &listenp
         */
         XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
-        pitem->port = pport[i];
+        pitem->port = kpPort[i];
+        pitem->pconnsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", pport[i]);
+        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", kpPort[i]);
     }
     return 0;
 
 exitlabel:
-    for (size_t i = 0; i < listenportcount; i++)
+    for (size_t i = 0; i < kListenPortCount; i++)
     {
         close(psocksum[i]);
     }
@@ -389,10 +390,12 @@ int XMNSocket::EpollInit()
             xmn_log_stderr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
             return -2;
         }
+
         /**
          * 连接对象和监听对象进行关联。
         */
         pconnsockinfo->plistensockinfo = (*it);
+
         /**
          * 监听对象和连接对象进行关联。
         */
@@ -402,6 +405,7 @@ int XMNSocket::EpollInit()
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
         pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
+
         /*
         if (EpollAddEvent(
                 (*it)->fd,     //socekt句柄
@@ -471,10 +475,10 @@ int XMNSocket::EpollAddEvent(const int &fd,
 }
 */
 
-int XMNSocket::EpollOperationEvent(const int &fd,
-                                   const uint32_t &eventtype,
-                                   const uint32_t &flag,
-                                   const int &bcaction,
+int XMNSocket::EpollOperationEvent(const int &kSockFd,
+                                   const uint32_t &kOption,
+                                   const uint32_t &kEvents,
+                                   const int &kFlag,
                                    XMNConnSockInfo *pconnsockinfo)
 {
     /**
@@ -482,38 +486,38 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     */
     struct epoll_event ev;
     memset(&ev, 0, sizeof(struct epoll_event));
-    if (eventtype == EPOLL_CTL_ADD)
+    if (kOption == EPOLL_CTL_ADD)
     {
-        ev.events = flag;
+        ev.events = kEvents;
         //ev.data.ptr = (void *)pconnsockinfo;
-        pconnsockinfo->eventtype = flag;
+        pconnsockinfo->eventtype = kEvents;
     }
-    else if (eventtype == EPOLL_CTL_MOD)
+    else if (kOption == EPOLL_CTL_MOD)
     {
         /**
          * 恢复标记。
         */
         ev.events = pconnsockinfo->eventtype;
-        if (bcaction == 0)
+        if (kFlag == 0)
         {
             /**
              * 增加该标记。
             */
-            ev.events |= flag;
+            ev.events |= kEvents;
         }
-        else if (bcaction == 1)
+        else if (kFlag == 1)
         {
             /**
              * 删除该标记。
             */
-            ev.events ^= ~flag;
+            ev.events ^= ~kFlag;
         }
-        else if (bcaction == 2)
+        else if (kFlag == 2)
         {
             /**
              * 覆盖该标记。
             */
-            ev.events = flag;
+            ev.events = kFlag;
         }
         else
         {
@@ -522,7 +526,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
 
         pconnsockinfo->eventtype = ev.events;
     }
-    else if (eventtype == EPOLL_CTL_DEL)
+    else if (kOption == EPOLL_CTL_DEL)
     {
         /* code */
     }
@@ -535,7 +539,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
      * （2）epoll_ctl()函数的调用。
     */
     ev.data.ptr = (void *)pconnsockinfo;
-    if (epoll_ctl(epoll_handle_, eventtype, fd, &ev) != 0)
+    if (epoll_ctl(epoll_handle_, kOption, kSockFd, &ev) != 0)
     {
         xmn_log_stderr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
         return -2;
@@ -544,7 +548,7 @@ int XMNSocket::EpollOperationEvent(const int &fd,
     return 0;
 }
 
-int XMNSocket::EpollProcessEvents(const int &timer)
+int XMNSocket::EpollProcessEvents(const int &kTimer)
 {
     int eventcount = 0;
     /**
@@ -564,7 +568,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
      * （2）有事件发生。
      * （3）有信号发生。                                                                 
     */
-    eventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, timer);
+    eventcount = epoll_wait(epoll_handle_, wait_events_, XMN_EPOLL_WAIT_MAX_EVENTS, kTimer);
 
     /**
      * TODO：这里有惊群效应，后续对该问题进行处理。
@@ -599,7 +603,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
         /**
          * 正常超时返回。
         */
-        if (timer != -1)
+        if (kTimer != -1)
         {
             return 0;
         }
@@ -674,6 +678,7 @@ int XMNSocket::EpollProcessEvents(const int &timer)
             events_type |= EPOLLIN | EPOLLOUT;
         }
         */
+
         /**
          * 读事件。触发条件，
          * （1）客户端新连入。
@@ -683,9 +688,9 @@ int XMNSocket::EpollProcessEvents(const int &timer)
         {
             (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
         }
+
         /**
-         * 写事件。server 可以向 client 发送数据了。
-         * 注意：对方关闭连接时也执行这部分代码，
+         * 写事件。server 可以向 client 发送数据了，包括正常的通信数据以及关闭连接数据。
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
         if (eventstmp & EPOLLOUT)
@@ -693,13 +698,13 @@ int XMNSocket::EpollProcessEvents(const int &timer)
             if (eventstmp & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 /**
-                 * server 挂了一个可写通知，但是 client 却关闭了，则此处会被执行。
+                 * server 在红黑树中挂了一个可写通知，但是 client 却关闭了，则此处会被执行。
                  * EPOLLERR：对应的连接发生了错误。
                  * EPOLLHUP：对应的连接被挂起。
                  * EPOLLRDHUP：表示TCP连接，远端处于关闭或者办关闭的状态。
                 */
                 xmn_log_stderr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
-但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为%d。",
+但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为 %d。",
                                eventstmp);
                 --pconnsockinfo->throwepollsendcount;
             }
@@ -723,7 +728,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
 
     if (sem_post(&senddata_queue_sem_) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::MsgSend()中sem_post()执行失败。");
+        xmn_log_stderr(0, "XMNSocket::SendData()中sem_post()执行失败。");
     }
     return 0;
 }
@@ -794,7 +799,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
 
             pmsgheader = (XMNMsgHeader *)psendalldata;
-            ppkgheader = (XMNPkgHeader *)(psendalldata + psocket->msgheaderlen_);
+            ppkgheader = (XMNPkgHeader *)(psendalldata + psocket->kMsgHeaderLen_);
             pconnsockinfo = pmsgheader->pconnsockinfo;
 
             /**
@@ -822,11 +827,11 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 continue;
             }
             pconnsockinfo->psendalldataforfree = psendalldata;
-            pconnsockinfo->psenddata = psendalldata + psocket->msgheaderlen_;
+            pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
             xmn_log_stderr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
-            sendsize = psocket->MsgSend(pconnsockinfo);
+            sendsize = psocket->SendData(pconnsockinfo);
             if (sendsize > 0)
             {
                 if (sendsize == pconnsockinfo->senddatalen)
@@ -902,7 +907,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     return nullptr;
 }
 
-int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo)
+int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
 {
     size_t n = 0;
     while (true)
@@ -935,7 +940,7 @@ int XMNSocket::MsgSend(XMNConnSockInfo *pconnsockinfo)
             /**
              * send()被中断打断，下次再次运行试一下。
             */
-            xmn_log_stderr(0, "XMNSocket::MsgSend()中send()运行被中断打断。");
+            xmn_log_stderr(0, "XMNSocket::SendData()中send()运行被中断打断。");
         }
         else
         {

@@ -46,6 +46,7 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
         {
             continue;
         }
+        
         /**
          * 去掉每行后面的换行、回车以及空格等。
          */
@@ -59,6 +60,7 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
             }
             break;
         }
+        
         /**
          * 开始截取选项以及选项信息。
          */

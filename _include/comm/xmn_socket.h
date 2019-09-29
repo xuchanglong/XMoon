@@ -140,6 +140,11 @@ public:
     */
     uint32_t eventtype;
 
+    /**
+     * 业务逻辑处理的互斥量。
+    */
+    pthread_mutex_t logicprocmutex;
+
     /**************************************************************************************
      * 
      ***************** 与收包相关的变量 **************** 
@@ -148,7 +153,7 @@ public:
     /**
      * 接收当前数据包的状态。
     */
-    RecvStatus recvstat;
+    RecvStatus recvstatus;
 
     /**
      * 存放包头数据。
@@ -174,11 +179,6 @@ public:
      * 标记 precvalldata 是否需要释放。
     */
     bool isfree;
-
-    /**
-     * 业务逻辑处理的互斥量。
-    */
-    pthread_mutex_t logicprocmutex;
 
     /**************************************************************************************
      * 
@@ -341,31 +341,35 @@ public:
 
     /**
      * @function    向 epoll 中增加、删除、修改事件。
-     * @paras   fd  被 epoll 监控的 socket 。
-     *          eventtype   事件类型，包括：增、删、改。
-     *          flag    标志。若事件类型为增加时,
+     * @paras   kSockFd 被 epoll 监控的 socket 。
+     *          kOption 操作选项，包括：
+     *                  增：EPOLL_CTL_ADD
+     *                  删：EPOLL_CTL_DEL
+     *                  改：EPOLL_CTL_MOD
+     *          kEvents 事件类型。包括：
      *                  EPOLLIN：可读。
      *                  EPOLLRDHUP：TCP连接的远端关闭或者半关闭。
-     *          bcaction    补充动作，用于补充flag标记的不足  :  0：增加   1：去掉
-     *          pconnsockinfo   连接池中对应的指针。
+     *                  等。
+     *          kFlag   为操作类型 EPOLL_CTL_MOD 补充操作：0：增加   1：去掉
+     *          pconnsockinfo   该连接的信息。
      * @return  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-27
     */
-    int EpollOperationEvent(const int &fd,
-                            const uint32_t &eventtype,
-                            const uint32_t &flag,
-                            const int &bcaction,
-                            XMNConnSockInfo *pconnsockinfo);
+    int EpollOperationEvent(const int &kSockFd,
+                                       const uint32_t &kOption,
+                                       const uint32_t &kEvents,
+                                       const int &kFlag,
+                                       XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    epoll 等待接收和处理事件。
-     * @paras   timer   等待事件的超时时间，单位 ms 。
+     * @paras   kTimer  等待事件的超时时间，单位 ms 。
      * @return  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-28
     */
-    int EpollProcessEvents(const int &timer);
+    int EpollProcessEvents(const int &kTimer);
 
     /**
      * @function    返回消息链表中元素的数量。
@@ -375,7 +379,7 @@ public:
      * @time    2019-09-06
     */
     size_t RecvMsgListSize();
-    
+
     /**************************************************************************************
      * 
      ***************** 线程相关操作 *****************
@@ -476,11 +480,11 @@ private:
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
      *          pbuff   保存接收到的数据。
-     *          bufflen 接收的数据的字节数。
+     *          kBuffLen    接收的数据的字节数。
      * @author  xuchanglong
      * @time    2019-08-31
     */
-    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &bufflen);
+    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &kBuffLen);
 
     /**
      * @function    判断该包是否正常以及为接收包体做准备。
@@ -604,7 +608,7 @@ private:
      * @author  xuchanglong
      * @time    2019-09-26
     */
-    int MsgSend(XMNConnSockInfo *pconnsockinfo);
+    int SendData(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    释放发送队列中的消息。
@@ -615,17 +619,16 @@ private:
     */
     int FreeSendDataQueue();
 
-
 protected:
     /**
      * 消息头的大小。
     */
-    size_t msgheaderlen_;
+    const size_t kMsgHeaderLen_;
 
     /**
      * 包头的大小。
     */
-    size_t pkgheaderlen_;
+    const size_t kPkgHeaderLen_;
 
 private:
     /**

@@ -21,7 +21,7 @@
  * @author  xuchanglong
  * @time    2019-08-14
 */
-static void freeresource();
+static void FreeResource();
 
 size_t g_argvmemlen = 0;
 size_t g_envmemlen = 0;
@@ -40,7 +40,7 @@ int g_xmn_process_type = XMN_PROCESS_MASTER;
 sig_atomic_t g_xmn_reap = 0;
 bool g_isquit = false;
 
-int main(int argc, char *const *argv)
+int main(int argc, char * const *argv)
 {
     /**
      *  （1）变量初始化。 
@@ -49,7 +49,7 @@ int main(int argc, char *const *argv)
     int exitcode = 0;
     g_xmn_pid = getpid();
     g_xmn_pid_parent = getppid();
-    const std::string configfilename = "xmoon.conf";
+    const std::string kstrConfigFilePath = "xmoon.conf";
     //g_argv = (char **)argv;
 
     /**
@@ -80,10 +80,10 @@ int main(int argc, char *const *argv)
      * （2）初始化配置模块。
     */
     XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    if (pconfig->Load(configfilename) != 0)
+    if (pconfig->Load(kstrConfigFilePath) != 0)
     {
         xmn_log_init();
-        xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", configfilename.c_str());
+        xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", kstrConfigFilePath.c_str());
         exitcode = 1;
         goto lblexit;
     }
@@ -119,7 +119,7 @@ int main(int argc, char *const *argv)
     /**
      * （7）初始化设置程序名称模块。
     */
-    xmn_setproctitle_init();
+    XMNSetProcTitleInit();
 
     /**
      * （8）创建守护进程。
@@ -127,14 +127,14 @@ int main(int argc, char *const *argv)
     strdaemoncontext = pconfig->GetConfigItem("Daemon", "0");
     if (strdaemoncontext.compare("1"))
     {
-        int r = xmn_daemon();
+        int r = XMNCreateDaemon();
 
         /**
          * 父进程退出。
         */
         if (r == 1)
         {
-            freeresource();
+            FreeResource();
             exitcode = 0;
             return exitcode;
         }
@@ -157,18 +157,18 @@ int main(int argc, char *const *argv)
     /**
      * （9）开始进入主进程工作流程。
     */
-    xmn_master_process_cycle();
+    XMNMasterProcessCycle();
 
 lblexit:
     /**
      *  （10）释放内存。
     */
-    freeresource();
+    FreeResource();
     printf("程序退出，再见!\n");
     return exitcode;
 }
 
-void freeresource()
+void FreeResource()
 {
     /**
      * （1）释放存储的环境变量。

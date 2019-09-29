@@ -17,7 +17,7 @@
  * @author  xuchanglong
  * @time    2019-08-17
 */
-void xmn_setproctitle_init();
+void XMNSetProcTitleInit();
 
 /**
  * @function    设置当前进程标题。
@@ -27,7 +27,7 @@ void xmn_setproctitle_init();
  * @author  xuchanglong
  * @time    2019-08-17
 */
-int xmn_setproctitle(const std::string &strtitle);
+int XMNSetProcTitle(const std::string &strtitle);
 
 /******************************  日志打印相关函数  *******************************/
 void xmn_log_init();
@@ -56,7 +56,7 @@ int XMNSignalInit();
  * @author  xuchanglong
  * @time    2019-08-17
 */
-void xmn_master_process_cycle();
+void XMNMasterProcessCycle();
 
 /**
  * @function    创建守护进程。
@@ -67,7 +67,7 @@ void xmn_master_process_cycle();
  * @author  xuchanglong
  * @time    2019-08-17
 */
-int xmn_daemon();
+int XMNCreateDaemon();
 
 /**
  * @function    处理子进程的网络事件和定时器事件。

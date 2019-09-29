@@ -92,16 +92,16 @@ int XMNSocketLogic::HandleRegister(
     */
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
     XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
-    char *psenddata = (char *)pmemory->AllocMemory(msgheaderlen_ + pkgheaderlen_ + sizeof(RegisterInfo), false);
+    char *psenddata = (char *)pmemory->AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
     // a、消息头。
     XMNMsgHeader *pmsgheader_send = (XMNMsgHeader *)psenddata;
     memcpy(pmsgheader_send, pmsgheader, sizeof(XMNMsgHeader));
     //b、包头
-    XMNPkgHeader *ppkgheader_send = (XMNPkgHeader *)(psenddata + msgheaderlen_);
-    ppkgheader_send->pkglen = htons(pkgheaderlen_ + sizeof(RegisterInfo));
+    XMNPkgHeader *ppkgheader_send = (XMNPkgHeader *)(psenddata + kMsgHeaderLen_);
+    ppkgheader_send->pkglen = htons(kPkgHeaderLen_ + sizeof(RegisterInfo));
     ppkgheader_send->msgcode = htons(CMD_LOGIC_REGISTER);
     //c、包体
-    char *ppkgbody_send = psenddata + msgheaderlen_ + pkgheaderlen_;
+    char *ppkgbody_send = psenddata + kMsgHeaderLen_ + kPkgHeaderLen_;
     memcpy(ppkgbody_send, pregisterinfo, sizeof(RegisterInfo));
     ppkgheader_send->crc32 = htonl(pcrc32->GetCRC((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
 
@@ -135,7 +135,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
      * （1）变量声明。
     */
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pmsgbuf;
-    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + msgheaderlen_);
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + kMsgHeaderLen_);
     char *ppkgbody = nullptr;
     unsigned short msgcode = 0;
     XMNConnSockInfo *pconnsockinfo = nullptr;
@@ -146,12 +146,12 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     //memcpy(pconnsockinfo, pmsgheader->pconnsockinfo, sizeof(XMNConnSockInfo) * 1);
 
     size_t pkglen = ntohs(ppkgheader->pkglen);
-    size_t pkgbodylen = pkglen - pkgheaderlen_;
+    size_t pkgbodylen = pkglen - kPkgHeaderLen_;
 
     /**
      * （2）CRC32 校验。
     */
-    if (pkglen == pkgheaderlen_)
+    if (pkglen == kPkgHeaderLen_)
     {
         /**
          * 没有包体的校验码应该为 0 。
@@ -164,7 +164,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     }
     else
     {
-        ppkgbody = pmsgbuf + msgheaderlen_ + pkgheaderlen_;
+        ppkgbody = pmsgbuf + kMsgHeaderLen_ + kPkgHeaderLen_;
         int crc32src = ntohl(ppkgheader->crc32);
         int crc32 = SingletonBase<XMNCRC32>::GetInstance()->GetCRC((unsigned char *)ppkgbody, pkgbodylen);
         if (crc32 != crc32src)

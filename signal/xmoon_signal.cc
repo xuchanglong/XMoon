@@ -14,36 +14,36 @@
 struct XMNSignal
 {
     /**
-          *  信号的编号。 
-          */
+     *  信号的编号。 
+    */
     int signum;
     /**
-          * 信号的名称。
-          */
+     * 信号的名称。
+    */
     const char *psigname;
     /**
-          *  信号的处理函数。
-          */
+     *  信号的处理函数。
+    */
     void (*phandler)(int signum, siginfo_t *psiginfo, void *content);
 };
 
 /**
  * @function   信号处理函数。
- * @paras           signum      信号的编号。
- *                           psiginfo      信号相关信息的结构体。
- *                           pcontext   备用。
- * @return         none 。
- * @author       xuchanglong
- * @time            2019-08-17
+ * @paras   signum      信号的编号。
+ *          psiginfo    信号相关信息的结构体。
+ *          pcontext    备用。
+ * @return  none 。
+ * @author  xuchanglong
+ * @time    2019-08-17
  */
 static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent);
 
 /**
  * @function    获取子进程的状态，避免子进程变成僵尸进程。
- * @paras           none 。
- * @return          none 。
- * @author        xuchanglong
- * @time            2019-08-18
+ * @paras   none 。
+ * @return  none 。
+ * @author  xuchanglong
+ * @time    2019-08-18
 */
 static void XMNProcessGetStatus();
 
@@ -90,6 +90,7 @@ int XMNSignalInit()
      * 变量初始化。
      */
     XMNSignal *psig = nullptr;
+
     /*
     struct sigaction 
     {
@@ -123,6 +124,7 @@ int XMNSignalInit()
             */
             sa.sa_handler = SIG_IGN;
         }
+
         /**
          * 接收信号时不堵塞其他信号。
         */
@@ -135,7 +137,7 @@ int XMNSignalInit()
         }
         else
         {
-            xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succed!", psig->psigname);
+            //xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succesed!", psig->psigname);
         }
     }
     return 0;

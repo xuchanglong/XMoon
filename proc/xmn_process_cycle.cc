@@ -21,44 +21,44 @@ static std::string g_strmasterprocessname = "master process";
 
 /**
  * @function    开始处理 workers 进程。
- * @paras           workprocesssum  创建 worker 进程的数量。
- * @return          none 。
- * @author          xuchanglong
- * @time              2019-08-15
+ * @paras   workprocesssum  创建 worker 进程的数量。
+ * @return  none 。
+ * @author  xuchanglong
+ * @time    2019-08-15
 */
-static void xmn_start_worker_process(const size_t &workerprocesssum);
+static void XMNStartWorkerProcess(const size_t &kWorkerProcessCount);
 
 /**
  * @function    创建指定数量的 worker 进程。
- * @paras           inum    子进程编号。
- *                            strprocname   子进程的名称。
- * @return          创建的子进程的 pid。
- * @author          xuchanglong
- * @time              2019-08-15
+ * @paras   inum    子进程编号。
+ *          strprocname   子进程的名称。
+ * @return  创建的子进程的 pid。
+ * @author  xuchanglong
+ * @time    2019-08-15
 */
-static int xmn_create_process(const size_t &inum, const std::string &strprocname);
+static int XMNCreateProcess(const size_t &kNum, const std::string &kstrProcName);
 
 /**
  * @function    设置子进程的标题以及进入子进程的循环。
- * @paras           inum    子进程编号。
- *                            strprocname   子进程的名称。
- * @return          none 。
- * @author          xuchanglong
- * @time              2019-08-15
+ * @paras   inum    子进程编号。
+ *          strprocname   子进程的名称。
+ * @return  none 。
+ * @author  xuchanglong
+ * @time    2019-08-15
 */
-static int xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname);
+static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProcName);
 
 /**
  * @function    子进程开始进入循环之前进行初始化。
- * @paras           inum    子进程编号。
- *                            kstrTitleName 进程标题名称。
- * @return          0   操作成功。
- * @author          xuchanglong
- * @time              2019-08-15
+ * @paras   inum    子进程编号。
+ *          kstrTitleName   进程标题名称。
+ * @return  0   操作成功。
+ * @author  xuchanglong
+ * @time    2019-08-15
 */
-static int xmn_worker_process_init(const size_t &inum, const std::string &kstrProcName);
+static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcName);
 
-void xmn_master_process_cycle()
+void XMNMasterProcessCycle()
 {
     /**
      * （1）屏蔽各种信号。
@@ -79,7 +79,7 @@ void xmn_master_process_cycle()
 
     if (sigprocmask(SIG_BLOCK, &set, nullptr) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "xmn_master_process_cycle()中 sigprocmask 函数执行失败！");
+        xmn_log_info(XMN_LOG_ALERT, errno, "XMNMasterProcessCycle()中 sigprocmask 函数执行失败！");
     }
 
     /**
@@ -93,15 +93,15 @@ void xmn_master_process_cycle()
         strtemp = g_argv[i];
         g_strmasterprocessname += " " + strtemp;
     }
-    xmn_setproctitle(g_strmasterprocessname);
+    XMNSetProcTitle(g_strmasterprocessname);
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功", g_strmasterprocessname, g_xmn_pid);
 
     /**
      * （3）创建 worker 子进程。
     */
     XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    size_t iworkerprocesssum = atoi(pconfig->GetConfigItem("WorkerProcesses", "4").c_str());
-    xmn_start_worker_process(iworkerprocesssum);
+    const size_t kWorkerProcessCount = atoi(pconfig->GetConfigItem("WorkerProcesses", "4").c_str());
+    XMNStartWorkerProcess(kWorkerProcessCount);
 
     /**
      * （4）解除信号屏蔽。
@@ -122,11 +122,11 @@ void xmn_master_process_cycle()
     }
 }
 
-static void xmn_start_worker_process(const size_t &workerprocesssum)
+static void XMNStartWorkerProcess(const size_t &kWorkerProcessCount)
 {
-    for (size_t i = 0; i < workerprocesssum; i++)
+    for (size_t i = 0; i < kWorkerProcessCount; i++)
     {
-        if (xmn_create_process(i, "worker process") <= 0)
+        if (XMNCreateProcess(i, "worker process") <= 0)
         {
             return;
         }
@@ -134,7 +134,7 @@ static void xmn_start_worker_process(const size_t &workerprocesssum)
     return;
 }
 
-static int xmn_create_process(const size_t &inum, const std::string &strprocname)
+static int XMNCreateProcess(const size_t &kNum, const std::string &kstrProcName)
 {
     int r = 0;
     pid_t pid = fork();
@@ -144,7 +144,7 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
      * 子进程创建失败。
     */
     case -1:
-        xmn_log_info(XMN_LOG_ALERT, errno, "xmn_create_process fork 产生的子进程num = %d，procname = \"%s\"失败！", inum, strprocname);
+        xmn_log_info(XMN_LOG_ALERT, errno, "XMNCreateProcess fork 产生的子进程num = %d，procname = \"%s\"失败！", kNum, kstrProcName);
         return -1;
     /**
      * 子进程创建成功。
@@ -155,7 +155,7 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
         */
         g_xmn_pid_parent = g_xmn_pid;
         g_xmn_pid = getpid();
-        r = xmn_worker_process_cycle(inum, strprocname);
+        r = XMNWorkerProcessCycle(kNum, kstrProcName);
         if (r != 0)
         {
             return -2;
@@ -174,14 +174,14 @@ static int xmn_create_process(const size_t &inum, const std::string &strprocname
     return pid;
 }
 
-static int xmn_worker_process_cycle(const size_t &inum, const std::string &strprocname)
+static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProcName)
 {
     int r = 0;
     /**
      * （1）worker 进程初始化。
     */
     g_xmn_process_type = XMN_PROCESS_WORKER;
-    r = xmn_worker_process_init(inum, strprocname);
+    r = XMNWorkerProcessInit(kNum, kstrProcName);
     if (r != 0)
     {
         return -1;
@@ -207,7 +207,7 @@ static int xmn_worker_process_cycle(const size_t &inum, const std::string &strpr
     return 0;
 }
 
-static int xmn_worker_process_init(const size_t &inum, const std::string &kstrProcName)
+static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcName)
 {
     /**
      * （1）解锁屏蔽的信号。
@@ -216,7 +216,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     sigemptyset(&set);
     if (sigprocmask(SIG_SETMASK, &set, nullptr) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "xmn_worker_process_init 在编号为 %d 的子进程中初始化失败！", inum);
+        xmn_log_info(XMN_LOG_ALERT, errno, "XMNWorkerProcessInit 在编号为 %d 的子进程中初始化失败！", kNum);
         return -1;
     }
 
@@ -224,12 +224,12 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
      * （2）创建线程池。
     */
     XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    size_t threadpoolsize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
+    const size_t kThreadPoolSize = atoi(pconfig->GetConfigItem("ThreadPoolSize", "100").c_str());
 
     /**
      * TODO：这里需要判断该函数的返回值。
     */
-    if (g_threadpool.Create(threadpoolsize))
+    if (g_threadpool.Create(kThreadPoolSize))
     {
         return -2;
     }
@@ -247,7 +247,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
      * （4）初始化 epoll ，并向 epoll 添加监听事件。
      * TODO：这里需要判断该函数的返回值。
     */
-    int r = g_socket.EpollInit();
+    const int r = g_socket.EpollInit();
     if (r != 0)
     {
         return -4;
@@ -256,7 +256,7 @@ static int xmn_worker_process_init(const size_t &inum, const std::string &kstrPr
     /**
      * （5）设置进程标题。
     */
-    xmn_setproctitle(kstrProcName);
+    XMNSetProcTitle(kstrProcName);
 
     xmn_log_info(XMN_LOG_NOTICE, 0, "%s %d 启动成功！", kstrProcName.c_str(), g_xmn_pid);
     return 0;

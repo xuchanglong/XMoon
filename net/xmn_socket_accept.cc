@@ -45,12 +45,13 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
 
         /**
          * （3）对 accept4 或者  accept 的返回值进行判断处理。
-        *       非0     有 client 连入。
+        *       非 0    有 client 连入。
         *       -1      有错误发生，通过 errno 获取报错代码。
         */
         if (linkfd == -1)
         {
             errnotmp = errno;
+
             /**
              *  对于 accept、send 和 recv 而言，事件未发生时， errno 通常被设置为 EAGAIN 
              *  或者 EWOULDBLOCK（期待堵塞），说明 accept 没有准备好，直接返回即可。 
@@ -60,6 +61,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
                 return;
             }
             logerrorlevel = XMN_LOG_ALERT;
+
             /**
              * 该错误被描述为“software caused connection abort”，即“软件引起的连接中止”。
              * 原因在于当服务和客户进程在完成用于 TCP 连接的“三次握手”后，客户 TCP 却发送了一个 RST （复位）分节。
@@ -73,6 +75,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
                 logerrorlevel = XMN_LOG_ERR;
             }
             xmn_log_info(logerrorlevel, errnotmp, "EventAcceptHandler 中 accept4 或者 accept 执行失败！");
+
             /**
              * accept4() 系统没有实现。
             */
@@ -102,8 +105,10 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             }
             return;
         }
+
         /**
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
+         * 从连接池中取走一个连接。
         */
         pconnsockinfo_new = PutOutConnSockInfofromPool(linkfd);
         if (pconnsockinfo_new == nullptr)
@@ -117,8 +122,10 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             }
             return;
         }
+
         /**
          * 执行到这里说明已经成功地从连接池中拿到了一个连接。
+         * 将 client 信息拷贝到 sockaddrinfo 中。
         */
         memcpy(&pconnsockinfo_new->sockaddrinfo, &addr, sizeof(struct sockaddr) * 1);
 
@@ -127,28 +134,32 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             if (SetNonBlocking(linkfd) != 0)
             {
                 /**
-                 * 回收连接至连接池并关闭 socket 。
+                 * 立即回收连接至连接池并关闭 socket 。
                 */
                 CloseConnection(pconnsockinfo_new);
                 return;
             }
         }
+
         /**
-         * 连接对象和监听对象关联。
+         * 连接 socket 对应的连接对象和监听对象关联。
         */
         pconnsockinfo_new->plistensockinfo = pconnsockinfo->plistensockinfo;
+
         /**
-         * 标记该连接是可写的。
+         * 标记该连接是可读和可写的。
         */
-        //pconnsockinfo_new->w_ready = 1;
+        pconnsockinfo_new->r_ready = 1;
+        pconnsockinfo_new->w_ready = 1;
+
         /**
          *  设置数据来时读处理函数。
         */
         pconnsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
         pconnsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;
+
         /**
         * （4）将新建立的连接加入到 epoll 的红黑树中。
-        *   读写标记设置为 1 和 0 的目的是让 client 首先向 server 发送消息。
         */
         int r = EpollOperationEvent(linkfd,
                                     EPOLL_CTL_ADD,

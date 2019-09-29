@@ -67,7 +67,7 @@ extern size_t g_argc;
 
 /**
  * 新搬家的环境变量的存放位置。
- * 在 xmn_setproctitle_init 中申请内存。
+ * 在 XMNSetProcTitleInit 中申请内存。
 */
 extern char *g_penvmem;
 
