@@ -101,7 +101,7 @@ int main(int argc, char * const *argv)
     /**
      * （5）初始化信号模块。
     */
-    if (XMNSignalInit() == -1)
+    if (XMNSignalInit() != 0)
     {
         exitcode = 2;
         goto lblexit;

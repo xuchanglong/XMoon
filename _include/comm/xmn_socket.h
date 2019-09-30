@@ -112,7 +112,7 @@ public:
     /**
      * 保存 client 地址信息用的。
     */
-    struct sockaddr sockaddrinfo;
+    struct sockaddr clientsockaddrinfo;
 
     /**
      * 读准备好标志。
@@ -138,7 +138,7 @@ public:
      * 存储该连接对应的 accept 返回的 socket 的触发事件类型。
      * 包括 EPOLLIN、EPOLLRDHUP 等。 
     */
-    uint32_t eventtype;
+    uint32_t events;
 
     /**
      * 业务逻辑处理的互斥量。
@@ -417,8 +417,7 @@ private:
 
     /**
      *  @function    打开指定数量的监听 socket 并进行相关配置。
-     *  @paras  pport  要监听的端口号的数组。
-     *                  listenportcount   监听端口号的数量。
+     *  @paras  none 。
      *  @return 0   操作成功。
      *          -1  sokcet 创建失败。
      *          -2  setsockopt 设置失败。
@@ -427,7 +426,7 @@ private:
      *          -5  listen  监听失败。
      *  @time   2019-08-25
     */
-    int OpenListenSocket(const size_t *const pport, const size_t &listenportcount);
+    int OpenListenSocket();
 
     /**
      *  @function   关闭监听 socket 。
@@ -479,12 +478,10 @@ private:
     /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
-     *          pbuff   保存接收到的数据。
-     *          kBuffLen    接收的数据的字节数。
      * @author  xuchanglong
      * @time    2019-08-31
     */
-    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &kBuffLen);
+    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    判断该包是否正常以及为接收包体做准备。
@@ -529,13 +526,13 @@ private:
 
     /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
-     * @paras   isockfd accept 返回的 socket 。
+     * @paras   kSockFd accept 返回的 socket 。
      * @return  绑定好的连接池中的一个连接。
      *          nullptr 连接池中的连接为空。
      * @author  xuchanglong
      * @time    2019-09-19
     */
-    XMNConnSockInfo *PutOutConnSockInfofromPool(const int &kSockfd);
+    XMNConnSockInfo *PutOutConnSockInfofromPool(const int &kSockFd);
 
     /**
      * @function    将连接归还至连接池中。

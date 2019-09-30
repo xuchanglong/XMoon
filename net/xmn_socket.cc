@@ -60,7 +60,7 @@ int XMNSocket::Initialize()
     /**
      * 开启指定的端口号。
     */
-    return OpenListenSocket(pportsum_, listenport_count_);
+    return OpenListenSocket();
 }
 
 int XMNSocket::InitializeWorker()
@@ -150,7 +150,7 @@ int XMNSocket::EndWorker()
     return 0;
 }
 
-int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListenPortCount)
+int XMNSocket::OpenListenSocket()
 {
     int exitcode = 0;
     int r = 0;
@@ -158,7 +158,7 @@ int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListe
     /**
      * 存放创建的监听 socket 。
     */
-    int *psocksum = new int[kListenPortCount]();
+    int *psocksum = new int[listenport_count_]();
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
@@ -171,7 +171,7 @@ int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListe
     /**
      * 对每一个 port 创建一个 socket 。
     */
-    for (size_t i = 0; i < kListenPortCount; i++)
+    for (size_t i = 0; i < listenport_count_; i++)
     {
         /**
          *  创建连接 socket 。
@@ -210,7 +210,7 @@ int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListe
         /**
          * 绑定 IP 和 port 。
         */
-        addr.sin_port = htons(kpPort[i]);
+        addr.sin_port = htons(pportsum_[i]);
         r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(struct sockaddr));
         if (r != 0)
         {
@@ -235,16 +235,16 @@ int XMNSocket::OpenListenSocket(const size_t *const kpPort, const size_t &kListe
         */
         XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
-        pitem->port = kpPort[i];
+        pitem->port = pportsum_[i];
         pitem->pconnsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", kpPort[i]);
+        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", pportsum_[i]);
     }
     return 0;
 
 exitlabel:
-    for (size_t i = 0; i < kListenPortCount; i++)
+    for (size_t i = 0; i < listenport_count_; i++)
     {
         close(psocksum[i]);
     }
@@ -277,26 +277,26 @@ int XMNSocket::ReadConf()
     /**
      * （1）获取 port 的数量。
     */
-    listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount", "59002").c_str());
+    listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount", "1").c_str());
     if (listenport_count_ <= 0)
     {
-        return 1;
+        return -1;
     }
 
     /**
      * （2）获取所有的 port 。
     */
     pportsum_ = new size_t[listenport_count_];
-    std::string str;
+    std::string str = "";
     std::stringstream s;
-    for (size_t i = 0; i < listenport_count_; i++)
+    for (size_t i = 0; i < listenport_count_; ++i)
     {
         s << i;
         str = "ListenPort" + s.str();
         pportsum_[i] = atoi(pconfig->GetConfigItem(str).c_str());
         if (pportsum_[i] <= 0)
         {
-            return 2;
+            return -2;
         }
         s.clear();
         s.str("");
@@ -308,16 +308,16 @@ int XMNSocket::ReadConf()
     worker_connection_count_ = atoi(pconfig->GetConfigItem("WorkerConnections", "1024").c_str());
     if (worker_connection_count_ <= 0)
     {
-        return 3;
+        return -3;
     }
 
     /**
      * （4）获取连接回收的等待时间。
     */
-    g_socket.recyconnsockinfowaittime_ = atoi(pconfig->GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
-    if (g_socket.recyconnsockinfowaittime_ <= 0)
+    recyconnsockinfowaittime_ = atoi(pconfig->GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
+    if (recyconnsockinfowaittime_ <= 0)
     {
-        return 4;
+        return -4;
     }
 
     return 0;
@@ -404,6 +404,7 @@ int XMNSocket::EpollInit()
         /**
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
+        pconnsockinfo->r_ready = 1;
         pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
 
         /*
@@ -490,14 +491,14 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     {
         ev.events = kEvents;
         //ev.data.ptr = (void *)pconnsockinfo;
-        pconnsockinfo->eventtype = kEvents;
+        pconnsockinfo->events = kEvents;
     }
     else if (kOption == EPOLL_CTL_MOD)
     {
         /**
          * 恢复标记。
         */
-        ev.events = pconnsockinfo->eventtype;
+        ev.events = pconnsockinfo->events;
         if (kFlag == 0)
         {
             /**
@@ -524,7 +525,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
             return -3;
         }
 
-        pconnsockinfo->eventtype = ev.events;
+        pconnsockinfo->events = ev.events;
     }
     else if (kOption == EPOLL_CTL_DEL)
     {
@@ -632,6 +633,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          *  获取该事件对应的连接的相关信息。
         */
         pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + i)->data.ptr;
+
         /*
         instance = (uintptr_t)pconnsockinfo & 1;
         pconnsockinfo = (XMNConnSockInfo *)((uintptr_t)pconnsockinfo & (uintptr_t)~1);
@@ -661,7 +663,9 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
             continue;
         }
         */
+
         /**
+         * 因为采用了延时回收连接的方案，所以该事件对应的连接肯定是原来的连接。
          * 程序走到这里，可以认为事件是非过期事件。
          * 确定事件类型，根据不同的类型来调用不同的处理函数。
         */
@@ -771,7 +775,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     while (!g_isquit)
     {
         /**
-         * （2）等待待发送的消息。
+         * （2）等待队列中有待发送的消息。
         */
         if (sem_wait(&psocket->senddata_queue_sem_) != 0)
         {

@@ -61,7 +61,7 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
 void XMNMasterProcessCycle()
 {
     /**
-     * （1）屏蔽各种信号。
+     * （1）添加进程的信号屏蔽掩码，即：当前堵塞而不能递送给该进程的信号集。
     */
     sigset_t set;
     sigemptyset(&set);
@@ -77,6 +77,10 @@ void XMNMasterProcessCycle()
     sigaddset(&set, SIGTERM);
     sigaddset(&set, SIGQUIT);
 
+    /**
+     * sigprocmask 用于检测或者修改当前的信号集。
+     * 参数 SIG_BLOCK 代表 set 的值会被加入到当前屏蔽信号的掩码中。
+    */
     if (sigprocmask(SIG_BLOCK, &set, nullptr) == -1)
     {
         xmn_log_info(XMN_LOG_ALERT, errno, "XMNMasterProcessCycle()中 sigprocmask 函数执行失败！");
@@ -210,7 +214,7 @@ static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProc
 static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcName)
 {
     /**
-     * （1）解锁屏蔽的信号。
+     * （1）解锁被屏蔽的信号。
     */
     sigset_t set;
     sigemptyset(&set);

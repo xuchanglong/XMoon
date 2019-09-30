@@ -15,7 +15,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
     */
     struct sockaddr addr;
     socklen_t addrlen = sizeof(struct sockaddr);
-    memset(&addr, 0, sizeof(struct sockaddr) * 1);
+    memset(&addr, 0, addrlen * 1);
     static bool isuseaccept4 = true;
     int linkfd = -1;
     int listenfd = pconnsockinfo->plistensockinfo->fd;
@@ -44,7 +44,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         }
 
         /**
-         * （3）对 accept4 或者  accept 的返回值进行判断处理。
+         * （3）对 accept4 或者 accept 的返回值进行判断处理。
         *       非 0    有 client 连入。
         *       -1      有错误发生，通过 errno 获取报错代码。
         */
@@ -125,9 +125,9 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
 
         /**
          * 执行到这里说明已经成功地从连接池中拿到了一个连接。
-         * 将 client 信息拷贝到 sockaddrinfo 中。
+         * 将 client 信息拷贝到 clientsockaddrinfo 中。
         */
-        memcpy(&pconnsockinfo_new->sockaddrinfo, &addr, sizeof(struct sockaddr) * 1);
+        memcpy(&pconnsockinfo_new->clientsockaddrinfo, &addr, sizeof(struct sockaddr) * 1);
 
         if (!isuseaccept4)
         {

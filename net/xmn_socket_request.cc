@@ -15,7 +15,7 @@ void XMNSocket::WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo)
     /**
      * （1）从接收缓冲区中取数据。
     */
-    ssize_t recvcount = RecvData(pconnsockinfo, pconnsockinfo->precvdatastart, pconnsockinfo->recvdatalen);
+    ssize_t recvcount = RecvData(pconnsockinfo);
     if (recvcount <= 0)
     {
         return;
@@ -108,9 +108,11 @@ void XMNSocket::WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo)
     return;
 }
 
-ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo, char *pbuff, const size_t &kBuffLen)
+ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
 {
     ssize_t n = 0;
+    char *pbuff = pconnsockinfo->precvdatastart;
+    const size_t kBuffLen = pconnsockinfo->recvdatalen;
     /**
      * （1）接收数据。
     */
@@ -196,7 +198,7 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
      * （1）判断该包是否正常,若不正常，则直接将状态机复原为初始状态。
     */
     unsigned short pkglen = 0;
-    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)pconnsockinfo->dataheader;
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)pconnsockinfo->precvdatastart;
     pkglen = ntohs(ppkgheader->pkglen);
     if ((pkglen < kPkgHeaderLen_) || (pkglen > PKG_MAX_LEN))
     {
