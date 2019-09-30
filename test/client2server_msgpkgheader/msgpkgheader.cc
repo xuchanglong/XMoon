@@ -15,6 +15,7 @@
 int connectserver(int &clientfd, const std::string &strserverip, const size_t &port);
 void senddata(int clientfd, char *buf, const size_t &buflen);
 void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
+int recvdata(int sockfd, char *precvdata);
 
 int main()
 {
@@ -55,13 +56,26 @@ int main()
     ppkgheader->crc32 = htonl(ppkgheader->crc32);
 
     /**
-     * （3）循环发送数据。
+     * （3）循环收发数据。
     */
     while (true)
     {
         senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
         std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
+
+        char recvbuf[200] = {0};
+        if (recvdata(clientfd, recvbuf) <= 0)
+        {
+            std::cout << "数据接收失败。" << std::endl;
+        }
+
+        XMNPkgHeader *ppkgheader = (XMNPkgHeader *)recvbuf;
+        RegisterInfo *pregisterinfo = (RegisterInfo *)(recvbuf + pkgheaderlen);
+
+        std::cout << "len：" << ntohs(ppkgheader->pkglen) << std::endl;
+        std::cout << "username：" << pregisterinfo->username << std::endl;
+        std::cout << "password：" << pregisterinfo->password << std::endl;
         sleep(1);
     }
     close(clientfd);
@@ -133,4 +147,78 @@ void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int
               << ",error code is \"" << err << "\""
               << ",error info is \"" << strerror(err) << "\""
               << "." << std::endl;
+}
+
+int recvdata(int sockfd, char *precvdata)
+{
+    if (precvdata == nullptr)
+    {
+        return -2;
+    }
+    const size_t kPkgHeaderLen = sizeof(XMNPkgHeader);
+    char *pbuftmp = precvdata;
+    size_t recvlen = kPkgHeaderLen;
+
+    /**
+     * （1）接收包头数据。
+    */
+    int recvdatacount = recv(sockfd, pbuftmp, recvlen, 0);
+    if (recvdatacount < 0)
+    {
+        return -1;
+    }
+
+    if (recvdatacount < recvlen)
+    {
+        /**
+         * 包头没有收全。
+        */
+lblrecvpkgheader:
+        pbuftmp += recvdatacount;
+        recvlen -= recvdatacount;
+        /**
+         * 继续接收包头。
+        */
+        recvdatacount = recv(sockfd, pbuftmp, recvlen, 0);
+        if (recvdatacount < 0)
+        {
+            return -1;
+        }
+        else if (recvdatacount < recvlen)
+        {
+            goto lblrecvpkgheader;
+        }
+        goto lblrecvpkgbody1;
+    }
+
+    /**
+     * （2）开始接收包体数据。
+    */
+lblrecvpkgbody1:
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)precvdata;
+    const size_t kPkgLen = ntohs(ppkgheader->pkglen);
+    if (kPkgLen == kPkgHeaderLen)
+    {
+        /**
+         * 此包数据只包含一个包头。
+         * 接收数据完毕！
+        */
+        return kPkgLen;
+    }
+    recvlen = kPkgLen - kPkgHeaderLen;
+    pbuftmp = precvdata + kPkgHeaderLen;
+lblrecvpkgbody2:
+    recvdatacount = recv(sockfd, pbuftmp, recvlen, 0);
+    if (recvdatacount < 0)
+    {
+        return -1;
+    }
+    if (recvdatacount < recvlen)
+    {
+        pbuftmp += recvdatacount;
+        recvlen -= recvdatacount;
+        goto lblrecvpkgbody2;
+    }
+
+    return kPkgLen;
 }

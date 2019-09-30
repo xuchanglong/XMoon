@@ -120,7 +120,7 @@ int XMNSocketLogic::HandleRegister(
     */
     PutInSendDataQueue(psenddata);
 
-    xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
+    //xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
     return 0;
 }
 
