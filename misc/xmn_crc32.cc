@@ -46,12 +46,17 @@ void XMNCRC32::InitCRC32Table()
 	}
 }
 
-int XMNCRC32::GetCRC(unsigned char *buffer, unsigned int dwSize)
+int XMNCRC32::GetCRC32(unsigned char *buffer, const size_t &kSize)
 {
-	unsigned int crc(0xffffffff);
-	int len;
+	if ((buffer == nullptr) || (kSize == 0))
+	{
+		return 0;
+	}
 
-	len = dwSize;
+	unsigned int crc(0xffffffff);
+	size_t len;
+
+	len = kSize;
 	/**
 	 * 对每一个字节的数据进行异或。
 	*/

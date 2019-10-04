@@ -53,29 +53,36 @@ int main()
     pregisterinfo->type = 0;
     std::strcpy(pregisterinfo->username, "xuchanglong");
     std::strcpy(pregisterinfo->password, "123456");
-    ppkgheader->crc32 = pcrc32->GetCRC((unsigned char *)pregisterinfo, registerinfolen);
+    ppkgheader->crc32 = pcrc32->GetCRC32((unsigned char *)pregisterinfo, registerinfolen);
     ppkgheader->crc32 = htonl(ppkgheader->crc32);
+
+    const size_t kRegisterCRC32 = ppkgheader->crc32;
+    const size_t kPingCRC32 = 0;
+    char recvbuf[200] = {0};
+    XMNPkgHeader *ppkgheader_tmp = nullptr;
 
     /**
      * （3）循环收发数据。
     */
     while (true)
     {
+        std::cout << std::endl;
         /**
          * 注册指令。
         */
         ppkgheader->msgcode = htons(CMD_LOGIC_REGISTER);
+        ppkgheader->crc32 = kRegisterCRC32;
+        ppkgheader->pkglen = htons(pkgheaderlen + registerinfolen);
         senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
         std::cout << "已发送 " << senddatacount << " 个注册包。" << std::endl;
 
-        char recvbuf[200] = {0};
-        if (recvdata(clientfd, recvbuf) <= 0)
+        if (recvdata(clientfd, recvbuf) < 0)
         {
             std::cout << "数据接收失败。" << std::endl;
         }
 
-        XMNPkgHeader *ppkgheader = (XMNPkgHeader *)recvbuf;
+        ppkgheader_tmp = (XMNPkgHeader *)recvbuf;
         RegisterInfo *pregisterinfo = (RegisterInfo *)(recvbuf + pkgheaderlen);
 
         std::cout << "len：" << ntohs(ppkgheader->pkglen) << std::endl;
@@ -86,18 +93,25 @@ int main()
          * 心跳包。
         */
         ppkgheader->msgcode = htons(CMD_LOGIC_PING);
-        senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
+        ppkgheader->crc32 = kPingCRC32;
+        ppkgheader->pkglen = htons(pkgheaderlen);
+        senddata(clientfd, sendbuf, pkgheaderlen);
         sendping++;
         std::cout << "已发送 " << sendping << " 个心跳包。" << std::endl;
 
-        if (recvdata(clientfd, recvbuf) <= 0)
+        if (recvdata(clientfd, recvbuf) < 0)
         {
             std::cout << "数据接收失败。" << std::endl;
         }
-        ppkgheader = (XMNPkgHeader *)recvbuf;
+        ppkgheader_tmp = (XMNPkgHeader *)recvbuf;
         if (ntohs(ppkgheader->msgcode) == CMD_LOGIC_PING)
         {
             std::cout << "心跳包接收成功。" << std::endl;
+        }
+
+        if (sendping > 5)
+        {
+            break;
         }
 
         sleep(10);

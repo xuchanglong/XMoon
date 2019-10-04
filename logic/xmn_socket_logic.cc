@@ -97,7 +97,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     //c、包体
     char *ppkgbody_send = psenddata + kMsgHeaderLen_ + kPkgHeaderLen_;
     memcpy(ppkgbody_send, pregisterinfo, sizeof(RegisterInfo));
-    ppkgheader_send->crc32 = htonl(pcrc32->GetCRC((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
+    ppkgheader_send->crc32 = htonl(pcrc32->GetCRC32((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
 
     /**
      * （6）将可写标志加入 epoll 红黑树中。
@@ -161,7 +161,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     {
         ppkgbody = pmsgbuf + kMsgHeaderLen_ + kPkgHeaderLen_;
         int crc32src = ntohl(ppkgheader->crc32);
-        int crc32 = SingletonBase<XMNCRC32>::GetInstance()->GetCRC((unsigned char *)ppkgbody, pkgbodylen);
+        int crc32 = SingletonBase<XMNCRC32>::GetInstance()->GetCRC32((unsigned char *)ppkgbody, pkgbodylen);
         if (crc32 != crc32src)
         {
             xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc 中 crc32 校验失败，丢弃数据。");
@@ -210,7 +210,7 @@ lblexit:
 
 int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen)
 {
-    if ((pmsgheader == nullptr) || (ppkgbody == nullptr))
+    if (pmsgheader == nullptr)
     {
         return -1;
     }
@@ -225,7 +225,7 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
 
     SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);
 
-    xmn_log_stderr(0, "成功地收到了心跳包并发送。");
+    //xmn_log_stderr(0, "成功地收到了心跳包并发送。");
     return 0;
 }
 
