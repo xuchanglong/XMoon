@@ -19,4 +19,5 @@ clean:
 	rm -rf app/link_obj/*d app/dep/*d xmoon
 	rm -rf signal/*.gch app/*.gch
 	rm -rf logic/*.gch
+	rm -rf app/link_obj/*o app/dep/*o
 
