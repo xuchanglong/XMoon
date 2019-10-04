@@ -20,6 +20,7 @@
 #include <vector>
 #include <list>
 #include <queue>
+#include <map>
 
 using CXMNSocket = class XMNSocket;
 using XMNEventHandler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -215,6 +216,16 @@ public:
      * 连接放入回收链表时的时间。
     */
     time_t putinrecylisttime;
+
+    /**************************************************************************************
+     * 
+     ***************** 和心跳包相关的变量 *****************
+     * 
+    **************************************************************************************/
+    /**
+     * 上次发送心跳包的时间。
+    */
+    time_t lastpingtime;
 };
 
 /****************************************************
@@ -357,10 +368,10 @@ public:
      * @time    2019-08-27
     */
     int EpollOperationEvent(const int &kSockFd,
-                                       const uint32_t &kOption,
-                                       const uint32_t &kEvents,
-                                       const int &kFlag,
-                                       XMNConnSockInfo *pconnsockinfo);
+                            const uint32_t &kOption,
+                            const uint32_t &kEvents,
+                            const int &kFlag,
+                            XMNConnSockInfo *pconnsockinfo);
 
     /**
      * @function    epoll 等待接收和处理事件。
@@ -394,6 +405,13 @@ public:
     */
     virtual void ThreadRecvProcFunc(char *pmsgbuf);
 
+    /**************************************************************************************
+     * 
+     ***************** 与心跳监控相关的变量 *****************
+     * 
+    **************************************************************************************/
+    virtual int PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime);
+
 protected:
     /**
      * @function    发送数据。
@@ -403,6 +421,29 @@ protected:
      * @time    2019-09-25
     */
     int PutInSendDataQueue(char *psenddata);
+
+    /**
+     * @function    向 client 发送消息。
+     * @paras   none 。
+     * @return  > 0 发送成功，返回值就是已发送的数据的字节数。
+     *          0   发送超时，对端已关闭。
+     *              发送的数据本身是0个字节。
+     *          -1  发送缓冲区已满。
+     *          -2  未知错误。
+     * @author  xuchanglong
+     * @time    2019-09-26
+    */
+    int SendData(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    sever 端主动地关闭 socket 的函数。
+     * @paras   pconnsockinfo   待关闭的连接信息。
+     * @return  0   操作成功。
+     *          -1  形参为空指针。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    int ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo);
 
 private:
     /**
@@ -595,19 +636,6 @@ private:
     char *PutOutSendDataFromQueue();
 
     /**
-     * @function    向 client 发送消息。
-     * @paras   none 。
-     * @return  > 0 发送成功，返回值就是已发送的数据的字节数。
-     *          0   发送超时，对端已关闭。
-     *              发送的数据本身是0个字节。
-     *          -1  发送缓冲区已满。
-     *          -2  未知错误。
-     * @author  xuchanglong
-     * @time    2019-09-26
-    */
-    int SendData(XMNConnSockInfo *pconnsockinfo);
-
-    /**
      * @function    释放发送队列中的消息。
      * @paras   none 。
      * @return  0   操作成功。
@@ -615,6 +643,75 @@ private:
      * @time    2019-09-26
     */
     int FreeSendDataQueue();
+
+    /**************************************************************************************
+     * 
+     ***************** 与心跳监控相关的变量 **************** 
+     * 
+    **************************************************************************************/
+    /**
+     * @function    将指定的连接信息放入 multimap 中，等待心跳监控。
+     * @paras   pconnsockinfo   指定的连接的信息。
+     * @return  0   操作成功。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    int PutInConnSockInfo2PingMultiMap(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    从 multimap 中获取最早的时间，即：头部元素。
+     * @paras   none 。
+     * @return  最早的时间。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    time_t GetEarliestTime();
+
+    /**
+     * @function    对心跳包进行监控的执行线程。
+     * @paras   pthreadinfo 该线程的相关信息。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    static void *PingThread(void *pthreadinfo);
+
+    /**
+     * @function    从监控 map 中找到比指定 time 最早的消息头。
+     * @paras   待比较的时间。
+     * @return  满足条件的消息。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    XMNMsgHeader *GetOverTimeMsgHeader(const time_t &timetmp);
+
+    /**
+     * @function    从监控 map 中移除最早的时间并返回该消息。
+     * @paras   none 。
+     * @return  最早时间的消息。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    XMNMsgHeader *RemoveFirstMsgHeader();
+
+    /**
+     * @function    从心跳监控的 multimap 中删除指定的消息头。
+     * @paras   pconnsockinfo   待删除的连接。
+     * @return  0   操作成功。
+     *          -1  形参为空指针。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    int PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    清空并释放心跳监控 multimap 。
+     * @paras   none 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-10-04
+    */
+    void FreePingMultiMap();
 
 protected:
     /**
@@ -626,6 +723,16 @@ protected:
      * 包头的大小。
     */
     const size_t kPkgHeaderLen_;
+
+    /**************************************************************************************
+     * 
+     ***************** 与心跳监控相关的变量 **************** 
+     * 
+    **************************************************************************************/
+    /**
+     * 心跳超时时间。
+    */
+    size_t pingwaittime_;
 
 private:
     /**
@@ -737,6 +844,36 @@ private:
      * 与发送消息操作相关的信号量。
     */
     sem_t senddata_queue_sem_;
+
+    /**************************************************************************************
+     * 
+     ***************** 与心跳监控相关的变量 **************** 
+     * 
+    **************************************************************************************/
+    /**
+     * 标记是否开启心跳包功能。
+    */
+    bool pingenable_;
+
+    /**
+     * 与心跳监控的 multimap 相关的互斥量。
+    */
+    pthread_mutex_t ping_multimap_mutex_;
+
+    /**
+     * 被心跳监控的连接信息的 multimap 。
+    */
+    std::multimap<time_t, XMNMsgHeader *> ping_multimap_;
+
+    /**
+     * ping_multimap_ 元素个数。
+    */
+    std::atomic<size_t> ping_multimap_count_;
+
+    /**
+     * ping_multimap_ 中最早时间的值。
+    */
+    time_t ping_multimap_headtime_;
 };
 
 #endif

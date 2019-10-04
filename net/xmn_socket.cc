@@ -30,6 +30,13 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
     queue_senddata_count_ = 0;
     recyconnsockinfowaittime_ = 0;
     memset(wait_events_, 0, sizeof(struct epoll_event) * XMN_EPOLL_WAIT_MAX_EVENTS);
+
+    /**
+     * 心跳监控相关变量。
+    */
+    pingenable_ = false;
+    pingwaittime_ = 0;
+    ping_multimap_count_ = 0;
 }
 
 XMNSocket::~XMNSocket()
@@ -135,10 +142,11 @@ int XMNSocket::EndWorker()
     vthreadinfo_.clear();
 
     /**
-     * （2）回收线程池、发送消息队列。
+     * （2）回收线程池、发送消息队列和心跳监控 multimap 。
     */
     FreeConnSockInfoPool();
     FreeSendDataQueue();
+    FreePingMultiMap();
 
     /**
      * （3）销毁所有的互斥量、信号量。
@@ -319,6 +327,25 @@ int XMNSocket::ReadConf()
     {
         return -4;
     }
+
+    /**
+     * （5）是否开启心跳监控。
+    */
+    pingenable_ = atoi(pconfig->GetConfigItem("PingEnable", "0").c_str());
+    if (pingenable_ <= 0)
+    {
+        return -5;
+    }
+
+    /**
+     * （6）心跳间隔时间。
+    */
+    pingwaittime_ = atoi(pconfig->GetConfigItem("PingWaitTime", "30").c_str());
+    if (pingwaittime_ <= 0)
+    {
+        return -5;
+    }
+    pingwaittime_ = pingwaittime_ >= 5 ? pingwaittime_ : 5;
 
     return 0;
 }
@@ -964,5 +991,30 @@ int XMNSocket::FreeSendDataQueue()
         senddata_queue_.pop();
         pmemory->FreeMemory(ptmp);
     }
+    return 0;
+}
+
+int XMNSocket::ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo)
+{
+    if (pconnsockinfo == nullptr)
+    {
+        return -1;
+    }
+
+    if (pingenable_)
+    {
+        PutOutMsgHeaderFromMultiMap(pconnsockinfo);
+    }
+    if (pconnsockinfo->fd != -1)
+    {
+        close(pconnsockinfo->fd);
+        pconnsockinfo->fd = -1;
+    }
+    if (pconnsockinfo->throwepollsendcount > 0)
+    {
+        --pconnsockinfo->throwepollsendcount;
+    }
+    PutInConnSockInfo2RecyList(pconnsockinfo);
+
     return 0;
 }

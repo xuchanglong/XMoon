@@ -171,6 +171,15 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             CloseConnection(pconnsockinfo_new);
             return;
         }
+
+        /**
+        * （5）将该连接信息放入心跳监控 multimap 中。
+        */
+        if (pingenable_)
+        {
+            PutInConnSockInfo2PingMultiMap(pconnsockinfo_new);
+        }
+
         break;
     } while (true);
 

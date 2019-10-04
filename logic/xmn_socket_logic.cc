@@ -4,6 +4,7 @@
 #include "xmn_func.h"
 #include "xmn_crc32.h"
 #include "xmn_lockmutex.hpp"
+
 #include "netinet/in.h"
 #include <string.h>
 
@@ -11,8 +12,7 @@
  * TODO：此处为什么函数指针必须是 XMNSocketLogic 作用域下的。
  * 定义一个函数指针类型，该函数指针仅仅指向符合要求的 XMNSocketLogic 的成员函数。
 */
-using MsgHandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
-                                           XMNMsgHeader *pmsgheader,
+using MsgHandler = int (XMNSocketLogic::*)(XMNMsgHeader *pmsgheader,
                                            char *ppkgbody,
                                            size_t pkgbodylen);
 
@@ -21,7 +21,7 @@ using MsgHandler = int (XMNSocketLogic::*)(XMNConnSockInfo *pconnsockinfo,
 */
 static const MsgHandler msghandlerall[] =
     {
-        nullptr,                         //【0】
+        &XMNSocketLogic::HandlePing,     //【0】
         nullptr,                         //【1】
         nullptr,                         //【2】
         nullptr,                         //【3】
@@ -48,7 +48,6 @@ int XMNSocketLogic::Initialize()
 }
 
 int XMNSocketLogic::HandleRegister(
-    XMNConnSockInfo *pconnsockinfo,
     XMNMsgHeader *pmsgheader,
     char *ppkgbody,
     size_t pkgbodylen)
@@ -56,7 +55,7 @@ int XMNSocketLogic::HandleRegister(
     /**
      * （1）判断数据包的合法性。
      */
-    if ((pconnsockinfo == nullptr) || (pmsgheader == nullptr) || (ppkgbody == nullptr))
+    if ((pmsgheader == nullptr) || (ppkgbody == nullptr))
     {
         return -1;
     }
@@ -65,7 +64,7 @@ int XMNSocketLogic::HandleRegister(
     {
         return -2;
     }
-
+    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
     /*
      * （2）对该业务逻辑处理进行加锁。
      * 解释：对于同一个用户，可能同时发送来多个请求过来，造成多个线程同时为该 用户服务。
@@ -125,7 +124,6 @@ int XMNSocketLogic::HandleRegister(
 }
 
 int XMNSocketLogic::HandleLogin(
-    XMNConnSockInfo *pconnsockinfo,
     XMNMsgHeader *pmsgheader,
     char *ppkgbody,
     size_t pkgbodylen)
@@ -210,10 +208,79 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
         xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgcode = %d 消息码找不到对应的处理函数。", msgcode);
         goto lblexit;
     }
-    (this->*msghandlerall[msgcode])(pconnsockinfo, pmsgheader, (char *)ppkgbody, pkgbodylen);
+    (this->*msghandlerall[msgcode])(pmsgheader, (char *)ppkgbody, pkgbodylen);
 
 lblexit:
     //delete pconnsockinfo;
     //pconnsockinfo = nullptr;
     return;
+}
+
+int XMNSocketLogic::HandlePing(
+    XMNMsgHeader *pmsgheader,
+    char *ppkgbody,
+    size_t pkgbodylen)
+{
+    if ((pmsgheader == nullptr) || (ppkgbody == nullptr))
+    {
+        return -1;
+    }
+    if (pkgbodylen != 0)
+    {
+        return -2;
+    }
+
+    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
+    pconnsockinfo->lastpingtime = time(nullptr);
+
+    SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);
+
+    xmn_log_stderr(0, "成功地收到了心跳包并发送。");
+    return 0;
+}
+
+void XMNSocketLogic::SendNoBodyData2Client(XMNMsgHeader *pmsgheader, const uint16_t &kMsgCode)
+{
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    char *psenddata = (char *)pmemory->AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_, false);
+
+    memcpy(psenddata, pmsgheader, sizeof(char) * kMsgHeaderLen_);
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(psenddata + kMsgHeaderLen_);
+
+    ppkgheader->pkglen = htons(kPkgHeaderLen_);
+    ppkgheader->msgcode = htons(kMsgCode);
+    ppkgheader->crc32 = 0;
+
+    PutInSendDataQueue(psenddata);
+
+    return;
+}
+
+int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime)
+{
+    if (pmsgheader == nullptr)
+    {
+        return -1;
+    }
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+    if (pmsgheader->currsequence == pconnsockinfo->currsequence)
+    {
+        /**
+         * 此连接没有断开。
+        */
+        if ((currenttime - pconnsockinfo->lastpingtime) > (pingwaittime_ * 3 + 10))
+        {
+            xmn_log_stderr(0, "超时不发心跳包，连接被关闭。");
+            ActivelyCloseSocket(pconnsockinfo);
+        }
+    }
+    else
+    {
+        /**
+         * 此连接已经断开。
+        */
+        pmemory->FreeMemory(pmsgheader);
+    }
 }
