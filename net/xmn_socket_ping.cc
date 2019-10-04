@@ -47,6 +47,9 @@ void *XMNSocket::PingThread(void *pthreadinfo)
             current_time = time(nullptr);
             if (psocket->ping_multimap_headtime_ < current_time)
             {
+                /**
+                 * 初步判断出存在某个连接有心跳通信超时的情况。
+                */
                 std::list<XMNMsgHeader *> timeoutpinglist;
                 XMNMsgHeader *pmsgheadertmp = nullptr;
 
@@ -55,6 +58,9 @@ void *XMNSocket::PingThread(void *pthreadinfo)
                 {
                     xmn_log_stderr(err, "XMNSocket::PingThread()中pthread_mutex_lock()执行失败，返回值是 %d 。", err);
                 }
+                /**
+                 * 通过互斥量，将所有的心跳通信超时的连接揪出来。
+                */
                 while ((pmsgheadertmp = psocket->GetOverTimeMsgHeader(current_time)) != nullptr)
                 {
                     timeoutpinglist.push_back(pmsgheadertmp);
@@ -68,6 +74,9 @@ void *XMNSocket::PingThread(void *pthreadinfo)
                 {
                     pmsgheadertmp = timeoutpinglist.front();
                     timeoutpinglist.pop_front();
+                    /**
+                     * 具体的判断一下该连接是否通信超时并超过指定的时间，若是如此，则断开该连接。
+                    */
                     psocket->PingTimeOutChecking(pmsgheadertmp, current_time);
                 }
             }

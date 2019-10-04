@@ -23,6 +23,7 @@ int main()
      * （1）连接 server 。
     */
     size_t senddatacount = 0;
+    size_t sendping = 0;
     int clientfd = 0;
     int r = connectserver(clientfd, SERVERIP, SERVERPORT);
     if (r == 0)
@@ -60,9 +61,13 @@ int main()
     */
     while (true)
     {
+        /**
+         * 注册指令。
+        */
+        ppkgheader->msgcode = htons(CMD_LOGIC_REGISTER);
         senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
         senddatacount++;
-        std::cout << "已发送 " << senddatacount << " 个数据包。" << std::endl;
+        std::cout << "已发送 " << senddatacount << " 个注册包。" << std::endl;
 
         char recvbuf[200] = {0};
         if (recvdata(clientfd, recvbuf) <= 0)
@@ -76,7 +81,26 @@ int main()
         std::cout << "len：" << ntohs(ppkgheader->pkglen) << std::endl;
         std::cout << "username：" << pregisterinfo->username << std::endl;
         std::cout << "password：" << pregisterinfo->password << std::endl;
-        sleep(1);
+
+        /**
+         * 心跳包。
+        */
+        ppkgheader->msgcode = htons(CMD_LOGIC_PING);
+        senddata(clientfd, sendbuf, pkgheaderlen + registerinfolen);
+        sendping++;
+        std::cout << "已发送 " << sendping << " 个心跳包。" << std::endl;
+
+        if (recvdata(clientfd, recvbuf) <= 0)
+        {
+            std::cout << "数据接收失败。" << std::endl;
+        }
+        ppkgheader = (XMNPkgHeader *)recvbuf;
+        if (ntohs(ppkgheader->msgcode) == CMD_LOGIC_PING)
+        {
+            std::cout << "心跳包接收成功。" << std::endl;
+        }
+
+        sleep(10);
     }
     close(clientfd);
     return 0;
@@ -173,7 +197,7 @@ int recvdata(int sockfd, char *precvdata)
         /**
          * 包头没有收全。
         */
-lblrecvpkgheader:
+    lblrecvpkgheader:
         pbuftmp += recvdatacount;
         recvlen -= recvdatacount;
         /**

@@ -12,9 +12,7 @@
  * TODO：此处为什么函数指针必须是 XMNSocketLogic 作用域下的。
  * 定义一个函数指针类型，该函数指针仅仅指向符合要求的 XMNSocketLogic 的成员函数。
 */
-using MsgHandler = int (XMNSocketLogic::*)(XMNMsgHeader *pmsgheader,
-                                           char *ppkgbody,
-                                           size_t pkgbodylen);
+using MsgHandler = int (XMNSocketLogic::*)(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen);
 
 /**
  * 保存各种业务处理函数的数据。
@@ -47,10 +45,7 @@ int XMNSocketLogic::Initialize()
     return XMNSocket::Initialize();
 }
 
-int XMNSocketLogic::HandleRegister(
-    XMNMsgHeader *pmsgheader,
-    char *ppkgbody,
-    size_t pkgbodylen)
+int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen)
 {
     /**
      * （1）判断数据包的合法性。
@@ -123,10 +118,7 @@ int XMNSocketLogic::HandleRegister(
     return 0;
 }
 
-int XMNSocketLogic::HandleLogin(
-    XMNMsgHeader *pmsgheader,
-    char *ppkgbody,
-    size_t pkgbodylen)
+int XMNSocketLogic::HandleLogin(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen)
 {
     xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleLogin 函数。");
     return 0;
@@ -216,10 +208,7 @@ lblexit:
     return;
 }
 
-int XMNSocketLogic::HandlePing(
-    XMNMsgHeader *pmsgheader,
-    char *ppkgbody,
-    size_t pkgbodylen)
+int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen)
 {
     if ((pmsgheader == nullptr) || (ppkgbody == nullptr))
     {
@@ -270,11 +259,12 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
         /**
          * 此连接没有断开。
         */
-        if ((currenttime - pconnsockinfo->lastpingtime) > (pingwaittime_ * 3 + 10))
+        if ((currenttime - pconnsockinfo->lastpingtime) > (pingwaittime_ * 3))
         {
             xmn_log_stderr(0, "超时不发心跳包，连接被关闭。");
             ActivelyCloseSocket(pconnsockinfo);
         }
+        pmemory->FreeMemory(pmsgheader);
     }
     else
     {

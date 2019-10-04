@@ -77,6 +77,7 @@ int XMNSocket::InitializeWorker()
      * a、与连接池操作相关的互斥量。
      * b、与回收连接池相关的互斥量。
      * c、与发送消息相关的互斥量。
+     * d、与心跳包收发监控相关的互斥量。
     */
     if (pthread_mutex_init(&connsock_pool_mutex_, nullptr) != 0)
     {
@@ -93,6 +94,11 @@ int XMNSocket::InitializeWorker()
         xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_queue_mutex_) 执行失败。");
         return -3;
     }
+    if (pthread_mutex_init(&ping_multimap_mutex_, nullptr) != 0)
+    {
+        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&ping_multimap_mutex_) 执行失败。");
+        return -3;
+    }
 
     /**
      * （2）初始化信号量。
@@ -107,6 +113,7 @@ int XMNSocket::InitializeWorker()
      * （3）创建线程。
      * a、创建用于回收连接的线程。
      * b、创建用于发送数据的线程。
+     * c、创建用于监控心跳包收发的线程。
     */
     ThreadInfo *pthreadinfo_recysockinfo = nullptr;
     vthreadinfo_.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
@@ -115,6 +122,10 @@ int XMNSocket::InitializeWorker()
     ThreadInfo *pthreadinfo_senddata = nullptr;
     vthreadinfo_.push_back(pthreadinfo_senddata = new ThreadInfo(this));
     pthread_create(&pthreadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
+
+    ThreadInfo *pthreadinfo_ping = nullptr;
+    vthreadinfo_.push_back(pthreadinfo_ping = new ThreadInfo(this));
+    pthread_create(&pthreadinfo_ping->threadhandle_, nullptr, PingThread, (void *)pthreadinfo_ping);
     return 0;
 }
 
@@ -154,6 +165,7 @@ int XMNSocket::EndWorker()
     pthread_mutex_destroy(&connsock_pool_mutex_);
     pthread_mutex_destroy(&connsock_pool_recy_mutex_);
     pthread_mutex_destroy(&senddata_queue_mutex_);
+    pthread_mutex_destroy(&ping_multimap_mutex_);
     sem_destroy(&senddata_queue_sem_);
     return 0;
 }
