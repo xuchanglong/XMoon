@@ -261,13 +261,27 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
 
 void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
 {
-    /**
-     * （1）将接收的数据压入消息队列中。
-    */
-    /**
-     * TODO：返回值为-1暂时没有想好怎么处理。
-    */
-    g_threadpool.PutInRecvMsgList_Signal(pconnsockinfo->precvalldata);
+    bool isflood = false;
+    if (floodattackmonitorenable_)
+    {
+        isflood = TestFlood(pconnsockinfo);
+        if (isflood)
+        {
+            xmn_log_stderr(0, "3");
+            XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+            pmemory->FreeMemory(pconnsockinfo->precvalldata);
+        }
+        else
+        {
+            /**
+             * （1）将接收的数据压入消息队列中。
+            */
+            /**
+             * TODO：返回值为-1暂时没有想好怎么处理。
+            */
+            g_threadpool.PutInRecvMsgList_Signal(pconnsockinfo->precvalldata);
+        }
+    }
 
     /**
      * （2）更新状态机至初始状态。
@@ -277,6 +291,16 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
     pconnsockinfo->recvdatalen = kPkgHeaderLen_;
     pconnsockinfo->precvalldata = nullptr;
+
+    /**
+     * （3）若是 flood 攻击，则断开连接。
+    */
+    if (isflood)
+    {
+        //xmn_log_stderr(0, "该连接存在恶意攻击，已断开连接。");
+        ActivelyCloseSocket(pconnsockinfo);
+    }
+
     return;
 }
 

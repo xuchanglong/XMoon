@@ -109,12 +109,13 @@ int main()
             std::cout << "心跳包接收成功。" << std::endl;
         }
 
-        if (sendping > 5)
+        if (sendping > 15)
         {
             break;
         }
 
-        sleep(10);
+        //usleep(10);
+        sleep(5);
     }
     close(clientfd);
     return 0;

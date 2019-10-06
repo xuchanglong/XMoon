@@ -13,6 +13,7 @@
 #include "errno.h"
 #include "unistd.h"
 #include <errno.h>
+#include <sys/time.h>
 
 #include <cstdio>
 #include <sstream>
@@ -42,6 +43,13 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
      * 在线用户相关的变量。
     */
     onlineuser_count_ = 0;
+
+    /**
+     * 与网络安全相关的变量。
+    */
+    floodattackmonitorenable_ = 0;
+    floodtimeinterval_ = 0;
+    floodcount_ = 0;
 }
 
 XMNSocket::~XMNSocket()
@@ -360,9 +368,36 @@ int XMNSocket::ReadConf()
     pingwaittime_ = atoi(pconfig->GetConfigItem("PingWaitTime", "30").c_str());
     if (pingwaittime_ <= 0)
     {
-        return -5;
+        return -6;
     }
     pingwaittime_ = pingwaittime_ >= 5 ? pingwaittime_ : 5;
+
+    /**
+     * （7）Flood 攻击检测是否开启的标志。
+    */
+    floodattackmonitorenable_ = atoi(pconfig->GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
+    if (floodattackmonitorenable_ <= 0)
+    {
+        return -7;
+    }
+
+    /**
+     * （8）相邻两次接收到数据包的最小时间间隔。
+    */
+    floodtimeinterval_ = atoi(pconfig->GetConfigItem("FloodTimeInterval", "100").c_str());
+    if (floodtimeinterval_ <= 0)
+    {
+        return -8;
+    }
+
+    /**
+     * （9）允许连续恶意包的最小数量。
+    */
+    floodcount_ = atoi(pconfig->GetConfigItem("FloodCount", "10").c_str());
+    if (floodcount_ <= 0)
+    {
+        return -9;
+    }
 
     return 0;
 }
@@ -1034,4 +1069,30 @@ int XMNSocket::ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo)
     PutInConnSockInfo2RecyList(pconnsockinfo);
 
     return 0;
+}
+
+bool XMNSocket::TestFlood(XMNConnSockInfo *pconnsockinfo)
+{
+    struct timeval scurrenttime;
+    uint64_t currenttime = 0;
+    bool ret = false;
+
+    gettimeofday(&scurrenttime, nullptr);
+    currenttime = scurrenttime.tv_sec * 1000 + scurrenttime.tv_usec / 1000;
+    if (currenttime - pconnsockinfo->floodlasttime < floodtimeinterval_)
+    {
+        pconnsockinfo->floodattackcount++;
+    }
+    else
+    {
+        pconnsockinfo->floodattackcount = 0;
+    }
+    pconnsockinfo->floodlasttime = currenttime;
+
+    if (pconnsockinfo->floodattackcount >= floodcount_)
+    {
+        ret = true;
+    }
+
+    return ret;
 }
