@@ -73,6 +73,12 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
      * （3）获取发送来的所有数据。
     */
     RegisterInfo *pregisterinfo = (RegisterInfo *)ppkgbody;
+    pregisterinfo->type = ntohs(pregisterinfo->type);
+    /**
+     * 防止该包是畸形包，如果后面没有'\0'，容易造成字符串溢出漏洞。
+    */
+    pregisterinfo->username[sizeof(pregisterinfo->username) - 1] = 0;
+    pregisterinfo->password[sizeof(pregisterinfo->password) - 1] = 0;
     /**
      * （4）各种业务处理。
     */
