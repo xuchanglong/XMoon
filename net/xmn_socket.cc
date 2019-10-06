@@ -37,6 +37,11 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
     pingenable_ = false;
     pingwaittime_ = 0;
     ping_multimap_count_ = 0;
+
+    /**
+     * 在线用户相关的变量。
+    */
+    onlineuser_count_ = 0;
 }
 
 XMNSocket::~XMNSocket()

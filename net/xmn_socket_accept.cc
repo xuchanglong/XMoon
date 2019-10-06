@@ -107,6 +107,16 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         }
 
         /**
+         * （4）判断当前在线用户是否已经超过了指定的上限值。
+        */
+        if (++onlineuser_count_ > worker_connection_count_)
+        {
+            close(linkfd);
+            xmn_log_stderr(0, "XMNSocket::EventAcceptHandler()中新连入的连接将被关闭，因为已经超过了指定的在线用户数量的上限。");
+            return;
+        }
+
+        /**
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
          * 从连接池中取走一个连接。
         */
@@ -159,7 +169,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         pconnsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;
 
         /**
-        * （4）将新建立的连接加入到 epoll 的红黑树中。
+        * （5）将新建立的连接加入到 epoll 的红黑树中。
         */
         int r = EpollOperationEvent(linkfd,
                                     EPOLL_CTL_ADD,
@@ -173,13 +183,12 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         }
 
         /**
-        * （5）将该连接信息放入心跳监控 multimap 中。
+        * （6）将该连接信息放入心跳监控 multimap 中。
         */
         if (pingenable_)
         {
             PutInConnSockInfo2PingMultiMap(pconnsockinfo_new);
         }
-
         break;
     } while (true);
 

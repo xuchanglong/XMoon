@@ -167,10 +167,24 @@ void XMNSocket::PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_recy_mutex_);
 
+    /**
+     * 防止连接被重复地放入连接回收池中。
+    */
+    std::list<XMNConnSockInfo *>::iterator it;
+    for (it = recyconnsock_pool_.begin(); it != recyconnsock_pool_.end(); ++it)
+    {
+        if ((*it) == pconnsockinfo)
+        {
+            return;
+        }
+    }
+
     pconnsockinfo->putinrecylisttime = time(nullptr);
     ++pconnsockinfo->currsequence;
     recyconnsock_pool_.push_back(pconnsockinfo);
     ++pool_recyconnsock_count_;
+    
+    --onlineuser_count_;
     return;
 }
 
