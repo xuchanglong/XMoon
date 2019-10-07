@@ -50,6 +50,11 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
     floodattackmonitorenable_ = 0;
     floodtimeinterval_ = 0;
     floodcount_ = 0;
+
+    /**
+     * 显示统计信息相关的变量。
+    */
+    discardsendpkgcount_ = 0;
 }
 
 XMNSocket::~XMNSocket()
@@ -805,7 +810,31 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
 
 int XMNSocket::PutInSendDataQueue(char *psenddata)
 {
+    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex lockmutex_senddata(&senddata_queue_mutex_);
+    XMNMsgHeader *pmsgheader = (XMNMsgHeader *)psenddata;
+    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+
+    /**
+     * 安全防范。
+    */
+    if (queue_senddata_count_ > 50000)
+    {
+        ++discardsendpkgcount_;
+        pmemory->FreeMemory(psenddata);
+        return -1;
+    }
+    if (pconnsockinfo->nosendmsgcount > 400)
+    {
+        xmn_log_stderr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
+                       pconnsockinfo->fd);
+        ++discardsendpkgcount_;
+        pmemory->FreeMemory(psenddata);
+        ActivelyCloseSocket(pconnsockinfo);
+        return -2;
+    }
+
+    ++pconnsockinfo->nosendmsgcount;
     senddata_queue_.push(psenddata);
     ++queue_senddata_count_;
 
@@ -909,6 +938,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 //PutInSendDataQueue(psenddata);
                 continue;
             }
+
+            --pconnsockinfo->nosendmsgcount;
             pconnsockinfo->psendalldataforfree = psendalldata;
             pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
@@ -1095,4 +1126,45 @@ bool XMNSocket::TestFlood(XMNConnSockInfo *pconnsockinfo)
     }
 
     return ret;
+}
+
+void XMNSocket::PrintInfo()
+{
+    time_t currenttime = time(nullptr);
+    if (currenttime - lastprinttime_ > 10)
+    {
+        /**
+         * 接收消息的链表中元素的数量，即：接收到的数据中尚未处理完的消息的数量。
+        */
+        size_t recvmsgcount = g_threadpool.RecvMsgListSize();
+
+        /**
+         * 当前在线的 client 数量。
+        */
+        size_t onlineusercount = onlineuser_count_;
+
+        /**
+         * 发送消息队列中元素的数量，即：尚未发送完的消息的数量。
+        */
+        size_t sendmsgcount_ = queue_senddata_count_;
+
+        xmn_log_stderr(0, "---------------------------------------------  begin ---------------------------------------------");
+        xmn_log_stderr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
+        xmn_log_stderr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
+                       pool_free_connsock_count_,
+                       pool_connsock_count_,
+                       pool_recyconnsock_count_);
+        xmn_log_stderr(0, "当前时间队列的大小（%d）", ping_multimap_count_);
+        xmn_log_stderr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
+                       recvmsgcount,
+                       sendmsgcount_,
+                       discardsendpkgcount_);
+
+        if (recvmsgcount > 100000)
+        {
+            xmn_log_stderr(0, "接收数据的链表中元素数量过大，要考虑限速或者增加处理线程！");
+        }
+        lastprinttime_ = currenttime;
+    }
+    return;
 }

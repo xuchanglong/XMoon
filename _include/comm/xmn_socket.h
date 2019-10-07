@@ -241,6 +241,13 @@ public:
      * 一共连续受到 flood 攻击的次数。
     */
     std::atomic<size_t> floodattackcount;
+
+    /**
+     * 在发送消息队列中该连接对应的数据包的数量。
+     * 用于防止某个 client 只发送不接收而导致服务器的问题。
+     * 对于上述 client ，需要将其踢掉。
+    */
+    std::atomic<size_t> nosendmsgcount;
 };
 
 /****************************************************
@@ -334,6 +341,15 @@ public:
      * @time    2019-09-21
     */
     virtual int EndWorker();
+
+    /**
+     * @function    打印统计信息。
+     * @paras   none 。
+     * @return  none 。
+     * @author  xuchanglong
+     * @time    2019-10-07
+    */
+    void PrintInfo();
 
 public:
     /**
@@ -933,6 +949,21 @@ private:
      * 则认为该客户端是 Flood 的始作俑者。
     */
     int floodcount_;
+
+    /**************************************************************************************
+     * 
+     ***************** 显示统计信息相关的变量 **************** 
+     * 
+    **************************************************************************************/
+    /**
+     * 上次在终端显示统计信息的时间。
+    */
+    time_t lastprinttime_;
+
+    /**
+     * 被丢弃的待发送的数据包的数量。
+    */
+    size_t discardsendpkgcount_;
 };
 
 #endif

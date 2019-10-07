@@ -82,6 +82,15 @@ public:
     */
     int PutInRecvMsgList_Signal(char *pdata);
 
+    /**
+     * @function    获取消息的数量
+     * @paras   none 。
+     * @return  消息的数量
+     * @author  xuchanglong
+     * @time    2019-09-12
+    */
+    size_t RecvMsgListSize();
+
 private:
     /**
      * @function    线程的执行入口函数。
@@ -101,15 +110,6 @@ private:
      * @time    2019-09-06
     */
     char *PutOutRecvMsgList();
-
-    /**
-     * @function    获取消息的数量
-     * @paras   none 。
-     * @return  消息的数量
-     * @author  xuchanglong
-     * @time    2019-09-12
-    */
-    size_t RecvMsgListSize();
 
 private:
     /**
@@ -148,7 +148,7 @@ private:
     time_t lasttime_;
 
     /**
-     * 存放接收的数据的消息队列。（双向链表）
+     * 存放接收的数据的消息链表。
     */
     std::list<char *> recvmsglist_;
 };

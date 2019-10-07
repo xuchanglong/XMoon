@@ -8,10 +8,9 @@ int XMNProcessEventsTimers()
     g_socket.EpollProcessEvents(-1);
 
     /**
-     * （2）处理定时器事件。
+     * （2）在终端显示统计信息。
     */
-    /**
-     * TODO：后续补充。
-    */
+    g_socket.PrintInfo();
+    
     return 0;
 }
