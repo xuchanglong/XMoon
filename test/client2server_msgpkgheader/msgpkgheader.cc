@@ -10,7 +10,7 @@
 #include <cstring>
 
 #define SERVERIP "127.0.0.1"
-#define SERVERPORT 59002
+#define SERVERPORT 80
 
 int connectserver(int &clientfd, const std::string &strserverip, const size_t &port);
 void senddata(int clientfd, char *buf, const size_t &buflen);

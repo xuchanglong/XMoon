@@ -944,7 +944,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
-            xmn_log_stderr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
+            //xmn_log_stderr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
             sendsize = psocket->SendData(pconnsockinfo);
             if (sendsize > 0)
             {
@@ -1148,17 +1148,18 @@ void XMNSocket::PrintInfo()
         */
         size_t sendmsgcount_ = queue_senddata_count_;
 
-        xmn_log_stderr(0, "---------------------------------------------  begin ---------------------------------------------");
+        xmn_log_stderr(0, "\n---------------------------------------------  begin ---------------------------------------------");
         xmn_log_stderr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
         xmn_log_stderr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
-                       pool_free_connsock_count_,
-                       pool_connsock_count_,
-                       pool_recyconnsock_count_);
-        xmn_log_stderr(0, "当前时间队列的大小（%d）", ping_multimap_count_);
+                       connsock_pool_free_.size(),
+                       connsock_pool_.size(),
+                       recyconnsock_pool_.size());
+        xmn_log_stderr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
         xmn_log_stderr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
                        recvmsgcount,
                        sendmsgcount_,
                        discardsendpkgcount_);
+        xmn_log_stderr(0, "---------------------------------------------  end ---------------------------------------------");
 
         if (recvmsgcount > 100000)
         {
