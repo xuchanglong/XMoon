@@ -59,11 +59,10 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
 
 XMNSocket::~XMNSocket()
 {
-    std::vector<XMNListenSockInfo *>::iterator it;
-    for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); ++it)
+    for (auto &x : vlistenportsockinfolist_)
     {
-        delete *it;
-        *it = nullptr;
+        delete x;
+        x = nullptr;
     }
     vlistenportsockinfolist_.clear();
 
@@ -158,15 +157,14 @@ int XMNSocket::EndWorker()
         xmn_log_stderr(0, "XMNSocket::EndWorker()中sem_post()执行失败。");
     }
 
-    std::vector<ThreadInfo *>::iterator it;
-    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); it++)
+    for (const auto &x : vthreadinfo_)
     {
-        pthread_join((*it)->threadhandle_, nullptr);
+        pthread_join(x->threadhandle_, nullptr);
     }
-    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); it++)
+    for (auto &x : vthreadinfo_)
     {
-        delete (*it);
-        (*it) = nullptr;
+        delete x;
+        x = nullptr;
     }
     vthreadinfo_.clear();
 
@@ -293,11 +291,10 @@ exitlabel:
 
 int XMNSocket::CloseListenSocket()
 {
-    std::vector<XMNListenSockInfo *>::iterator it;
-    for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); it++)
+    for (const auto &x : vlistenportsockinfolist_)
     {
-        close((*it)->fd);
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的 socket 已经关闭！", (*it)->port);
+        close(x->fd);
+        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的 socket 已经关闭！", x->port);
     }
     return 0;
 }
@@ -462,13 +459,12 @@ int XMNSocket::EpollInit()
      * （3）循环遍历所有监听 socket ，为每个 socket 绑定一个连接池中的连接，用于记录相关信息。
     */
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    std::vector<XMNListenSockInfo *>::iterator it;
-    for (it = vlistenportsockinfolist_.begin(); it != vlistenportsockinfolist_.end(); ++it)
+    for (auto &x : vlistenportsockinfolist_)
     {
         /**
          * 从连接池中取出空闲节点。
         */
-        pconnsockinfo = PutOutConnSockInfofromPool((*it)->fd);
+        pconnsockinfo = PutOutConnSockInfofromPool(x->fd);
         if (pconnsockinfo == nullptr)
         {
             xmn_log_stderr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
@@ -478,12 +474,12 @@ int XMNSocket::EpollInit()
         /**
          * 连接对象和监听对象进行关联。
         */
-        pconnsockinfo->plistensockinfo = (*it);
+        pconnsockinfo->plistensockinfo = x;
 
         /**
          * 监听对象和连接对象进行关联。
         */
-        (*it)->pconnsockinfo = pconnsockinfo;
+        x->pconnsockinfo = pconnsockinfo;
 
         /**
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
@@ -503,7 +499,7 @@ int XMNSocket::EpollInit()
             return -3;
         }
         */
-        if (EpollOperationEvent((*it)->fd,
+        if (EpollOperationEvent(x->fd,
                                 EPOLL_CTL_ADD,
                                 EPOLLIN | EPOLLRDHUP,
                                 0,

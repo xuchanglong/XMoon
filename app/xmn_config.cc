@@ -8,11 +8,10 @@ XMNConfig::XMNConfig()
 
 XMNConfig::~XMNConfig()
 {
-    std::vector<ConfigItem *>::iterator it;
-    for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); ++it)
+    for (auto &x : vconfig_item_set_)
     {
-        delete (*it);
-        (*it) = nullptr;
+        delete x;
+        x = nullptr;
     }
     vconfig_item_set_.clear();
 }
@@ -46,7 +45,7 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
         {
             continue;
         }
-        
+
         /**
          * 去掉每行后面的换行、回车以及空格等。
          */
@@ -60,7 +59,7 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
             }
             break;
         }
-        
+
         /**
          * 开始截取选项以及选项信息。
          */
@@ -93,12 +92,11 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
 
 std::string XMNConfig::GetConfigItem(const std::string &kstrConfigItem, const std::string strdefault)
 {
-    std::vector<ConfigItem *>::iterator it;
-    for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); it++)
+    for (const auto &x : vconfig_item_set_)
     {
-        if ((*it)->stritem == kstrConfigItem)
+        if (x->stritem == kstrConfigItem)
         {
-            return (*it)->striteminfo;
+            return x->striteminfo;
         }
     }
 
@@ -148,10 +146,9 @@ std::string XMNConfig::testStringConfigItemSet()
     std::string strret;
     strret.clear();
 
-    std::vector<ConfigItem *>::iterator it;
-    for (it = vconfig_item_set_.begin(); it != vconfig_item_set_.end(); it++)
+    for (const auto &x : vconfig_item_set_)
     {
-        strret += (*it)->stritem + "=" + (*it)->striteminfo + '\n';
+        strret += x->stritem + "=" + x->striteminfo + '\n';
     }
     return strret;
 }

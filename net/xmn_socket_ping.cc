@@ -180,10 +180,9 @@ int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
 void XMNSocket::FreePingMultiMap()
 {
     XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-    std::multimap<time_t, XMNMsgHeader *>::iterator it;
-    for (it = ping_multimap_.begin(); it != ping_multimap_.end(); it++)
+    for (auto &x : ping_multimap_)
     {
-        pmemory->FreeMemory(it->second);
+        pmemory->FreeMemory(x.second);
         --ping_multimap_count_;
     }
     ping_multimap_.clear();

@@ -49,11 +49,10 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
     /**
      * （2）等待所有的线程都卡在 pthread_cond_wait() 。
     */
-    std::vector<ThreadInfo *>::iterator it;
 lbcheck:
-    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); ++it)
+    for (const auto &x : vthreadinfo_)
     {
-        if (!(*it)->isrunning_)
+        if (!x->isrunning_)
         {
             /**
              * 如果尚有未准备就绪的线程，则延时 100ms 。
@@ -167,14 +166,13 @@ int XMNThreadPool::Destroy()
     /**
      * （2）等待线程池中的线程都退出。
     */
-    std::vector<ThreadInfo *>::iterator it;
-    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); ++it)
+    for (const auto &x : vthreadinfo_)
     {
         /**
          * @function    1、等待指定的线程退出。
          *                           2、释放退出的线程的系统资源。
         */
-        pthread_join((*it)->threadhandle_, nullptr);
+        pthread_join(x->threadhandle_, nullptr);
     }
 
     /**
@@ -183,10 +181,10 @@ int XMNThreadPool::Destroy()
     pthread_cond_destroy(&thread_cond_);
     pthread_mutex_destroy(&thread_mutex_);
 
-    for (it = vthreadinfo_.begin(); it != vthreadinfo_.end(); ++it)
+    for (auto &x : vthreadinfo_)
     {
-        delete (*it);
-        (*it) = nullptr;
+        delete x;
+        x = nullptr;
     }
     vthreadinfo_.clear();
 
