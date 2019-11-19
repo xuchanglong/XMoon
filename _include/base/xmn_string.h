@@ -1,7 +1,7 @@
 #ifndef XMOON__INCLUDE_BASE_XMN_STRING_H_
 #define XMOON__INCLUDE_BASE_XMN_STRING_H_
 
-using size_t = unsigned long; 
+using size_t = unsigned long;
 
 //===========================  内存比较函数  ===========================//
 /**
@@ -174,6 +174,97 @@ char *strrev(char *str)
         *p1 ^= *p2;
     }
     return str;
+}
+
+//===========================  string 类  ===========================//
+class MyString
+{
+public:
+    MyString(const char *str = nullptr);
+    MyString(const MyString &other);
+    MyString &operator=(const MyString &other);
+
+public:
+    ~MyString();
+
+public:
+    size_t length();
+    char *c_str();
+    bool isempty();
+
+private:
+    char *pstr_;
+    size_t len_;
+}
+
+MyString::MyString(const char *str) : pstr_(str)
+{
+    if (str == nullptr)
+    {
+        len_ = 0;
+        return;
+    }
+    len_ = strlen(str);
+    pstr_ = new char[len_ + 1];
+    memcmp(pstr_, str, len_ + 1);
+    return;
+}
+
+MyString::MyString(const MyString &other) : pstr_(str), len_(other.len_)
+{
+    if (other.pstr_ == nullptr)
+    {
+        return;
+    }
+
+    len_ = other.len_;
+    pstr_ = new char[len_ + 1];
+    memcmp(pstr_, other.pstr_, len_ + 1);
+    return;
+}
+
+MyString &MyString::operator=(const MyString &other)
+{
+    if (&other == this)
+    {
+        return *this;
+    }
+    if (pstr_ != nullptr)
+    {
+        delete pstr_;
+        pstr_ = nullptr;
+    }
+    if (other.pstr_ == nullptr)
+    {
+        len_ = 0;
+        return *this;
+    }
+
+    len_ = other.len_;
+    pstr_ = new char[len_ + 1];
+    memcmp(pstr_, other.pstr_, len_ + 1);
+    return *this;
+}
+
+MyString::~MyString()
+{
+    delete[] pstr_;
+    pstr_ = nullptr;
+}
+
+size_t MyString::length()
+{
+    return len_;
+}
+
+size_t MyString::c_str()
+{
+    return pstr_;
+}
+
+bool MyString::isempty()
+{
+    return pstr_ == nullptr ? true : false;
 }
 
 #endif
