@@ -22,7 +22,7 @@ static std::string g_strmasterprocessname = "master process";
 /**
  * @function    开始处理 workers 进程。
  * @paras   workprocesssum  创建 worker 进程的数量。
- * @return  none 。
+ * @ret  none 。
  * @author  xuchanglong
  * @time    2019-08-15
 */
@@ -32,7 +32,7 @@ static void XMNStartWorkerProcess(const size_t &kWorkerProcessCount);
  * @function    创建指定数量的 worker 进程。
  * @paras   inum    子进程编号。
  *          strprocname   子进程的名称。
- * @return  创建的子进程的 pid。
+ * @ret  创建的子进程的 pid。
  * @author  xuchanglong
  * @time    2019-08-15
 */
@@ -42,7 +42,7 @@ static int XMNCreateProcess(const size_t &kNum, const std::string &kstrProcName)
  * @function    设置子进程的标题以及进入子进程的循环。
  * @paras   inum    子进程编号。
  *          strprocname   子进程的名称。
- * @return  none 。
+ * @ret  none 。
  * @author  xuchanglong
  * @time    2019-08-15
 */
@@ -52,7 +52,7 @@ static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProc
  * @function    子进程开始进入循环之前进行初始化。
  * @paras   inum    子进程编号。
  *          kstrTitleName   进程标题名称。
- * @return  0   操作成功。
+ * @ret  0   操作成功。
  * @author  xuchanglong
  * @time    2019-08-15
 */

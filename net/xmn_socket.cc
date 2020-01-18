@@ -641,7 +641,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
      *          wait_events_   epoll_event 对象存储池。
      *          XMN_EPOLL_WAIT_MAX_EVENTS   wait_events_ 大小。
      *          timer   超时时间，若为-1，则一直堵塞，直至有事件到来。
-     * @return  > 0  实际返回的 epoll_event 对象的数量，即：事件的数量。
+     * @ret  > 0  实际返回的 epoll_event 对象的数量，即：事件的数量。
      *          = 0  等待超时。
      *          -1   有错误发生，报错代码保存在 errno 中。
      * @notice  该函数的返回条件如下：

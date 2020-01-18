@@ -28,7 +28,7 @@ public:
      * @function    申请内存。
      * @paras   bytecount   申请的内存的字节数。
      *          ismemset    是否对申请的内存进行 memset 。
-     * @return  非 nullptr  申请成功。
+     * @ret  非 nullptr  申请成功。
      *          nullptr     申请失败。
      * @author  xuchanglong
      * @time    2019-08-31
@@ -38,7 +38,7 @@ public:
     /**
      * @function    释放内存。
      * @paras   pmemory   待释放的内存的首地址。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-08-31
     */

@@ -31,7 +31,7 @@ public:
      * @function 向 client 发送无包体的数据。
      * @paras   pmsgheader  消息头。
      *          kMsgCode    指令。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-10-04
     */

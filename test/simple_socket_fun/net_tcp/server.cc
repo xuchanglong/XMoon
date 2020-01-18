@@ -41,7 +41,7 @@
  * @paras           str     报错的函数。
  *                          ireturnvalue    函数的返回值。
  *                          err errno，即：错误代码。
- * @return      none。
+ * @ret      none。
  * @author      xuchanglong
  * @time           2019-08-24
 */

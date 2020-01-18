@@ -27,7 +27,7 @@ public:
      * @function 用 crc32_table 查找表来产生数据的CRC值
      * @paras buffer 待转换的数据的首地址。
      *        kSize 待转换的数据的字节数量。
-     * @return 最终的经过 crc32 转换之后的数据。
+     * @ret 最终的经过 crc32 转换之后的数据。
      * @author xuchanglong
      * @time 2019-09-16
     */
@@ -37,7 +37,7 @@ private:
     /**
      * @function 创建单字节的查表法所用到的表。
      * @paras none。
-     * @return none。
+     * @ret none。
      * @author xuchanglong
      * @time 2019-09-16
     */

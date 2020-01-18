@@ -310,7 +310,7 @@ public:
     /**
      * @function   按照配置文件创建指定数量的监听 socket 。
      * @paras  none 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      *          1   配置文件中端口号数量 <= 0 。
      *          -1  sokcet 创建失败。
      *          -2  setsockopt 设置失败。
@@ -325,7 +325,7 @@ public:
     /**
      * @function    部分内容需要在 worker 进程中初始化。
      * @paras   none 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      *          -1  connsock_pool_mutex_    初始化失败。
      *          -2  connsock_pool_recy_mutex_   初始化失败。
      * @author xuchanglong
@@ -336,7 +336,7 @@ public:
     /**
      * @function    worker 进程中初始化的内容需要在 worker 中释放。
      * @paras   none 。
-     * @return  0 操作成功。
+     * @ret  0 操作成功。
      * @author  xuchanglong
      * @time    2019-09-21
     */
@@ -345,7 +345,7 @@ public:
     /**
      * @function    打印统计信息。
      * @paras   none 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-10-07
     */
@@ -355,7 +355,7 @@ public:
     /**
      * @function    初始化 epoll 功能。
      * @paras   none 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @time    2019-08-26
     */
     int EpollInit();
@@ -368,7 +368,7 @@ public:
      *          otherflag   其他标记。
      *          eventtype   事件类型，包括：增、删、改。
      *          pconnsockinfo   连接池中对应的指针。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-27
     */
@@ -394,7 +394,7 @@ public:
      *                  等。
      *          kFlag   为操作类型 EPOLL_CTL_MOD 补充操作：0：增加   1：去掉
      *          pconnsockinfo   该连接的信息。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-27
     */
@@ -407,7 +407,7 @@ public:
     /**
      * @function    epoll 等待接收和处理事件。
      * @paras   kTimer  等待事件的超时时间，单位 ms 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-08-28
     */
@@ -416,7 +416,7 @@ public:
     /**
      * @function    返回消息链表中元素的数量。
      * @paras   none 。
-     * @return   消息链表中元素的数量。
+     * @ret   消息链表中元素的数量。
      * @author  xuchanglong
      * @time    2019-09-06
     */
@@ -430,7 +430,7 @@ public:
     /**
      * @function    处理收到的数据包。
      * @paras   数据包。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-15
     */
@@ -447,7 +447,7 @@ protected:
     /**
      * @function    发送数据。
      * @paras   psenddata   待发送的数据。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-09-25
     */
@@ -456,7 +456,7 @@ protected:
     /**
      * @function    向 client 发送消息。
      * @paras   none 。
-     * @return  > 0 发送成功，返回值就是已发送的数据的字节数。
+     * @ret  > 0 发送成功，返回值就是已发送的数据的字节数。
      *          0   发送超时，对端已关闭。
      *              发送的数据本身是0个字节。
      *          -1  发送缓冲区已满。
@@ -469,7 +469,7 @@ protected:
     /**
      * @function    sever 端主动地关闭 socket 的函数。
      * @paras   pconnsockinfo   待关闭的连接信息。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      *          -1  形参为空指针。
      * @author  xuchanglong
      * @time    2019-10-04
@@ -490,7 +490,7 @@ private:
     /**
      *  @function    打开指定数量的监听 socket 并进行相关配置。
      *  @paras  none 。
-     *  @return 0   操作成功。
+     *  @ret 0   操作成功。
      *          -1  sokcet 创建失败。
      *          -2  setsockopt 设置失败。
      *          -3  SetNonBlocking 设置失败。
@@ -503,7 +503,7 @@ private:
     /**
      *  @function   关闭监听 socket 。
      *  @paras  none 。
-     *  @return 0   操作成功。
+     *  @ret 0   操作成功。
      *  @time   2019-08-25
     */
     int CloseListenSocket();
@@ -511,7 +511,7 @@ private:
     /**
      *  @function    设置文件 IO 为非堵塞。
      *  @paras  sockfd  被设置的 IO 的文件描述符。
-     *  @return 0   操作成功。
+     *  @ret 0   操作成功。
      *  @time   2019-08-25
     */
     int SetNonBlocking(const int &sockfd);
@@ -521,7 +521,7 @@ private:
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于处理新建立的连接。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
-     * @return  none .
+     * @ret  none .
      * @author  xuchanglong
      * @time    2019-08-27
     */
@@ -531,7 +531,7 @@ private:
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于读取 client 发来的数据并做处理。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-26
     */
@@ -541,7 +541,7 @@ private:
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于向 client 发送数据。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-26
     */
@@ -558,7 +558,7 @@ private:
     /**
      * @function    判断该包是否正常以及为接收包体做准备。
      * @paras   pconnsokcinfo   待处理的连接。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-08-31
     */
@@ -567,7 +567,7 @@ private:
     /**
      * @function    对接收的完整的包进行处理（压入消息队列中并初始化状态机）。
      * @paras   pconnsokcinfo   待处理的连接。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-01
     */
@@ -581,7 +581,7 @@ private:
     /**
      * @function    初始化连接池。
      * @paras   none 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -590,7 +590,7 @@ private:
     /**
      * @function    释放连接池所占的内存。
      * @paras   none 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -599,7 +599,7 @@ private:
     /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   kSockFd accept 返回的 socket 。
-     * @return  绑定好的连接池中的一个连接。
+     * @ret  绑定好的连接池中的一个连接。
      *          nullptr 连接池中的连接为空。
      * @author  xuchanglong
      * @time    2019-09-19
@@ -609,7 +609,7 @@ private:
     /**
      * @function    将连接归还至连接池中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -618,7 +618,7 @@ private:
     /**
      * @function    将连接放入回收链表中。
      * @paras   pconnsockinfo   待归还的连接。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -627,7 +627,7 @@ private:
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
      * @paras   pthreadinfo 线程的相关信息。
-     * @return  nullptr .
+     * @ret  nullptr .
      * @author  xuchanglong
      * @time    2019-09-19
     */
@@ -636,7 +636,7 @@ private:
     /**
      * @function    关闭已经建立的连接。
      * @paras   pfd 待关闭的连接。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-08-29
     */
@@ -650,7 +650,7 @@ private:
     /**
      * @function    发送数据线程，每次循环只发送一次数据。
      * @paras   pthreadinfo   线程的相关信息。
-     * @return  nullptr   操作成功。
+     * @ret  nullptr   操作成功。
      * @author  xuchanglong
      * @time    2019-09-25
     */
@@ -659,7 +659,7 @@ private:
     /**
      * @function    从存储待发送的数据的数据池中获得消息。
      * @paras   none 。
-     * @return  非 nullptr  待发送的消息。
+     * @ret  非 nullptr  待发送的消息。
      *          nullptr 数据池中不存在消息。
      * @author  xuchanglong
      * @time    2019-09-25
@@ -669,7 +669,7 @@ private:
     /**
      * @function    释放发送队列中的消息。
      * @paras   none 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-09-26
     */
@@ -683,7 +683,7 @@ private:
     /**
      * @function    将指定的连接信息放入 multimap 中，等待心跳监控。
      * @paras   pconnsockinfo   指定的连接的信息。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -692,7 +692,7 @@ private:
     /**
      * @function    从 multimap 中获取最早的时间，即：头部元素。
      * @paras   none 。
-     * @return  最早的时间。
+     * @ret  最早的时间。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -701,7 +701,7 @@ private:
     /**
      * @function    对心跳包进行监控的执行线程。
      * @paras   pthreadinfo 该线程的相关信息。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -710,7 +710,7 @@ private:
     /**
      * @function    从监控 map 中找到比指定 time 最早的消息头。
      * @paras   待比较的时间。
-     * @return  满足条件的消息。
+     * @ret  满足条件的消息。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -719,7 +719,7 @@ private:
     /**
      * @function    从监控 map 中移除最早的时间并返回该消息。
      * @paras   none 。
-     * @return  最早时间的消息。
+     * @ret  最早时间的消息。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -728,7 +728,7 @@ private:
     /**
      * @function    从心跳监控的 multimap 中删除指定的消息头。
      * @paras   pconnsockinfo   待删除的连接。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      *          -1  形参为空指针。
      * @author  xuchanglong
      * @time    2019-10-04
@@ -738,7 +738,7 @@ private:
     /**
      * @function    清空并释放心跳监控 multimap 。
      * @paras   none 。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-10-04
     */
@@ -752,7 +752,7 @@ private:
     /**
      * @function    测试当前连接对应的 client 是否存在恶意行为。
      * @paras   none 。
-     * @return  true    存在恶意行为，应该关闭该连接。
+     * @ret  true    存在恶意行为，应该关闭该连接。
      * @author  xuchanglong
      * @time    2019-10-06
     */

@@ -32,7 +32,7 @@ struct XMNSignal
  * @paras   signum      信号的编号。
  *          psiginfo    信号相关信息的结构体。
  *          pcontext    备用。
- * @return  none 。
+ * @ret  none 。
  * @author  xuchanglong
  * @time    2019-08-17
  */
@@ -41,7 +41,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent);
 /**
  * @function    获取子进程的状态，避免子进程变成僵尸进程。
  * @paras   none 。
- * @return  none 。
+ * @ret  none 。
  * @author  xuchanglong
  * @time    2019-08-18
 */

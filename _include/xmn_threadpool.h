@@ -49,7 +49,7 @@ public:
     /**
      * @function    创建线程池。
      * @paras   kThreadCount 线程池中线程的数量。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-09-04
     */
@@ -58,7 +58,7 @@ public:
     /**
      * @funtion 释放线程池中所有线程。
      * @paras   none 。
-     * @return  0   操作成功。
+     * @ret  0   操作成功。
      * @author  xuchanglong
      * @time    2019-09-04
     */
@@ -67,7 +67,7 @@ public:
     /**
      * @function    唤醒一个线程开始执行任务。
      * @paras   none 。
-     * @return  0   操作成功
+     * @ret  0   操作成功
      * @author  xuchanglong
      * @time    2019-09-05
     */
@@ -76,7 +76,7 @@ public:
     /**
      * @function    将接收到的数据压入消息链表中。
      * @paras   pdata   接收到的数据。
-     * @return  none 。
+     * @ret  none 。
      * @author  xuchanglong
      * @time    2019-09-01
     */
@@ -85,7 +85,7 @@ public:
     /**
      * @function    获取消息的数量
      * @paras   none 。
-     * @return  消息的数量
+     * @ret  消息的数量
      * @author  xuchanglong
      * @time    2019-09-12
     */
@@ -95,7 +95,7 @@ private:
     /**
      * @function    线程的执行入口函数。
      * @paras   pthreaddata 保存当前线程信息的内存。
-     * @return  nullptr 。
+     * @ret  nullptr 。
      * @author  xuchanglong
      * @time 2019-09-07
     */
@@ -104,7 +104,7 @@ private:
     /**
      * @function    从消息链表中获取消息。
      * @paras   none 。
-     * @return  非0 获取消息成功。
+     * @ret  非0 获取消息成功。
      *                  nullptr 获取消息失败。
      * @author  xuchanglong
      * @time    2019-09-06
