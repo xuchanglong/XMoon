@@ -69,6 +69,7 @@ void *PrintA(void *arg)
     }
     // 防止线程 C ，在执行 MyCondSignal 函数时，由于 g_flag_CA = 0，导致程序执行在 while 循环中。
     g_flag_CA = true;
+    pthread_exit(nullptr);
     return nullptr;
 }
 
@@ -86,7 +87,7 @@ void *PrintB(void *arg)
         MyCondSignal(&g_flag_BC, &g_condBC, &g_mtx);
         pthread_mutex_unlock(&g_mtx);
     }
-
+    pthread_exit(nullptr);
     return nullptr;
 }
 
@@ -104,7 +105,7 @@ void *PrintC(void *arg)
         MyCondSignal(&g_flag_CA, &g_condCA, &g_mtx);
         pthread_mutex_unlock(&g_mtx);
     }
-
+    pthread_exit(nullptr);
     return nullptr;
 }
 
