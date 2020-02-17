@@ -1,6 +1,7 @@
 #include <iostream>
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
 
 using THREADFUNC = void *(*)(void *);
 
@@ -32,8 +33,8 @@ int main()
     {
         if (pthread_create(thread_pid, nullptr, threadfunc[i], nullptr) != 0)
         {
-            std::cout << "Failed to create thread." << std::endl;
-            exit(1);
+            std::cout << "Failed to create thread, error code is " << errno << std::endl;
+            return -1;
         }
     }
     // 加 sleep(1) 的作用是使三个线程在执行完 sleep(1) 之后，
@@ -55,7 +56,7 @@ int main()
 void *PrintA(void *arg)
 {
     char showcount = g_showcount;
-    pthread_t pid= pthread_self();
+    pthread_t pid = pthread_self();
     while (showcount--)
     {
         pthread_mutex_lock(&g_mtx);
@@ -76,7 +77,7 @@ void *PrintA(void *arg)
 void *PrintB(void *arg)
 {
     char showcount = g_showcount;
-    pthread_t pid= pthread_self();
+    pthread_t pid = pthread_self();
     while (showcount--)
     {
         pthread_mutex_lock(&g_mtx);
@@ -94,7 +95,7 @@ void *PrintB(void *arg)
 void *PrintC(void *arg)
 {
     char showcount = g_showcount;
-    pthread_t pid= pthread_self();
+    pthread_t pid = pthread_self();
     while (showcount--)
     {
         pthread_mutex_lock(&g_mtx);

@@ -3,8 +3,8 @@ TARGET := forlinux.o
 all:$(TARGET)
 
 $(TARGET):forlinux.cc
-	g++ -o $@ $< -pthread
+	g++ -o ./obj/$@ $< -pthread -g
 
 .PHONY:clean
 clean:
-	rm -rf $(TARGET)  
+	rm -rf ./obj/$(TARGET)  
