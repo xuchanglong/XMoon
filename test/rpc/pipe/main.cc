@@ -1,9 +1,8 @@
 /*****************************************************************************************
  * @function    无名管道示例代码。
- * @notice        fd1，parent 写，child 读。
- *                          fd2，child 写，parent 读。
- * @author       xuchanglong
- * @time            2019-09-22    
+ * @notice  fd1，parent 写，child 读。
+ *          fd2，child 写，parent 读。
+ * @time    2019-09-22    
  *****************************************************************************************/
 #include <sys/types.h>
 #include <sys/wait.h>
