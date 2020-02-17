@@ -7,32 +7,37 @@
 
 typedef struct
 {
-    char name[4];
-    int age;
-} people;
+    char name;
+    size_t age;
+} PeopleInfo;
 
 // map a normal file as shared mem:　
 int main(int argc, char **argv)
 {
-    int fd, i;
-    people *p_map;
-    char temp;
+    int fd;
+    PeopleInfo *pmap;
 
     fd = open(argv[1], O_CREAT | O_RDWR | O_TRUNC, 00777);
-    lseek(fd, sizeof(people) * 5 - 1, SEEK_SET);
+    lseek(fd, sizeof(PeopleInfo) * 5 - 1, SEEK_SET);
     write(fd, "", 1);
-    p_map = (people *)mmap(NULL, sizeof(people) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    close(fd);
-    temp = 'a';
-    for (i = 0; i < 10; i++)
+    pmap = (PeopleInfo *)mmap(NULL, sizeof(PeopleInfo) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (pmap < 0)
     {
-        temp += 1;
-        memcpy((*(p_map + i)).name, &temp, 2);
-        (*(p_map + i)).age = 20 + i;
+        std::cout << "Failed to create to mmap ." << std::endl;
+        return -1;
     }
-    std::cout << "initializeover" << std::endl;
-    sleep(10);
-    munmap(p_map, sizeof(people) * 10);
-    std::cout << "umapok" << std::endl;
+    close(fd);
+
+    char temp = 'a';
+    for (size_t i = 0; i < 10; i++)
+    {
+        pmap[i].name = temp++;
+        pmap[i].age = 20 + i;
+    }
+    if (munmap(pmap, sizeof(PeopleInfo) * 10) < 0)
+    {
+        std::cout << "Failed to delete to mmap ." << std::endl;
+        return -2;
+    }
     return 0;
 }

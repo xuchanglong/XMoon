@@ -1,25 +1,37 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <iostream>
 #include <unistd.h>
 
 typedef struct
 {
-    char name[4];
-    int age;
-} people;
+    char name;
+    size_t age;
+} PeopleInfo;
 
-int main(int argc, char **argv) //map a normal file as shared mem:　
+//map a normal file as shared mem:　
+int main(int argc, char **argv)
 {
-    int fd, i;
-    people *p_map;
+    int fd;
+    PeopleInfo *pmap;
+
     fd = open(argv[1], O_CREAT | O_RDWR, 00777);
-    p_map = (people *)mmap(NULL, sizeof(people) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    for (i = 0; i < 10; i++)
+    pmap = (PeopleInfo *)mmap(NULL, sizeof(PeopleInfo) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (pmap < 0)
     {
-        printf("name = %s   age = %d;\n", (*(p_map + i)).name, (*(p_map + i)).age);
+        std::cout << "Failed to create to mmap ." << std::endl;
+        return -1;
     }
-    munmap(p_map, sizeof(people) * 10);
+    for (size_t i = 0; i < 10; i++)
+    {
+        std::cout << "name = " << pmap[i].name << "  "
+                  << "age = " << pmap[i].age << std::endl;
+    }
+    if (munmap(pmap, sizeof(PeopleInfo) * 10) < 0)
+    {
+        std::cout << "Failed to delete to mmap ." << std::endl;
+        return -2;
+    }
     return 0;
 }
