@@ -1,7 +1,6 @@
 /*****************************************************************************************
  * 
  *  @function CRC32 单字节校验算法。
- *  @author xuchanglong
  *  @time   2019-09-13
  *  @reference link：https://www.cnblogs.com/esestt/archive/2007/08/09/848856.html
  * 
@@ -28,7 +27,6 @@ public:
      * @paras buffer 待转换的数据的首地址。
      *        kSize 待转换的数据的字节数量。
      * @ret 最终的经过 crc32 转换之后的数据。
-     * @author xuchanglong
      * @time 2019-09-16
     */
     int GetCRC32(unsigned char *buffer, const size_t &kSize);
@@ -38,7 +36,6 @@ private:
      * @function 创建单字节的查表法所用到的表。
      * @paras none。
      * @ret none。
-     * @author xuchanglong
      * @time 2019-09-16
     */
     void InitCRC32Table();
@@ -47,7 +44,6 @@ private:
      * @function 将 ref 各个位首尾交换。
      * @paras ref 待处理的数据。
      *        ch ref 数据需要交换的位数。
-     * @author xuchanglong
      * @time 2019-09-13
     */
     unsigned int Reflect(unsigned int ref, char ch);

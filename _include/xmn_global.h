@@ -1,7 +1,6 @@
 ﻿/*****************************************************************************************
  * @function    存放声明的全局变量、结构体等相关信息。
- * @author       xuchanglong
- * @time            2019-08-14
+ * @time    2019-08-14
 *****************************************************************************************/
 #ifndef XMOON__INCLUDE_XMN_GLOBAL_H_
 #define XMOON__INCLUDE_XMN_GLOBAL_H_
@@ -13,8 +12,7 @@
 
 /**
  * @function    记录配置文件中每一个条目的信息。
- * @author        xuchanglong
- * @time            2019-08-01
+ * @time    2019-08-01
  */
 struct ConfigItem
 {
@@ -30,8 +28,7 @@ struct ConfigItem
 
 /**
  * @function    记录打印的日志的相关信息。
- * @author         xuchanglong
- * @time            2019-08-17
+ * @time    2019-08-17
 */
 struct XMNLog
 {

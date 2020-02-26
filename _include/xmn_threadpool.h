@@ -50,7 +50,6 @@ public:
      * @function    创建线程池。
      * @paras   kThreadCount 线程池中线程的数量。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-09-04
     */
     int Create(const size_t &kThreadCount);
@@ -59,7 +58,6 @@ public:
      * @funtion 释放线程池中所有线程。
      * @paras   none 。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-09-04
     */
     int Destroy();
@@ -68,7 +66,6 @@ public:
      * @function    唤醒一个线程开始执行任务。
      * @paras   none 。
      * @ret  0   操作成功
-     * @author  xuchanglong
      * @time    2019-09-05
     */
     int Call();
@@ -77,7 +74,6 @@ public:
      * @function    将接收到的数据压入消息链表中。
      * @paras   pdata   接收到的数据。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-01
     */
     int PutInRecvMsgList_Signal(char *pdata);
@@ -86,7 +82,6 @@ public:
      * @function    获取消息的数量
      * @paras   none 。
      * @ret  消息的数量
-     * @author  xuchanglong
      * @time    2019-09-12
     */
     size_t RecvMsgListSize();
@@ -96,7 +91,6 @@ private:
      * @function    线程的执行入口函数。
      * @paras   pthreaddata 保存当前线程信息的内存。
      * @ret  nullptr 。
-     * @author  xuchanglong
      * @time 2019-09-07
     */
     static void *ThreadFunc(void *pthreaddata);
@@ -105,8 +99,7 @@ private:
      * @function    从消息链表中获取消息。
      * @paras   none 。
      * @ret  非0 获取消息成功。
-     *                  nullptr 获取消息失败。
-     * @author  xuchanglong
+     *       nullptr 获取消息失败。
      * @time    2019-09-06
     */
     char *PutOutRecvMsgList();

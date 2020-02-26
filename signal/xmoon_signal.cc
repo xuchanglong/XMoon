@@ -1,7 +1,6 @@
 /*****************************************************************************************
  * @function   信号相关操作函数。
- * @author      xuchanglong
- * @time            2019-08-15
+ * @time    2019-08-15
 *****************************************************************************************/
 #include <signal.h>
 #include <iostream>
@@ -33,7 +32,6 @@ struct XMNSignal
  *          psiginfo    信号相关信息的结构体。
  *          pcontext    备用。
  * @ret  none 。
- * @author  xuchanglong
  * @time    2019-08-17
  */
 static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent);
@@ -42,7 +40,6 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent);
  * @function    获取子进程的状态，避免子进程变成僵尸进程。
  * @paras   none 。
  * @ret  none 。
- * @author  xuchanglong
  * @time    2019-08-18
 */
 static void XMNProcessGetStatus();

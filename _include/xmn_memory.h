@@ -1,8 +1,7 @@
 /*****************************************************************************************
  * @function    内存分配类，仅仅是对 new 和 free 的简单的封装。
- * @notice      采用单例模式。
- * @author      xuchanglong
- * @time        2019-08-31   
+ * @notice  采用单例模式。
+ * @time    2019-08-31   
  *****************************************************************************************/
 
 #ifndef XMOON__INCLUDE_XMNMEMORY_H_
@@ -30,7 +29,6 @@ public:
      *          ismemset    是否对申请的内存进行 memset 。
      * @ret  非 nullptr  申请成功。
      *          nullptr     申请失败。
-     * @author  xuchanglong
      * @time    2019-08-31
     */
     void *AllocMemory(const size_t &bytecount, const bool &ismemset);
@@ -39,7 +37,6 @@ public:
      * @function    释放内存。
      * @paras   pmemory   待释放的内存的首地址。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-08-31
     */
     void FreeMemory(void *pmemory);

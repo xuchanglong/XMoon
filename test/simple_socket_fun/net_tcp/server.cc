@@ -1,10 +1,9 @@
 /**
  * @function    简单的服务器的实现。
- * @author      xuchanglong
- * @time        2019-08-18
- * @website     https://www.cnblogs.com/jiangzhaowei/p/8261174.html
- *                          https://blog.csdn.net/sandware/article/details/40923491
- *                          https://blog.csdn.net/xioahw/article/details/4056514
+ * @time    2019-08-18
+ * @website https://www.cnblogs.com/jiangzhaowei/p/8261174.html
+ *          https://blog.csdn.net/sandware/article/details/40923491
+ *          https://blog.csdn.net/xioahw/article/details/4056514
  * @notice  查看socket的状态的指令：netstat -anp | grep -E "State|59002"
 */
 
@@ -38,12 +37,11 @@
 
 /**
  * @function    在终端显示函数返回的错误信息。
- * @paras           str     报错的函数。
- *                          ireturnvalue    函数的返回值。
- *                          err errno，即：错误代码。
- * @ret      none。
- * @author      xuchanglong
- * @time           2019-08-24
+ * @paras       str     报错的函数。
+ *              ireturnvalue    函数的返回值。
+ *              err errno，即：错误代码。
+ * @ret none。
+ * @time    2019-08-24
 */
 void showerrorinfo(const std::string &strfun, const int &ireturnvalue, const int &err);
 
@@ -127,10 +125,11 @@ int main()
         /**
          * 向 client 发送数据。
         */
-        isenddatasum = write(confd, pbuf, strlen(pbuf));
+        //isenddatasum = send(confd, pbuf, strlen(pbuf), 0);
 
         std::cout << "Send \"" << isenddatasum << "\" bytes." << std::endl;
-        close(confd);
+        //close(confd);
+        sleep(1);
     }
     close(listenfd);
     return 0;

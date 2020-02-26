@@ -1,6 +1,5 @@
 /**
  * @function    简单的客户端的实现。
- * @author      xuchanglong
  * @time        2019-08-18
  * @website     https://www.cnblogs.com/jiangzhaowei/p/8261174.html
 */
@@ -12,6 +11,7 @@
 //#include "linux/in.h"
 #include "arpa/inet.h"
 #include <string.h>
+#include <errno.h>
 
 #define SERVERPORT 59002
 
@@ -23,7 +23,7 @@ int main()
     /**
      * 保存从server端接收来的数据。
     */
-    char buf[1000 + 1] = {'\0'};
+    char buf[10 + 1] = {'\0'};
 
     /**
      * 创建socket。
@@ -41,7 +41,7 @@ int main()
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(SERVERPORT);
-    r = inet_pton(AF_INET, "192.168.1.105", &addr.sin_addr.s_addr);
+    r = inet_pton(AF_INET, "192.168.43.103", &addr.sin_addr.s_addr);
     if (r <= 0)
     {
         showerrorinfo("inet_pton", r, errno);
@@ -60,13 +60,41 @@ int main()
 
     /**
      * 读取 server 发来的数据。
+     * 非阻塞模式。
     */
-    if (read(clientfd, buf, 1000))
+    int buflen = 0;
+    while (true)
     {
-        std::cout << "Recieve data is \"" << buf << "\"" << std::endl;
-        memset(buf, '\0', strlen(buf));
+        buflen = recv(clientfd, buf + buflen, 10, MSG_DONTWAIT);
+        if (buflen < 0)
+        {
+            if (errno == EAGAIN)
+            {
+                std::cout << "已无数据可读！" << std::endl;
+                goto exitpos;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else if (buflen == 0)
+        {
+            std::cout << "这里表示对端的 socket 已正常关闭。" << std::endl;
+        }
+        // 需要再次读取
+        if (buflen == 10)
+        {
+            ;
+        }
+        else
+        {
+            break;
+        }
     }
-
+    std::cout << "Recieve data is \"" << buf << "\"" << std::endl;
+    memset(buf, '\0', strlen(buf));
+exitpos:
     close(clientfd);
     std::cout << "程序执行完毕，退出！" << std::endl;
     return 0;

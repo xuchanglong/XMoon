@@ -1,7 +1,6 @@
 /*****************************************************************************************
  * 
  *  @function linux socket 配置文件。
- *  @author xuchanglong
  *  @time   2019-08-25
  * 
  *****************************************************************************************/
@@ -37,7 +36,6 @@ using XMNEventHandler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockin
 
 /**
  *  @function   存放监听 socket 的相关的信息。
- *  @author xuchanglong
  *  @time   2019-08-25
 */
 struct XMNListenSockInfo
@@ -60,7 +58,6 @@ struct XMNListenSockInfo
 
 /**
  * @function    存放连接 socket 的相关信息。
- * @author  xuchanglong
  * @time    2019-08-26
 */
 struct XMNConnSockInfo
@@ -317,7 +314,6 @@ public:
      *          -3  SetNonBlocking 设置失败。
      *          -4  bind 绑定失败。
      *          -5  listen  监听失败。
-     * @author  xuchanglong
      * @time   2019-08-25
     */
     virtual int Initialize();
@@ -328,7 +324,6 @@ public:
      * @ret  0   操作成功。
      *          -1  connsock_pool_mutex_    初始化失败。
      *          -2  connsock_pool_recy_mutex_   初始化失败。
-     * @author xuchanglong
      * @time    2019-09-21
     */
     virtual int InitializeWorker();
@@ -337,7 +332,6 @@ public:
      * @function    worker 进程中初始化的内容需要在 worker 中释放。
      * @paras   none 。
      * @ret  0 操作成功。
-     * @author  xuchanglong
      * @time    2019-09-21
     */
     virtual int EndWorker();
@@ -346,7 +340,6 @@ public:
      * @function    打印统计信息。
      * @paras   none 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-10-07
     */
     void PrintInfo();
@@ -369,7 +362,6 @@ public:
      *          eventtype   事件类型，包括：增、删、改。
      *          pconnsockinfo   连接池中对应的指针。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-08-27
     */
     /*
@@ -395,7 +387,6 @@ public:
      *          kFlag   为操作类型 EPOLL_CTL_MOD 补充操作：0：增加   1：去掉
      *          pconnsockinfo   该连接的信息。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-08-27
     */
     int EpollOperationEvent(const int &kSockFd,
@@ -408,7 +399,6 @@ public:
      * @function    epoll 等待接收和处理事件。
      * @paras   kTimer  等待事件的超时时间，单位 ms 。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-08-28
     */
     int EpollProcessEvents(const int &kTimer);
@@ -417,7 +407,6 @@ public:
      * @function    返回消息链表中元素的数量。
      * @paras   none 。
      * @ret   消息链表中元素的数量。
-     * @author  xuchanglong
      * @time    2019-09-06
     */
     size_t RecvMsgListSize();
@@ -431,7 +420,6 @@ public:
      * @function    处理收到的数据包。
      * @paras   数据包。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-15
     */
     virtual void ThreadRecvProcFunc(char *pmsgbuf);
@@ -448,7 +436,6 @@ protected:
      * @function    发送数据。
      * @paras   psenddata   待发送的数据。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-09-25
     */
     int PutInSendDataQueue(char *psenddata);
@@ -461,7 +448,6 @@ protected:
      *              发送的数据本身是0个字节。
      *          -1  发送缓冲区已满。
      *          -2  未知错误。
-     * @author  xuchanglong
      * @time    2019-09-26
     */
     int SendData(XMNConnSockInfo *pconnsockinfo);
@@ -471,7 +457,6 @@ protected:
      * @paras   pconnsockinfo   待关闭的连接信息。
      * @ret  0   操作成功。
      *          -1  形参为空指针。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     int ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo);
@@ -482,7 +467,6 @@ private:
      * @paras   0  操作成功。
      *          1  读取 port 数量失败。
      *          2  读取 各个port 失败。
-     * @author  xuchanglong
      * @time    2019-08-26
     */
     int ReadConf();
@@ -522,7 +506,6 @@ private:
      *              用于处理新建立的连接。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
      * @ret  none .
-     * @author  xuchanglong
      * @time    2019-08-27
     */
     void EventAcceptHandler(XMNConnSockInfo *pconnsockinfo);
@@ -532,7 +515,6 @@ private:
      *              用于读取 client 发来的数据并做处理。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-26
     */
     void WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo);
@@ -542,7 +524,6 @@ private:
      *              用于向 client 发送数据。
      * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-26
     */
     void WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo);
@@ -550,7 +531,6 @@ private:
     /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
-     * @author  xuchanglong
      * @time    2019-08-31
     */
     ssize_t RecvData(XMNConnSockInfo *pconnsockinfo);
@@ -559,7 +539,6 @@ private:
      * @function    判断该包是否正常以及为接收包体做准备。
      * @paras   pconnsokcinfo   待处理的连接。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-08-31
     */
     void WaitRequestHandlerHeader(XMNConnSockInfo *pconnsokcinfo);
@@ -568,7 +547,6 @@ private:
      * @function    对接收的完整的包进行处理（压入消息队列中并初始化状态机）。
      * @paras   pconnsokcinfo   待处理的连接。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-01
     */
     void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
@@ -582,7 +560,6 @@ private:
      * @function    初始化连接池。
      * @paras   none 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     void InitConnSockInfoPool();
@@ -591,7 +568,6 @@ private:
      * @function    释放连接池所占的内存。
      * @paras   none 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     void FreeConnSockInfoPool();
@@ -601,7 +577,6 @@ private:
      * @paras   kSockFd accept 返回的 socket 。
      * @ret  绑定好的连接池中的一个连接。
      *          nullptr 连接池中的连接为空。
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     XMNConnSockInfo *PutOutConnSockInfofromPool(const int &kSockFd);
@@ -610,7 +585,6 @@ private:
      * @function    将连接归还至连接池中。
      * @paras   pconnsockinfo   待归还的连接。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     void PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo);
@@ -619,7 +593,6 @@ private:
      * @function    将连接放入回收链表中。
      * @paras   pconnsockinfo   待归还的连接。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     void PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo);
@@ -628,7 +601,6 @@ private:
      * @function    定时将到时的连接归还至空闲连接池中。
      * @paras   pthreadinfo 线程的相关信息。
      * @ret  nullptr .
-     * @author  xuchanglong
      * @time    2019-09-19
     */
     static void *ConnSockInfoRecycleThread(void *pthreadinfo);
@@ -637,7 +609,6 @@ private:
      * @function    关闭已经建立的连接。
      * @paras   pfd 待关闭的连接。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-08-29
     */
     void CloseConnection(XMNConnSockInfo *pfd);
@@ -651,7 +622,6 @@ private:
      * @function    发送数据线程，每次循环只发送一次数据。
      * @paras   pthreadinfo   线程的相关信息。
      * @ret  nullptr   操作成功。
-     * @author  xuchanglong
      * @time    2019-09-25
     */
     static void *SendDataThread(void *pthreadinfo);
@@ -661,7 +631,6 @@ private:
      * @paras   none 。
      * @ret  非 nullptr  待发送的消息。
      *          nullptr 数据池中不存在消息。
-     * @author  xuchanglong
      * @time    2019-09-25
     */
     char *PutOutSendDataFromQueue();
@@ -670,7 +639,6 @@ private:
      * @function    释放发送队列中的消息。
      * @paras   none 。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-09-26
     */
     int FreeSendDataQueue();
@@ -684,7 +652,6 @@ private:
      * @function    将指定的连接信息放入 multimap 中，等待心跳监控。
      * @paras   pconnsockinfo   指定的连接的信息。
      * @ret  0   操作成功。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     int PutInConnSockInfo2PingMultiMap(XMNConnSockInfo *pconnsockinfo);
@@ -693,7 +660,6 @@ private:
      * @function    从 multimap 中获取最早的时间，即：头部元素。
      * @paras   none 。
      * @ret  最早的时间。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     time_t GetEarliestTime();
@@ -702,7 +668,6 @@ private:
      * @function    对心跳包进行监控的执行线程。
      * @paras   pthreadinfo 该线程的相关信息。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     static void *PingThread(void *pthreadinfo);
@@ -711,7 +676,6 @@ private:
      * @function    从监控 map 中找到比指定 time 最早的消息头。
      * @paras   待比较的时间。
      * @ret  满足条件的消息。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     XMNMsgHeader *GetOverTimeMsgHeader(const time_t &timetmp);
@@ -720,7 +684,6 @@ private:
      * @function    从监控 map 中移除最早的时间并返回该消息。
      * @paras   none 。
      * @ret  最早时间的消息。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     XMNMsgHeader *RemoveFirstMsgHeader();
@@ -730,7 +693,6 @@ private:
      * @paras   pconnsockinfo   待删除的连接。
      * @ret  0   操作成功。
      *          -1  形参为空指针。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     int PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo);
@@ -739,7 +701,6 @@ private:
      * @function    清空并释放心跳监控 multimap 。
      * @paras   none 。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     void FreePingMultiMap();
@@ -753,7 +714,6 @@ private:
      * @function    测试当前连接对应的 client 是否存在恶意行为。
      * @paras   none 。
      * @ret  true    存在恶意行为，应该关闭该连接。
-     * @author  xuchanglong
      * @time    2019-10-06
     */
     bool TestFlood(XMNConnSockInfo *pconnsockinfo);

@@ -10,7 +10,6 @@ using size_t = unsigned long;
  *          count   待比较的字节数量。
  * @ret  0   二者指定字节数的内存相同。
  *          非0 二者指定字节数的内存不相同。s
- * @author  xuchanglong
  * @time    2019-09-19
 */
 int memcmp(const void *cs, const void *ct, size_t count)
@@ -30,7 +29,6 @@ int memcmp(const void *cs, const void *ct, size_t count)
  * @ret  0   两个字符串相同。
  *          -1  对于第1个不同的字符,cs < ct 。
  *          1   对于第1个不同的字符,cs > ct 。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 int strcmp(const char *cs, const char *ct)
@@ -59,7 +57,6 @@ int strcmp(const char *cs, const char *ct)
  * @paras   dest 目的内存。
  *          src 待拷贝的内存。
  * @ret  目标内存赋值完数据之后下一个位置。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 void *memcpy(void *dest, const void *src, size_t count)
@@ -79,7 +76,6 @@ void *memcpy(void *dest, const void *src, size_t count)
  * @paras   dest 目的内存。
  *          src 待拷贝的字符串。
  * @ret  dest 的开始地址。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 char *strcpy(char *dest, const char *src)
@@ -97,7 +93,6 @@ char *strcpy(char *dest, const char *src)
  *          src  待拷贝的内存。
  *          count 赋值的字节数量。
  * @ret  目标内存赋值完数据之后下一个位置。
- * @author  xuchanglong
  * @time    2019-09-19
  * @notice  if ((*tmp = *src) != 0) 这里比较用的是“0”，因为和字符比较时，是双方的ASCII码值比较，故写 0 亦可。
 */
@@ -122,7 +117,6 @@ char *strncpy(char *dest, const char *src, size_t count)
  *          c 值。
  *          count 待赋值的字节数。
  * @ret  待赋值的内存的首地址。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 void *memset(void *s, int c, size_t count)
@@ -140,7 +134,6 @@ void *memset(void *s, int c, size_t count)
  * @function    字符串计数函数
  * @paras   s 待计数的内存
  * @ret  字符串的长度。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 size_t strlen(const char *s)
@@ -156,7 +149,6 @@ size_t strlen(const char *s)
  * @function    翻转字符串。
  * @paras   str 待翻转的字符串。
  * @raturn  翻转完之后的字符串。
- * @author  xuchanglong
  * @time    2019-09-19
 */
 char *strrev(char *str)

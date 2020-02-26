@@ -32,7 +32,6 @@ public:
      * @paras   pmsgheader  消息头。
      *          kMsgCode    指令。
      * @ret  none 。
-     * @author  xuchanglong
      * @time    2019-10-04
     */
     void SendNoBodyData2Client(XMNMsgHeader *pmsgheader, const uint16_t &kMsgCode);

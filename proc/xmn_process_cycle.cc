@@ -1,7 +1,6 @@
 /*****************************************************************************************
  * @function   master 和 wokers 进程工作函数。
- * @author      xuchanglong
- * @time            2019-08-15
+ * @time    2019-08-15
 *****************************************************************************************/
 #include "xmn_macro.h"
 #include "xmn_func.h"
@@ -23,7 +22,6 @@ static std::string g_strmasterprocessname = "master process";
  * @function    开始处理 workers 进程。
  * @paras   workprocesssum  创建 worker 进程的数量。
  * @ret  none 。
- * @author  xuchanglong
  * @time    2019-08-15
 */
 static void XMNStartWorkerProcess(const size_t &kWorkerProcessCount);
@@ -33,7 +31,6 @@ static void XMNStartWorkerProcess(const size_t &kWorkerProcessCount);
  * @paras   inum    子进程编号。
  *          strprocname   子进程的名称。
  * @ret  创建的子进程的 pid。
- * @author  xuchanglong
  * @time    2019-08-15
 */
 static int XMNCreateProcess(const size_t &kNum, const std::string &kstrProcName);
@@ -43,7 +40,6 @@ static int XMNCreateProcess(const size_t &kNum, const std::string &kstrProcName)
  * @paras   inum    子进程编号。
  *          strprocname   子进程的名称。
  * @ret  none 。
- * @author  xuchanglong
  * @time    2019-08-15
 */
 static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProcName);
@@ -53,7 +49,6 @@ static int XMNWorkerProcessCycle(const size_t &kNum, const std::string &kstrProc
  * @paras   inum    子进程编号。
  *          kstrTitleName   进程标题名称。
  * @ret  0   操作成功。
- * @author  xuchanglong
  * @time    2019-08-15
 */
 static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcName);
