@@ -766,7 +766,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         /**
          * 读事件。触发条件，
          * （1）客户端新连入。
-         * （2）已连接发送了数据。
+         * （2）读取对端发送的数据。
         */
         if (eventstmp & EPOLLIN)
         {

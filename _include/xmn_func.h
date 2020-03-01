@@ -39,7 +39,7 @@ u_char *xmn_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args);
 /**
  * @function    信号初始化函数，设置各个信号的信号处理函数。
  * @paras   none 。
- * @ret  none 。
+ * @ret none 。
  * @time    2019-08-17
 */
 int XMNSignalInit();
@@ -48,7 +48,7 @@ int XMNSignalInit();
 /**
  * @function    开始运行主进程，会创建指定数目的子进程并自身进入死循环中。
  * @paras   none 。
- * @ret  none 。
+ * @ret none 。
  * @time    2019-08-17
 */
 void XMNMasterProcessCycle();
@@ -56,9 +56,9 @@ void XMNMasterProcessCycle();
 /**
  * @function    创建守护进程。
  * @paras   none 。
- * @ret  0   子进程返回。
- *          -1    创建失败。
- *          1    主进程返回。
+ * @ret 0   子进程返回。
+ *      -1  创建失败。
+ *      1   主进程返回。
  * @time    2019-08-17
 */
 int XMNCreateDaemon();
@@ -66,7 +66,7 @@ int XMNCreateDaemon();
 /**
  * @function    处理子进程的网络事件和定时器事件。
  * @paras   none 。
- * @ret  0    操作成功。
+ * @ret 0   操作成功。
  * @time    2019-08-27
 */
 int XMNProcessEventsTimers();

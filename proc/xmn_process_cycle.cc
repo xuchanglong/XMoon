@@ -103,7 +103,7 @@ void XMNMasterProcessCycle()
     XMNStartWorkerProcess(kWorkerProcessCount);
 
     /**
-     * （4）解除信号屏蔽。
+     * （4）清空 set 信号集。
     */
     sigemptyset(&set);
 
@@ -112,6 +112,9 @@ void XMNMasterProcessCycle()
     */
     while (true)
     {
+        /**
+         * （6）解除信号屏蔽并休眠。
+        */
         sigsuspend(&set);
 
         /**

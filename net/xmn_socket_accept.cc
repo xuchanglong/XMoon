@@ -163,7 +163,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         pconnsockinfo_new->w_ready = 1;
 
         /**
-         *  设置数据来时读处理函数。
+         *  设置数据来时读和写的处理函数。
         */
         pconnsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
         pconnsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;

@@ -341,7 +341,7 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     else if (sendsize > 0 && sendsize == pconnsockinfo->senddatalen)
     {
         /**
-         * 发送成功，包已发全。
+         * 发送成功且发全。
          * 在 epoll 红黑树中删掉该 socket 。
         */
         if (EpollOperationEvent(pconnsockinfo->fd,

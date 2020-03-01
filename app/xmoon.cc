@@ -133,6 +133,7 @@ int main(int argc, char * const *argv)
         if (r == 1)
         {
             FreeResource();
+            xmn_log_stderr(0, "父进程正常退出。");
             exitcode = 0;
             return exitcode;
         }
@@ -143,6 +144,7 @@ int main(int argc, char * const *argv)
         else if (r != 0)
         {
             exitcode = 3;
+            xmn_log_stderr(0, "进程创建失败。");
             goto lblexit;
         }
 
@@ -162,7 +164,6 @@ lblexit:
      *  （10）释放内存。
     */
     FreeResource();
-    printf("程序退出，再见!\n");
     return exitcode;
 }
 
