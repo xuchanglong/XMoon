@@ -22,7 +22,7 @@ XMoon
    * **signal**：存放信号相关的代码文件。
    * **test**：存放相关功能单元测试代码文件。
 ### 三、整体框架图
-    ![Image text](https://github.com/xuchanglong/XMoon/blob/master/%E8%BD%AF%E4%BB%B6%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg)
+    ![Image text](https://github.com/xuchanglong/XMoon/blob/master/软件架构图.jpg)
 ### 四、项目概述
    * 非常完整的多进程多线程高并发服务器项目。
    * 按照包头 + 包体格式，完美地解决了数据粘包的问题。
