@@ -67,16 +67,16 @@ void XMNConnSockInfo::ClearConnSockInfo()
     /**
      * 释放内存。
     */
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     if (precvalldata != nullptr)
     {
-        pmemory->FreeMemory((void *)precvalldata);
+        memory.FreeMemory((void *)precvalldata);
         precvalldata = nullptr;
     }
 
     if (psendalldataforfree != nullptr)
     {
-        pmemory->FreeMemory((void *)psendalldataforfree);
+        memory.FreeMemory((void *)psendalldataforfree);
         psendalldataforfree = nullptr;
     }
 
@@ -93,7 +93,7 @@ void XMNConnSockInfo::ClearConnSockInfo()
 **************************************************************************************/
 void XMNSocket::InitConnSockInfoPool()
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     const size_t kConnSockInfoLen = sizeof(XMNConnSockInfo);
 
     /**
@@ -101,7 +101,7 @@ void XMNSocket::InitConnSockInfoPool()
     */
     for (size_t i = 0; i < worker_connection_count_; ++i)
     {
-        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(kConnSockInfoLen, false);
+        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(kConnSockInfoLen, false);
         pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
         pconnsockinfo->InitConnSockInfo();
         connsock_pool_.push_back(pconnsockinfo);
@@ -114,13 +114,13 @@ void XMNSocket::InitConnSockInfoPool()
 void XMNSocket::FreeConnSockInfoPool()
 {
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     while (!connsock_pool_.empty())
     {
         pconnsockinfo = connsock_pool_.front();
         connsock_pool_.pop_front();
         pconnsockinfo->~XMNConnSockInfo();
-        pmemory->FreeMemory((void *)pconnsockinfo);
+        memory.FreeMemory((void *)pconnsockinfo);
     }
 }
 
@@ -142,8 +142,8 @@ XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd)
         /**
          * 空闲连接池中无连接，再创建一个连接。
         */
-        XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-        pconnsockinfo = (XMNConnSockInfo *)pmemory->AllocMemory(sizeof(XMNConnSockInfo), false);
+        XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+        pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(sizeof(XMNConnSockInfo), false);
         pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
         connsock_pool_.push_back(pconnsockinfo);
         ++pool_connsock_count_;

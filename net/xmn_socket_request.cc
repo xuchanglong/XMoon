@@ -211,8 +211,8 @@ void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
         /**
         * （2）为包体分配内存并设置相关变量。
         */
-        XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-        char *pbuffall = (char *)pmemory->AllocMemory(kMsgHeaderLen_ + pkglen, false);
+        XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+        char *pbuffall = (char *)memory.AllocMemory(kMsgHeaderLen_ + pkglen, false);
         if (pbuffall == nullptr)
         {
             /**
@@ -268,8 +268,8 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
         if (isflood)
         {
             xmn_log_stderr(0, "3");
-            XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-            pmemory->FreeMemory(pconnsockinfo->precvalldata);
+            XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+            memory.FreeMemory(pconnsockinfo->precvalldata);
         }
         else
         {
@@ -311,7 +311,7 @@ void XMNSocket::ThreadRecvProcFunc(char *pmsgbuf)
 
 void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     /**
      * （1）发送消息。
     */
@@ -368,7 +368,7 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     {
         xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
     }
-    pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
     pconnsockinfo->psendalldataforfree = nullptr;
     pconnsockinfo->psenddata = nullptr;
     pconnsockinfo->senddatalen = 0;

@@ -77,8 +77,8 @@ int main(int argc, char * const *argv)
     /**
      * （2）初始化配置模块。
     */
-    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    if (pconfig->Load(kstrConfigFilePath) != 0)
+    XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
+    if (config.Load(kstrConfigFilePath) != 0)
     {
         xmn_log_init();
         xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", kstrConfigFilePath.c_str());
@@ -122,7 +122,7 @@ int main(int argc, char * const *argv)
     /**
      * （8）创建守护进程。
     */
-    strdaemoncontext = pconfig->GetConfigItem("Daemon", "0");
+    strdaemoncontext = config.GetConfigItem("Daemon", "0");
     if (strdaemoncontext.compare("1"))
     {
         int r = XMNCreateDaemon();

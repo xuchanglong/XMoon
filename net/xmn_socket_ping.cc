@@ -11,11 +11,11 @@ int XMNSocket::PutInConnSockInfo2PingMultiMap(XMNConnSockInfo *pconnsockinfo)
         return -1;
     }
 
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     time_t nexttime = time(nullptr) + pingwaittime_;
 
     XMNLockMutex pinglock(&ping_multimap_mutex_);
-    XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pmemory->AllocMemory(kMsgHeaderLen_, false);
+    XMNMsgHeader *pmsgheader = (XMNMsgHeader *)memory.AllocMemory(kMsgHeaderLen_, false);
     pmsgheader->currsequence = pconnsockinfo->currsequence;
     pmsgheader->pconnsockinfo = pconnsockinfo;
 
@@ -92,7 +92,7 @@ XMNMsgHeader *XMNSocket::GetOverTimeMsgHeader(const time_t &currenttime)
     {
         return nullptr;
     }
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     time_t earliesttime = GetEarliestTime();
     XMNMsgHeader *pmsgheadertmp = nullptr;
 
@@ -109,7 +109,7 @@ XMNMsgHeader *XMNSocket::GetOverTimeMsgHeader(const time_t &currenttime)
          * 重新加入到监控 multimap 中。
         */
         time_t newputinmultimaptime = currenttime + pingwaittime_;
-        XMNMsgHeader *pmsgheadertmp_new = (XMNMsgHeader *)pmemory->AllocMemory(kMsgHeaderLen_, false);
+        XMNMsgHeader *pmsgheadertmp_new = (XMNMsgHeader *)memory.AllocMemory(kMsgHeaderLen_, false);
         pmsgheadertmp_new->currsequence = pmsgheadertmp->currsequence;
         pmsgheadertmp_new->pconnsockinfo = pmsgheadertmp->pconnsockinfo;
         ping_multimap_.insert(std::make_pair(newputinmultimaptime, pmsgheadertmp_new));
@@ -142,8 +142,9 @@ XMNMsgHeader *XMNSocket::RemoveFirstMsgHeader()
 
 int XMNSocket::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime)
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-    pmemory->FreeMemory(pmemory);
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+    // 有问题。
+    //memory.FreeMemory(pmemory);
 
     return 0;
 }
@@ -154,7 +155,7 @@ int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
     {
         return -1;
     }
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex pinglock(&ping_multimap_mutex_);
 
     std::multimap<time_t, XMNMsgHeader *>::iterator it;
@@ -162,7 +163,7 @@ int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
     {
         if (it->second->pconnsockinfo == pconnsockinfo)
         {
-            pmemory->FreeMemory(it->second);
+            memory.FreeMemory(it->second);
             it = ping_multimap_.erase(it);
             --ping_multimap_count_;
         }
@@ -179,10 +180,10 @@ int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
 
 void XMNSocket::FreePingMultiMap()
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     for (auto &x : ping_multimap_)
     {
-        pmemory->FreeMemory(x.second);
+        memory.FreeMemory(x.second);
         --ping_multimap_count_;
     }
     ping_multimap_.clear();

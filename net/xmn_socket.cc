@@ -307,12 +307,12 @@ int XMNSocket::SetNonBlocking(const int &sockfd)
 
 int XMNSocket::ReadConf()
 {
-    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
+    XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
 
     /**
      * （1）获取 port 的数量。
     */
-    listenport_count_ = atoi(pconfig->GetConfigItem("ListenPortCount", "1").c_str());
+    listenport_count_ = atoi(config.GetConfigItem("ListenPortCount", "1").c_str());
     if (listenport_count_ <= 0)
     {
         return -1;
@@ -328,7 +328,7 @@ int XMNSocket::ReadConf()
     {
         s << i;
         str = "ListenPort" + s.str();
-        pportsum_[i] = atoi(pconfig->GetConfigItem(str).c_str());
+        pportsum_[i] = atoi(config.GetConfigItem(str).c_str());
         if (pportsum_[i] <= 0)
         {
             return -2;
@@ -340,7 +340,7 @@ int XMNSocket::ReadConf()
     /**
      * （3）获取每个 worker 进程的 epoll 连接的最大项数。
     */
-    worker_connection_count_ = atoi(pconfig->GetConfigItem("WorkerConnections", "1024").c_str());
+    worker_connection_count_ = atoi(config.GetConfigItem("WorkerConnections", "1024").c_str());
     if (worker_connection_count_ <= 0)
     {
         return -3;
@@ -349,7 +349,7 @@ int XMNSocket::ReadConf()
     /**
      * （4）获取连接回收的等待时间。
     */
-    recyconnsockinfowaittime_ = atoi(pconfig->GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
+    recyconnsockinfowaittime_ = atoi(config.GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
     if (recyconnsockinfowaittime_ <= 0)
     {
         return -4;
@@ -358,7 +358,7 @@ int XMNSocket::ReadConf()
     /**
      * （5）是否开启心跳监控。
     */
-    pingenable_ = atoi(pconfig->GetConfigItem("PingEnable", "0").c_str());
+    pingenable_ = atoi(config.GetConfigItem("PingEnable", "0").c_str());
     if (pingenable_ <= 0)
     {
         return -5;
@@ -367,7 +367,7 @@ int XMNSocket::ReadConf()
     /**
      * （6）心跳间隔时间。
     */
-    pingwaittime_ = atoi(pconfig->GetConfigItem("PingWaitTime", "30").c_str());
+    pingwaittime_ = atoi(config.GetConfigItem("PingWaitTime", "30").c_str());
     if (pingwaittime_ <= 0)
     {
         return -6;
@@ -377,7 +377,7 @@ int XMNSocket::ReadConf()
     /**
      * （7）Flood 攻击检测是否开启的标志。
     */
-    floodattackmonitorenable_ = atoi(pconfig->GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
+    floodattackmonitorenable_ = atoi(config.GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
     if (floodattackmonitorenable_ <= 0)
     {
         return -7;
@@ -386,7 +386,7 @@ int XMNSocket::ReadConf()
     /**
      * （8）相邻两次接收到数据包的最小时间间隔。
     */
-    floodtimeinterval_ = atoi(pconfig->GetConfigItem("FloodTimeInterval", "100").c_str());
+    floodtimeinterval_ = atoi(config.GetConfigItem("FloodTimeInterval", "100").c_str());
     if (floodtimeinterval_ <= 0)
     {
         return -8;
@@ -395,7 +395,7 @@ int XMNSocket::ReadConf()
     /**
      * （9）允许连续恶意包的最小数量。
     */
-    floodcount_ = atoi(pconfig->GetConfigItem("FloodCount", "10").c_str());
+    floodcount_ = atoi(config.GetConfigItem("FloodCount", "10").c_str());
     if (floodcount_ <= 0)
     {
         return -9;
@@ -806,7 +806,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
 
 int XMNSocket::PutInSendDataQueue(char *psenddata)
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex lockmutex_senddata(&senddata_queue_mutex_);
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)psenddata;
     XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
@@ -817,7 +817,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     if (queue_senddata_count_ > 50000)
     {
         ++discardsendpkgcount_;
-        pmemory->FreeMemory(psenddata);
+        memory.FreeMemory(psenddata);
         return -1;
     }
     if (pconnsockinfo->nosendmsgcount > 400)
@@ -825,7 +825,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
         xmn_log_stderr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
                        pconnsockinfo->fd);
         ++discardsendpkgcount_;
-        pmemory->FreeMemory(psenddata);
+        memory.FreeMemory(psenddata);
         ActivelyCloseSocket(pconnsockinfo);
         return -2;
     }
@@ -872,7 +872,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     XMNPkgHeader *ppkgheader = nullptr;
     char *psendalldata = nullptr;
     XMNConnSockInfo *pconnsockinfo = nullptr;
-    XMNMemory *pmemory = (XMNMemory *)SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     int err = 0;
     ssize_t sendsize = 0;
 
@@ -915,7 +915,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             */
             if (pconnsockinfo->currsequence != pmsgheader->currsequence)
             {
-                pmemory->FreeMemory(psendalldata);
+                memory.FreeMemory(psendalldata);
                 psendalldata = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -949,7 +949,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                     /**
                      * 全部正常发送成功。
                     */
-                    pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                     pconnsockinfo->psendalldataforfree = nullptr;
                     pconnsockinfo->psenddata = nullptr;
                     pconnsockinfo->senddatalen = 0;
@@ -982,7 +982,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送端已断开连接。
                 */
-                pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -1003,7 +1003,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
             else
             {
-                pmemory->FreeMemory(pconnsockinfo->psendalldataforfree);
+                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -1062,13 +1062,13 @@ int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
 
 int XMNSocket::FreeSendDataQueue()
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     char *ptmp = nullptr;
     while (!senddata_queue_.empty())
     {
         ptmp = senddata_queue_.front();
         senddata_queue_.pop();
-        pmemory->FreeMemory(ptmp);
+        memory.FreeMemory(ptmp);
     }
     return 0;
 }

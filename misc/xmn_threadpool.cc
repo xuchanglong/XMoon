@@ -74,7 +74,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
     int r = 0;
     ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
     XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     char *pmsg = nullptr;
 
     size_t pid = pthread_self();

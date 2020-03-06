@@ -90,9 +90,9 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     /**
      * （5）组合回复的数据。
     */
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-    XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
-    char *psenddata = (char *)pmemory->AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+    XMNCRC32 &crc32 = SingletonBase<XMNCRC32>::GetInstance();
+    char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
     // a、消息头。
     XMNMsgHeader *pmsgheader_send = (XMNMsgHeader *)psenddata;
     memcpy(pmsgheader_send, pmsgheader, sizeof(XMNMsgHeader));
@@ -103,7 +103,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     //c、包体
     char *ppkgbody_send = psenddata + kMsgHeaderLen_ + kPkgHeaderLen_;
     memcpy(ppkgbody_send, pregisterinfo, sizeof(RegisterInfo));
-    ppkgheader_send->crc32 = htonl(pcrc32->GetCRC32((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
+    ppkgheader_send->crc32 = htonl(crc32.GetCRC32((unsigned char *)ppkgbody_send, sizeof(RegisterInfo)));
 
     /**
      * （6）将可写标志加入 epoll 红黑树中。
@@ -167,7 +167,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     {
         ppkgbody = pmsgbuf + kMsgHeaderLen_ + kPkgHeaderLen_;
         int crc32src = ntohl(ppkgheader->crc32);
-        int crc32 = SingletonBase<XMNCRC32>::GetInstance()->GetCRC32((unsigned char *)ppkgbody, pkgbodylen);
+        int crc32 = SingletonBase<XMNCRC32>::GetInstance().GetCRC32((unsigned char *)ppkgbody, pkgbodylen);
         if (crc32 != crc32src)
         {
             xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc 中 crc32 校验失败，丢弃数据。");
@@ -237,8 +237,8 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
 
 void XMNSocketLogic::SendNoBodyData2Client(XMNMsgHeader *pmsgheader, const uint16_t &kMsgCode)
 {
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
-    char *psenddata = (char *)pmemory->AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_, false);
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+    char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_, false);
 
     memcpy(psenddata, pmsgheader, sizeof(char) * kMsgHeaderLen_);
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(psenddata + kMsgHeaderLen_);
@@ -258,7 +258,7 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
     {
         return -1;
     }
-    XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
     if (pmsgheader->currsequence == pconnsockinfo->currsequence)
     {
@@ -270,13 +270,13 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
             xmn_log_stderr(0, "超时不发心跳包，连接被关闭。");
             ActivelyCloseSocket(pconnsockinfo);
         }
-        pmemory->FreeMemory(pmsgheader);
+        memory.FreeMemory(pmsgheader);
     }
     else
     {
         /**
          * 此连接已经断开。
         */
-        pmemory->FreeMemory(pmsgheader);
+        memory.FreeMemory(pmsgheader);
     }
 }

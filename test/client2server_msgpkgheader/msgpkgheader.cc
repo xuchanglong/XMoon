@@ -39,7 +39,7 @@ int main()
     /**
      * （2）组合向 server 发送的数据。
     */
-    XMNCRC32 *pcrc32 = SingletonBase<XMNCRC32>::GetInstance();
+    XMNCRC32 &crc32 = SingletonBase<XMNCRC32>::GetInstance();
 
     size_t pkgheaderlen = sizeof(XMNPkgHeader);
     size_t registerinfolen = sizeof(RegisterInfo);
@@ -53,7 +53,7 @@ int main()
     pregisterinfo->type = 0;
     std::strcpy(pregisterinfo->username, "xuchanglong");
     std::strcpy(pregisterinfo->password, "123456");
-    ppkgheader->crc32 = pcrc32->GetCRC32((unsigned char *)pregisterinfo, registerinfolen);
+    ppkgheader->crc32 = crc32.GetCRC32((unsigned char *)pregisterinfo, registerinfolen);
     ppkgheader->crc32 = htonl(ppkgheader->crc32);
 
     const size_t kRegisterCRC32 = ppkgheader->crc32;

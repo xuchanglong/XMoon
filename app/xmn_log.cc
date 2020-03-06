@@ -182,13 +182,13 @@ void xmn_log_init()
     std::string strplogname = "";
     size_t nlen;
 
-    XMNConfig *pconfig = SingletonBase<XMNConfig>::GetInstance();
-    strplogname = pconfig->GetConfigItem("Log");
+    XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
+    strplogname = config.GetConfigItem("Log");
     if (strplogname == "")
     {
         strplogname = XMN_ERROR_LOG_PATH; 
     }
-    g_xmn_log.log_level = atoi(pconfig->GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); 
+    g_xmn_log.log_level = atoi(config.GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); 
 
     g_xmn_log.fd = open(strplogname.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0644);
     if (g_xmn_log.fd == -1) 
