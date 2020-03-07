@@ -111,7 +111,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     /*
     if (EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
     {
-        xmn_log_stderr(0,"XMNSocketLogic::HandleRegister() 中 EpollOperationEvent 执行失败。");
+        XMNLogStdErr(0,"XMNSocketLogic::HandleRegister() 中 EpollOperationEvent 执行失败。");
     }
     */
 
@@ -120,13 +120,13 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     */
     PutInSendDataQueue(psenddata);
 
-    //xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
+    //XMNLogStdErr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
     return 0;
 }
 
 int XMNSocketLogic::HandleLogin(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t pkgbodylen)
 {
-    xmn_log_stderr(0, "执行了 XMNSocketLogic::HandleLogin 函数。");
+    XMNLogStdErr(0, "执行了 XMNSocketLogic::HandleLogin 函数。");
     return 0;
 }
 
@@ -170,7 +170,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
         int crc32 = SingletonBase<XMNCRC32>::GetInstance().GetCRC32((unsigned char *)ppkgbody, pkgbodylen);
         if (crc32 != crc32src)
         {
-            xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc 中 crc32 校验失败，丢弃数据。");
+            XMNLogStdErr(0, "XMNSocketLogic::ThreadRecvProcFunc 中 crc32 校验失败，丢弃数据。");
             goto lblexit;
         }
     }
@@ -193,7 +193,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     msgcode = ntohs(ppkgheader->msgcode);
     if (msgcode >= TOTAL_COMMANDS)
     {
-        xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgCode = %d 消息码不对!", msgcode);
+        XMNLogStdErr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgCode = %d 消息码不对!", msgcode);
         goto lblexit;
     }
 
@@ -203,7 +203,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     */
     if (msghandlerall[msgcode] == nullptr)
     {
-        xmn_log_stderr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgcode = %d 消息码找不到对应的处理函数。", msgcode);
+        XMNLogStdErr(0, "XMNSocketLogic::ThreadRecvProcFunc()中的 msgcode = %d 消息码找不到对应的处理函数。", msgcode);
         goto lblexit;
     }
     (this->*msghandlerall[msgcode])(pmsgheader, (char *)ppkgbody, pkgbodylen);
@@ -231,7 +231,7 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
 
     SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);
 
-    //xmn_log_stderr(0, "成功地收到了心跳包并发送。");
+    //XMNLogStdErr(0, "成功地收到了心跳包并发送。");
     return 0;
 }
 
@@ -267,7 +267,7 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
         */
         if ((currenttime - pconnsockinfo->lastpingtime) > (pingwaittime_ * 3))
         {
-            xmn_log_stderr(0, "超时不发心跳包，连接被关闭。");
+            XMNLogStdErr(0, "超时不发心跳包，连接被关闭。");
             ActivelyCloseSocket(pconnsockinfo);
         }
         memory.FreeMemory(pmsgheader);

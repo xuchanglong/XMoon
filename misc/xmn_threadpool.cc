@@ -40,7 +40,7 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
         r = pthread_create(&pthreadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)pthreadinfoitem);
         if (r != 0)
         {
-            xmn_log_stderr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
+            XMNLogStdErr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
             return -1;
         }
         vthreadinfo_.push_back(pthreadinfoitem);
@@ -87,7 +87,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         r = pthread_mutex_lock(&thread_mutex_);
         if (r != 0)
         {
-            xmn_log_stderr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
+            XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
         while ((!isquit_) && ((pmsg = pthreadpool->PutOutRecvMsgList()) == nullptr))
@@ -116,7 +116,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         r = pthread_mutex_unlock(&thread_mutex_);
         if (r != 0)
         {
-            xmn_log_stderr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_unlock 执行失败。");
+            XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_unlock 执行失败。");
         }
 
         /**
@@ -127,7 +127,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 开始业务处理。
         */
-        //xmn_log_stderr(0, "业务逻辑开始执行，pid = %d", pid);
+        //XMNLogStdErr(0, "业务逻辑开始执行，pid = %d", pid);
         //sleep(5);
         g_socket.ThreadRecvProcFunc(pmsg);
 
@@ -135,7 +135,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 业务处理结束。
         */
-        //xmn_log_stderr(0, "业务逻辑执行结束，pid = %d", pid);
+        //XMNLogStdErr(0, "业务逻辑执行结束，pid = %d", pid);
 
         /**
          * 正在运行的线程数 - 1 。
@@ -160,7 +160,7 @@ int XMNThreadPool::Destroy()
     r = pthread_cond_broadcast(&thread_cond_);
     if (r != 0)
     {
-        xmn_log_stderr(r, "XMNThreadPool::Destroy() 中 pthread_cond_signal 执行失败。");
+        XMNLogStdErr(r, "XMNThreadPool::Destroy() 中 pthread_cond_signal 执行失败。");
     }
 
     /**
@@ -200,7 +200,7 @@ int XMNThreadPool::Call()
     int r = pthread_cond_signal(&thread_cond_);
     if (r != 0)
     {
-        xmn_log_stderr(r, "XMNThreadPool::Call 中 pthread_cond_signal 执行失败。");
+        XMNLogStdErr(r, "XMNThreadPool::Call 中 pthread_cond_signal 执行失败。");
     }
 
     /**
@@ -212,7 +212,7 @@ int XMNThreadPool::Call()
         if (currtime - lasttime_ > 10)
         {
             lasttime_ = currtime;
-            xmn_log_stderr(0, "线程池满负荷运转，可考虑扩容线程池。");
+            XMNLogStdErr(0, "线程池满负荷运转，可考虑扩容线程池。");
         }
     }
 
@@ -226,14 +226,14 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
     {
         return -1;
     }
-    //xmn_log_stderr(errno, "已接收到完整数据包。");
+    //XMNLogStdErr(errno, "已接收到完整数据包。");
     /**
      * （1）向消息链表中压入 client 发来的数据。
     */
     r = pthread_mutex_lock(&thread_mutex_);
     if (r != 0)
     {
-        xmn_log_stderr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_lock 执行失败。");
+        XMNLogStdErr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_lock 执行失败。");
     }
 
     recvmsglist_.push_back(pdata);
@@ -241,7 +241,7 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
     r = pthread_mutex_unlock(&thread_mutex_);
     if (r != 0)
     {
-        xmn_log_stderr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_unlock 执行失败。");
+        XMNLogStdErr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_unlock 执行失败。");
     }
     /**
      * （2）激发线程池中的一个线程从消息链表中取走消息并处理。

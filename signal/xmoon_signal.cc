@@ -142,7 +142,7 @@ int XMNSignalInit()
         }
         else
         {
-            //xmn_log_stderr(XMN_LOG_STDERR, "sigaction(%s) succesed!", psig->psigname);
+            //XMNLogStdErr(XMN_LOG_STDERR, "sigaction(%s) succesed!", psig->psigname);
         }
     }
     return 0;

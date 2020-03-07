@@ -20,7 +20,7 @@ XMNConnSockInfo::XMNConnSockInfo()
     int r = pthread_mutex_init(&logicprocmutex, nullptr);
     if (r != 0)
     {
-        xmn_log_stderr(0, "XMNConnSockInfo::XMNConnSockInfo() 调用 pthread_mutex_init 失败，错误代码：%d", r);
+        XMNLogStdErr(0, "XMNConnSockInfo::XMNConnSockInfo() 调用 pthread_mutex_init 失败，错误代码：%d", r);
     }
 }
 
@@ -29,7 +29,7 @@ XMNConnSockInfo::~XMNConnSockInfo()
     int r = pthread_mutex_destroy(&logicprocmutex);
     if (r != 0)
     {
-        xmn_log_stderr(0, "XMNConnSockInfo::~XMNConnSockInfo() 调用 pthread_mutex_destroy 失败，错误代码：%d", r);
+        XMNLogStdErr(0, "XMNConnSockInfo::~XMNConnSockInfo() 调用 pthread_mutex_destroy 失败，错误代码：%d", r);
     }
 }
 
@@ -223,14 +223,14 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                     /**
                      * 这种情况不应该发生，记录一下，以备寻找错误。
                     */
-                    xmn_log_stderr(0, "XMNSocket::ConnSockInfoRecycleThread() 连接回收了throwepollsendcount!=0，不应该发生。");
+                    XMNLogStdErr(0, "XMNSocket::ConnSockInfoRecycleThread() 连接回收了throwepollsendcount!=0，不应该发生。");
                 }
 
                 it = pthis->recyconnsock_pool_.erase(it);
                 --pthis->pool_recyconnsock_count_;
                 pthis->PutInConnSockInfo2Pool(pconnsockinfo);
 
-                //xmn_log_stderr(0,"connsockinfo is recycled.");
+                //XMNLogStdErr(0,"connsockinfo is recycled.");
             }
             pthread_mutex_unlock(&pthis->connsock_pool_recy_mutex_);
         }

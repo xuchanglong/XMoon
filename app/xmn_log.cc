@@ -38,7 +38,7 @@ static u_char err_levels[][20] =
 };
 XMNLog g_xmn_log;
 
-void xmn_log_stderr(int err, const char *fmt, ...)
+void XMNLogStdErr(int err, const char *fmt, ...)
 {
     va_list args;                      
     u_char errstr[XMN_MAX_ERROR_STR + 1]; 
@@ -184,16 +184,16 @@ void XMNLogInit()
 
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
     strplogname = config.GetConfigItem("LogFileName");
-    if (strplogname == "")
+    if (strplogname.empty())
     {
         strplogname = XMN_ERROR_LOG_PATH; 
     }
-    g_xmn_log.log_level = atoi(config.GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE)).c_str()); 
+    g_xmn_log.log_level = std::stoi(config.GetConfigItem("LogLevel", std::to_string(XMN_LOG_NOTICE))); 
 
     g_xmn_log.fd = open(strplogname.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0644);
     if (g_xmn_log.fd == -1) 
     {
-        xmn_log_stderr(errno, "[alert] could not open error log file: open() \"%s\" failed", strplogname.c_str());
+        XMNLogStdErr(errno, "[alert] could not open error log file: open() \"%s\" failed", strplogname.c_str());
         g_xmn_log.fd = STDERR_FILENO; 
     }
     return;

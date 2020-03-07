@@ -81,7 +81,7 @@ int main(int argc, char * const *argv)
     if (config.Load(kstrConfigFilePath) != 0)
     {
         XMNLogInit();
-        xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", kstrConfigFilePath.c_str());
+        XMNLogStdErr(0, "配置文件[%s]载入失败，退出!", kstrConfigFilePath.c_str());
         exitcode = 1;
         goto lblexit;
     }
@@ -133,7 +133,7 @@ int main(int argc, char * const *argv)
         if (r == 1)
         {
             FreeResource();
-            xmn_log_stderr(0, "父进程正常退出。");
+            XMNLogStdErr(0, "父进程正常退出。");
             exitcode = 0;
             return exitcode;
         }
@@ -144,7 +144,7 @@ int main(int argc, char * const *argv)
         else if (r != 0)
         {
             exitcode = 3;
-            xmn_log_stderr(0, "进程创建失败。");
+            XMNLogStdErr(0, "进程创建失败。");
             goto lblexit;
         }
 

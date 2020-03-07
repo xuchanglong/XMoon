@@ -98,22 +98,22 @@ int XMNSocket::InitializeWorker()
     */
     if (pthread_mutex_init(&connsock_pool_mutex_, nullptr) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_mutex_) 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_mutex_) 执行失败。");
         return -1;
     }
     if (pthread_mutex_init(&connsock_pool_recy_mutex_, nullptr) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
         return -2;
     }
     if (pthread_mutex_init(&senddata_queue_mutex_, nullptr) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_queue_mutex_) 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&senddata_queue_mutex_) 执行失败。");
         return -3;
     }
     if (pthread_mutex_init(&ping_multimap_mutex_, nullptr) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&ping_multimap_mutex_) 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&ping_multimap_mutex_) 执行失败。");
         return -3;
     }
 
@@ -122,7 +122,7 @@ int XMNSocket::InitializeWorker()
     */
     if (sem_init(&senddata_queue_sem_, 0, 0) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::InitializeWorker()中sem_init()执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker()中sem_init()执行失败。");
         return -4;
     }
 
@@ -154,7 +154,7 @@ int XMNSocket::EndWorker()
     */
     if (sem_post(&senddata_queue_sem_) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::EndWorker()中sem_post()执行失败。");
+        XMNLogStdErr(0, "XMNSocket::EndWorker()中sem_post()执行失败。");
     }
 
     for (const auto &x : vthreadinfo_)
@@ -312,7 +312,7 @@ int XMNSocket::ReadConf()
     /**
      * （1）获取 port 的数量。
     */
-    listenport_count_ = atoi(config.GetConfigItem("ListenPortCount", "1").c_str());
+    listenport_count_ = std::stoi(config.GetConfigItem("ListenPortCount", "1").c_str());
     if (listenport_count_ <= 0)
     {
         return -1;
@@ -328,7 +328,7 @@ int XMNSocket::ReadConf()
     {
         s << i;
         str = "ListenPort" + s.str();
-        pportsum_[i] = atoi(config.GetConfigItem(str).c_str());
+        pportsum_[i] = std::stoi(config.GetConfigItem(str).c_str());
         if (pportsum_[i] <= 0)
         {
             return -2;
@@ -340,7 +340,7 @@ int XMNSocket::ReadConf()
     /**
      * （3）获取每个 worker 进程的 epoll 连接的最大项数。
     */
-    worker_connection_count_ = atoi(config.GetConfigItem("WorkerConnections", "1024").c_str());
+    worker_connection_count_ = std::stoi(config.GetConfigItem("WorkerConnections", "1024").c_str());
     if (worker_connection_count_ <= 0)
     {
         return -3;
@@ -349,7 +349,7 @@ int XMNSocket::ReadConf()
     /**
      * （4）获取连接回收的等待时间。
     */
-    recyconnsockinfowaittime_ = atoi(config.GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
+    recyconnsockinfowaittime_ = std::stoi(config.GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
     if (recyconnsockinfowaittime_ <= 0)
     {
         return -4;
@@ -358,7 +358,7 @@ int XMNSocket::ReadConf()
     /**
      * （5）是否开启心跳监控。
     */
-    pingenable_ = atoi(config.GetConfigItem("PingEnable", "0").c_str());
+    pingenable_ = std::stoi(config.GetConfigItem("PingEnable", "0").c_str());
     if (pingenable_ <= 0)
     {
         return -5;
@@ -367,7 +367,7 @@ int XMNSocket::ReadConf()
     /**
      * （6）心跳间隔时间。
     */
-    pingwaittime_ = atoi(config.GetConfigItem("PingWaitTime", "30").c_str());
+    pingwaittime_ = std::stoi(config.GetConfigItem("PingWaitTime", "30").c_str());
     if (pingwaittime_ <= 0)
     {
         return -6;
@@ -377,7 +377,7 @@ int XMNSocket::ReadConf()
     /**
      * （7）Flood 攻击检测是否开启的标志。
     */
-    floodattackmonitorenable_ = atoi(config.GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
+    floodattackmonitorenable_ = std::stoi(config.GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
     if (floodattackmonitorenable_ <= 0)
     {
         return -7;
@@ -386,7 +386,7 @@ int XMNSocket::ReadConf()
     /**
      * （8）相邻两次接收到数据包的最小时间间隔。
     */
-    floodtimeinterval_ = atoi(config.GetConfigItem("FloodTimeInterval", "100").c_str());
+    floodtimeinterval_ = std::stoi(config.GetConfigItem("FloodTimeInterval", "100").c_str());
     if (floodtimeinterval_ <= 0)
     {
         return -8;
@@ -395,7 +395,7 @@ int XMNSocket::ReadConf()
     /**
      * （9）允许连续恶意包的最小数量。
     */
-    floodcount_ = atoi(config.GetConfigItem("FloodCount", "10").c_str());
+    floodcount_ = std::stoi(config.GetConfigItem("FloodCount", "10").c_str());
     if (floodcount_ <= 0)
     {
         return -9;
@@ -412,7 +412,7 @@ int XMNSocket::EpollInit()
     epoll_handle_ = epoll_create(worker_connection_count_);
     if (epoll_handle_ <= 0)
     {
-        xmn_log_stderr(errno, "EpollInit 中的 epoll_create()执行失败！");
+        XMNLogStdErr(errno, "EpollInit 中的 epoll_create()执行失败！");
         return -1;
     }
 
@@ -467,7 +467,7 @@ int XMNSocket::EpollInit()
         pconnsockinfo = PutOutConnSockInfofromPool(x->fd);
         if (pconnsockinfo == nullptr)
         {
-            xmn_log_stderr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
+            XMNLogStdErr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
             return -2;
         }
 
@@ -548,7 +548,7 @@ int XMNSocket::EpollAddEvent(const int &fd,
     int r = epoll_ctl(epoll_handle_, eventtype, fd, &ev);
     if (r == -1)
     {
-        xmn_log_stderr(errno, "EpollAddEvent 中 epoll_ctl执行失败！");
+        XMNLogStdErr(errno, "EpollAddEvent 中 epoll_ctl执行失败！");
         return -1;
     }
 
@@ -622,7 +622,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     ev.data.ptr = (void *)pconnsockinfo;
     if (epoll_ctl(epoll_handle_, kOption, kSockFd, &ev) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
         return -2;
     }
 
@@ -787,7 +787,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
                  * EPOLLHUP：对应的连接被挂起。
                  * EPOLLRDHUP：表示TCP连接，远端处于关闭或者办关闭的状态。
                 */
-                xmn_log_stderr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
+                XMNLogStdErr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
 但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为 %d。",
                                eventstmp);
                 --pconnsockinfo->throwepollsendcount;
@@ -797,7 +797,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
                 (this->*(pconnsockinfo->whandler))(pconnsockinfo);
             }
 
-            //xmn_log_stderr(0, "收到可写事件。");
+            //XMNLogStdErr(0, "收到可写事件。");
         }
     }
 
@@ -822,7 +822,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     }
     if (pconnsockinfo->nosendmsgcount > 400)
     {
-        xmn_log_stderr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
+        XMNLogStdErr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
                        pconnsockinfo->fd);
         ++discardsendpkgcount_;
         memory.FreeMemory(psenddata);
@@ -836,7 +836,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
 
     if (sem_post(&senddata_queue_sem_) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::SendData()中sem_post()执行失败。");
+        XMNLogStdErr(0, "XMNSocket::SendData()中sem_post()执行失败。");
     }
     return 0;
 }
@@ -859,7 +859,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
 {
     if (pthreadinfo == nullptr)
     {
-        xmn_log_stderr(0, "XMNSocket::SendDataThread() 中形参 pthreadinfo 为 nullptr 。");
+        XMNLogStdErr(0, "XMNSocket::SendDataThread() 中形参 pthreadinfo 为 nullptr 。");
         return nullptr;
     }
 
@@ -887,7 +887,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             {
                 continue;
             }
-            xmn_log_stderr(0, "XMNSocket::SendDataThread() 中 sem_wait 执行失败。");
+            XMNLogStdErr(0, "XMNSocket::SendDataThread() 中 sem_wait 执行失败。");
             continue;
         }
         if (g_isquit)
@@ -940,7 +940,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
-            //xmn_log_stderr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
+            //XMNLogStdErr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
             sendsize = psocket->SendData(pconnsockinfo);
             if (sendsize > 0)
             {
@@ -965,9 +965,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                     ++pconnsockinfo->throwepollsendcount;
                     if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
                     {
-                        xmn_log_stderr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
+                        XMNLogStdErr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
                     }
-                    xmn_log_stderr(0,
+                    XMNLogStdErr(0,
                                    "XMNSocket::SendDataThread()中理论发送 %d 个字节，实际发送 %d 个字节。",
                                    pconnsockinfo->senddatalen,
                                    sendsize);
@@ -997,7 +997,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 ++pconnsockinfo->throwepollsendcount;
                 if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
                 {
-                    xmn_log_stderr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
+                    XMNLogStdErr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
                 }
                 continue;
             }
@@ -1050,7 +1050,7 @@ int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
             /**
              * send()被中断打断，下次再次运行试一下。
             */
-            xmn_log_stderr(0, "XMNSocket::SendData()中send()运行被中断打断。");
+            XMNLogStdErr(0, "XMNSocket::SendData()中send()运行被中断打断。");
         }
         else
         {
@@ -1144,22 +1144,22 @@ void XMNSocket::PrintInfo()
         */
         size_t sendmsgcount_ = queue_senddata_count_;
 
-        xmn_log_stderr(0, "\n---------------------------------------------  begin ---------------------------------------------");
-        xmn_log_stderr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
-        xmn_log_stderr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
+        XMNLogStdErr(0, "\n---------------------------------------------  begin ---------------------------------------------");
+        XMNLogStdErr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
+        XMNLogStdErr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
                        connsock_pool_free_.size(),
                        connsock_pool_.size(),
                        recyconnsock_pool_.size());
-        xmn_log_stderr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
-        xmn_log_stderr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
+        XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
+        XMNLogStdErr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
                        recvmsgcount,
                        sendmsgcount_,
                        discardsendpkgcount_);
-        xmn_log_stderr(0, "---------------------------------------------  end ---------------------------------------------");
+        XMNLogStdErr(0, "---------------------------------------------  end ---------------------------------------------");
 
         if (recvmsgcount > 100000)
         {
-            xmn_log_stderr(0, "接收数据的链表中元素数量过大，要考虑限速或者增加处理线程！");
+            XMNLogStdErr(0, "接收数据的链表中元素数量过大，要考虑限速或者增加处理线程！");
         }
         lastprinttime_ = currenttime;
     }

@@ -56,7 +56,7 @@ void *XMNSocket::PingThread(void *pthreadinfo)
                 err = pthread_mutex_lock(&psocket->ping_multimap_mutex_);
                 if (err != 0)
                 {
-                    xmn_log_stderr(err, "XMNSocket::PingThread()中pthread_mutex_lock()执行失败，返回值是 %d 。", err);
+                    XMNLogStdErr(err, "XMNSocket::PingThread()中pthread_mutex_lock()执行失败，返回值是 %d 。", err);
                 }
                 /**
                  * 通过互斥量，将所有的心跳通信超时的连接揪出来。
@@ -68,7 +68,7 @@ void *XMNSocket::PingThread(void *pthreadinfo)
                 err = pthread_mutex_unlock(&psocket->ping_multimap_mutex_);
                 if (err != 0)
                 {
-                    xmn_log_stderr(err, "XMNSocket::PingThread()pthread_mutex_unlock()执行失败，返回值是 %d 。", err);
+                    XMNLogStdErr(err, "XMNSocket::PingThread()pthread_mutex_unlock()执行失败，返回值是 %d 。", err);
                 }
                 while (!timeoutpinglist.empty())
                 {

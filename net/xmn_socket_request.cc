@@ -30,7 +30,7 @@ void XMNSocket::WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo)
     /**
      * （2）开始接收包头数据。
     */
-    //xmn_log_stderr(0, "Data is arrived.");
+    //XMNLogStdErr(0, "Data is arrived.");
     if (pconnsockinfo->recvstatus == PKG_HD_INIT)
     {
         /**
@@ -128,10 +128,10 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
         */
         if (close(pconnsockinfo->fd) == -1)
         {
-            xmn_log_stderr(0, "XMNSocket::RecvData 中 close 执行失败。");
+            XMNLogStdErr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
-        //xmn_log_stderr(0,"connsockinfo put in recylist.");
+        //XMNLogStdErr(0,"connsockinfo put in recylist.");
         /**
          * 延时回收连接。
         */
@@ -148,7 +148,7 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
         */
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-            xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了 EAGAIN 或者 EWOULDBLOCK 错误。");
+            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 EAGAIN 或者 EWOULDBLOCK 错误。");
             return 0;
         }
         /**
@@ -156,7 +156,7 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
         */
         else if (errno == EINTR)
         {
-            xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了 EINTR 错误。");
+            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 EINTR 错误。");
             return 0;
         }
         /**
@@ -169,19 +169,19 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
              * 而 client 突然被关闭，导致了与 server 没有进行正常的 4 次挥手，
              * 而是发送了 RST 包。
             */
-            xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了 ECONNRESET 错误，即：client -> server rst 包。");
+            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 ECONNRESET 错误，即：client -> server rst 包。");
         }
         else
         {
-            xmn_log_stderr(errno, "XMNSocket::RecvData() 返回了未知错误。");
+            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了未知错误。");
         }
 
         if (close(pconnsockinfo->fd) == -1)
         {
-            xmn_log_stderr(0, "XMNSocket::RecvData 中 close 执行失败。");
+            XMNLogStdErr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
-        xmn_log_stderr(0, "connsockinfo put in recylist.");
+        XMNLogStdErr(0, "connsockinfo put in recylist.");
         /**
          * 延时回收连接。
         */
@@ -267,7 +267,7 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
         isflood = TestFlood(pconnsockinfo);
         if (isflood)
         {
-            xmn_log_stderr(0, "3");
+            XMNLogStdErr(0, "3");
             XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
             memory.FreeMemory(pconnsockinfo->precvalldata);
         }
@@ -297,7 +297,7 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
     */
     if (isflood)
     {
-        //xmn_log_stderr(0, "该连接存在恶意攻击，已断开连接。");
+        //XMNLogStdErr(0, "该连接存在恶意攻击，已断开连接。");
         ActivelyCloseSocket(pconnsockinfo);
     }
 
@@ -335,7 +335,7 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
          * 发送缓冲区已满不太可能，因为 epoll 驱动通知系统可以发送，
          * 结果发送缓冲区已满，不正常。
         */
-        xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发现发送缓冲区已满的问题。");
+        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发现发送缓冲区已满的问题。");
         return;
     }
     else if (sendsize > 0 && sendsize == pconnsockinfo->senddatalen)
@@ -350,9 +350,9 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
                                 1,
                                 pconnsockinfo) != 0)
         {
-            xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()中EpollOperationEvent()执行失败。");
+            XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()中EpollOperationEvent()执行失败。");
         }
-        xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()发送数据完毕。");
+        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()发送数据完毕。");
     }
 
     /**
@@ -366,7 +366,7 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     */
     if (sem_post(&senddata_queue_sem_) != 0)
     {
-        xmn_log_stderr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
+        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
     }
     memory.FreeMemory(pconnsockinfo->psendalldataforfree);
     pconnsockinfo->psendalldataforfree = nullptr;

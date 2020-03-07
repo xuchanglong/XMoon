@@ -28,7 +28,7 @@ int XMNSetProcTitle(const std::string &strtitle);
 
 /******************************  日志打印相关函数  *******************************/
 void XMNLogInit();
-void xmn_log_stderr(int err, const char *fmt, ...);
+void XMNLogStdErr(int err, const char *fmt, ...);
 void xmn_log_info(int level, int err, const char *fmt, ...);
 
 u_char *xmn_log_errno(u_char *buf, u_char *last, int err);

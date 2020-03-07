@@ -112,7 +112,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
         if (++onlineuser_count_ > worker_connection_count_)
         {
             close(linkfd);
-            xmn_log_stderr(0, "XMNSocket::EventAcceptHandler()中新连入的连接将被关闭，因为已经超过了指定的在线用户数量的上限。");
+            XMNLogStdErr(0, "XMNSocket::EventAcceptHandler()中新连入的连接将被关闭，因为已经超过了指定的在线用户数量的上限。");
             return;
         }
 
