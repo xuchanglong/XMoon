@@ -48,7 +48,7 @@ void xmn_log_stderr(int err, const char *fmt, ...)
 
     last = errstr + XMN_MAX_ERROR_STR; 
 
-    p = xmn_cpymem(errstr, "xmoon: ", 7); 
+    p = XMN_CPYMEM(errstr, "xmoon: ", 7); 
 
     va_start(args, fmt);                   
     p = xmn_vslprintf(p, last, fmt, args); 
@@ -91,9 +91,9 @@ u_char *xmn_log_errno(u_char *buf, u_char *last, int err)
     size_t extralen = leftlen + rightlen; 
     if ((buf + len + extralen) < last)
     {
-        buf = xmn_cpymem(buf, leftstr, leftlen);
-        buf = xmn_cpymem(buf, perrorinfo, len);
-        buf = xmn_cpymem(buf, rightstr, rightlen);
+        buf = XMN_CPYMEM(buf, leftstr, leftlen);
+        buf = XMN_CPYMEM(buf, perrorinfo, len);
+        buf = XMN_CPYMEM(buf, rightstr, rightlen);
     }
     return buf;
 }
@@ -129,7 +129,7 @@ void xmn_log_info(int level, int err, const char *fmt, ...)
                  tm.tm_year, tm.tm_mon,
                  tm.tm_mday, tm.tm_hour,
                  tm.tm_min, tm.tm_sec);
-    p = xmn_cpymem(errstr, strcurrtime, strlen((const char *)strcurrtime)); 
+    p = XMN_CPYMEM(errstr, strcurrtime, strlen((const char *)strcurrtime)); 
     p = xmn_slprintf(p, last, " [%s] ", err_levels[level]);               
     p = xmn_slprintf(p, last, "%P: ", g_xmn_pid);                    
 
@@ -177,13 +177,13 @@ void xmn_log_info(int level, int err, const char *fmt, ...)
     return;
 }
 
-void xmn_log_init()
+void XMNLogInit()
 {
     std::string strplogname = "";
     size_t nlen;
 
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
-    strplogname = config.GetConfigItem("Log");
+    strplogname = config.GetConfigItem("LogFileName");
     if (strplogname == "")
     {
         strplogname = XMN_ERROR_LOG_PATH; 

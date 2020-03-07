@@ -10,7 +10,7 @@ public:
     NonCopyable(const NonCopyable &kObj) = delete;
     NonCopyable &operator=(const NonCopyable &kObj) = delete;
 /**
- * TODO：需要确定这里使用 protected 的原因。
+ * 这里使用 protected 是为了防止该类被单独的创建对象。
 */
 protected:
     NonCopyable() = default;

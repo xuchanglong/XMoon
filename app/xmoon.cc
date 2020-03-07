@@ -51,7 +51,7 @@ int main(int argc, char * const *argv)
     //g_argv = (char **)argv;
 
     /**
-     * 统计 argv 和 env 所占的内存。
+     * 统计 argv 和 env 所占的内存的字节数量。
     */
     g_argvmemlen = 0;
     for (size_t i = 0; i < argc; i++)
@@ -80,7 +80,7 @@ int main(int argc, char * const *argv)
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
     if (config.Load(kstrConfigFilePath) != 0)
     {
-        xmn_log_init();
+        XMNLogInit();
         xmn_log_stderr(0, "配置文件[%s]载入失败，退出!", kstrConfigFilePath.c_str());
         exitcode = 1;
         goto lblexit;
@@ -94,7 +94,7 @@ int main(int argc, char * const *argv)
     /**
      * （4）初始化日志模块。
     */
-    xmn_log_init();
+    XMNLogInit();
 
     /**
      * （5）初始化信号模块。

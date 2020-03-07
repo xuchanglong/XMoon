@@ -265,6 +265,6 @@ static u_char * xmn_sprintf_num(u_char *buf, u_char *last, uint64_t ui64, u_char
         len = last - buf; 
     }
 
-    return xmn_cpymem(buf, p, len); 
+    return XMN_CPYMEM(buf, p, len); 
 }
 

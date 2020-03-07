@@ -142,10 +142,8 @@ XMNMsgHeader *XMNSocket::RemoveFirstMsgHeader()
 
 int XMNSocket::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime)
 {
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    // 有问题。
-    //memory.FreeMemory(pmemory);
-
+    // XMNMemory *pmemory = SingletonBase<XMNMemory>::GetInstance();
+    // pmemory->FreeMemory(pmemory);
     return 0;
 }
 
