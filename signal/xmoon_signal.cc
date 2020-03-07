@@ -159,12 +159,18 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     /**
      * （1）遍历信号数组。
     */
+    bool issignalexit = false;
     for (psi = g_signalinfo; psi->signum; ++psi)
     {
         if (psi->signum == signum)
         {
+            issignalexit = true;
             break;
         }
+    }
+    if (!issignalexit)
+    {
+        return;
     }
 
     /**
@@ -237,7 +243,7 @@ void XMNProcessGetStatus()
     /**
      * 用于保存子进程的终止状态。
     */
-    int status;
+    int statloc;
     /**
      * 是否已经有子进程退出。
     */
@@ -250,14 +256,17 @@ void XMNProcessGetStatus()
      * 保存调用函数出错的代码。
     */
     int err;
-
+    /**
+     * while 循环的意义是将所有已经终结的子进程都处理完毕。
+    */
     while (true)
     {
         /**
+         * APUE 第3版，P190
          * 等待任何子进程退出，并将子进程终止状态存入 status 。
          * WNOHANG 无子进程终止时不堵塞，直接返回。
         */
-        pid = waitpid(-1, &status, WNOHANG);
+        pid = waitpid(-1, &statloc, WNOHANG);
 
         /**
          * 没有子进程退出。
@@ -295,19 +304,23 @@ void XMNProcessGetStatus()
             }
         }
         one = 1;
-        if (WTERMSIG(status))
+        /**
+         * 取得子进程因信号而中止的信号。
+        */
+        if (int sig = WTERMSIG(statloc))
         {
             /**
              * 获取使子进程终止的信号编号。
             */
-            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on signal %d.", pid, WTERMSIG(status));
+            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on signal %d.", pid, sig);
         }
         else
         {
             /**
-             * WEXITSTATUS()获取子进程传递给exit或者_exit参数的低八位。
+             * 运行到这里说明子进程是正常退出的。
+             * WEXITSTATUS()获取子进程传递给 exit 或者 _exit 参数的低八位。
             */
-            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on code %d.", pid, WTERMSIG(status));
+            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on code %d.", pid, WEXITSTATUS(statloc));
         }
     }
 }
