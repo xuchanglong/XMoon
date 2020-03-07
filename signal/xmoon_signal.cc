@@ -16,10 +16,12 @@ struct XMNSignal
      *  信号的编号。 
     */
     int signum;
+
     /**
      * 信号的名称。
     */
-    const char *psigname;
+    std::string psigname;
+
     /**
      *  信号的处理函数。
     */
@@ -47,7 +49,7 @@ static void XMNProcessGetStatus();
 /**
  *  定义本系统处理的各种信号。 
  */
-XMNSignal signalinfo[] = {
+XMNSignal g_signalinfo[] = {
     /**
      *  终端断开信号。常用于向守护进程发送 reload 配置文件的通知。 
      */
@@ -98,12 +100,13 @@ int XMNSignalInit()
         void (*sa_restorer)(void);                          //已过时，POSIX 已不再支持。
     }
     */
+    // APUE 第3版，P278
     struct sigaction sa;
 
     /**
      * （2）为每一个信号设置信号处理函数。
      */
-    for (psig = signalinfo; psig->signum; psig++)
+    for (psig = g_signalinfo; psig->signum; psig++)
     {
         memset(&sa, 0, sizeof(struct sigaction) * 1);
         /**
@@ -113,7 +116,7 @@ int XMNSignalInit()
         {
             sa.sa_sigaction = psig->phandler;
             /**
-             * 设置了该标志位，表明信号附带的参数可以传入信号处理函数中。
+             * 设置了该标志位，表明信号附带的参数可以传入信号处理函数(sa.sa_sigaction)中。
              * 否则，信号处理函数中访问这些参数会造成段错误。
             */
             sa.sa_flags = SA_SIGINFO;
@@ -121,7 +124,7 @@ int XMNSignalInit()
         else
         {
             /**
-             * 忽略信号的处理程序，否则OS会执行默认的处理程序，很有可能是杀死系统。
+             * 忽略信号的处理程序，否则 OS 会执行默认的处理程序，很有可能是杀死系统。
             */
             sa.sa_handler = SIG_IGN;
         }
@@ -135,7 +138,7 @@ int XMNSignalInit()
         /**
          * c、执行信号安装函数。
         */
-        if (sigaction(psig->signum, &sa, nullptr) == -1)
+        if (sigaction(psig->signum, &sa, nullptr) < 0)
         {
             xmn_log_info(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
             return -1;
@@ -156,7 +159,7 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     /**
      * （1）遍历信号数组。
     */
-    for (psi = signalinfo; psi->signum; ++psi)
+    for (psi = g_signalinfo; psi->signum; ++psi)
     {
         if (psi->signum == signum)
         {
@@ -227,7 +230,6 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     {
         /* code */
     }
-    
 }
 
 void XMNProcessGetStatus()

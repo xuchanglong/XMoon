@@ -177,13 +177,10 @@ void xmn_log_info(int level, int err, const char *fmt, ...)
     return;
 }
 
-void XMNLogInit()
+int XMNLogInit()
 {
-    std::string strplogname = "";
-    size_t nlen;
-
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
-    strplogname = config.GetConfigItem("LogFileName");
+    std::string strplogname = config.GetConfigItem("LogFileName");
     if (strplogname.empty())
     {
         strplogname = XMN_ERROR_LOG_PATH; 
@@ -195,6 +192,7 @@ void XMNLogInit()
     {
         XMNLogStdErr(errno, "[alert] could not open error log file: open() \"%s\" failed", strplogname.c_str());
         g_xmn_log.fd = STDERR_FILENO; 
+        return -1;
     }
-    return;
+    return 0;
 }
