@@ -25,12 +25,13 @@ void XMNSetProcTitleInit()
     /**
      * 搬迁环境变量至新位置。
     */
+    size_t len = 0;
     for (size_t i = 0; environ[i]; i++)
     {
-        size_t size = strlen(environ[i]) + 1;
-        memcpy(ptmp, environ[i], size);
+        len = strlen(environ[i]) + 1;
+        memcpy(ptmp, environ[i], len);
         environ[i] = ptmp;
-        ptmp += size;
+        ptmp += len;
     }
     return;
 }

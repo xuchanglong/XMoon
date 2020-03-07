@@ -48,7 +48,7 @@ struct XMNLog
 extern size_t g_argvmemlen;
 
 /**
- * 环境变量所占内存大小。
+ * 所有的环境变量所占的内存大小。
 */
 extern size_t g_envmemlen;
 
@@ -90,8 +90,8 @@ extern XMNLog g_xmn_log;
 
 /**
  * 守护进程是否启动成功。
- * 0    未启用。
- * 1    已启用。
+ * true 未启用。
+ * false    已启用。
 */
 extern bool g_isdaemonized;
 

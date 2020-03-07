@@ -140,7 +140,7 @@ int XMNSignalInit()
         */
         if (sigaction(psig->signum, &sa, nullptr) < 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
+            XMNLogInfo(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
             return -1;
         }
         else
@@ -218,11 +218,11 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     */
     if (psiginfo && psiginfo->si_pid)
     {
-        xmn_log_info(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %d %s", signum, psi->psigname, psiginfo->si_pid, action);
+        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %d %s", signum, psi->psigname, psiginfo->si_pid, action);
     }
     else
     {
-        xmn_log_info(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->psigname, action);
+        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->psigname, action);
     }
 
     /**
@@ -299,7 +299,7 @@ void XMNProcessGetStatus()
             }
             else if (err == ECHILD)
             {
-                xmn_log_info(XMN_LOG_INFO, err, "waitpid() failed.");
+                XMNLogInfo(XMN_LOG_INFO, err, "waitpid() failed.");
                 return;
             }
         }
@@ -312,7 +312,7 @@ void XMNProcessGetStatus()
             /**
              * 获取使子进程终止的信号编号。
             */
-            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on signal %d.", pid, sig);
+            XMNLogInfo(XMN_LOG_NOTICE, 0, "pid = %d exited on signal %d.", pid, sig);
         }
         else
         {
@@ -320,7 +320,7 @@ void XMNProcessGetStatus()
              * 运行到这里说明子进程是正常退出的。
              * WEXITSTATUS()获取子进程传递给 exit 或者 _exit 参数的低八位。
             */
-            xmn_log_info(XMN_LOG_NOTICE, 0, "pid = %d exited on code %d.", pid, WEXITSTATUS(statloc));
+            XMNLogInfo(XMN_LOG_NOTICE, 0, "pid = %d exited on code %d.", pid, WEXITSTATUS(statloc));
         }
     }
 }

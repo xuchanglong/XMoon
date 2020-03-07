@@ -211,7 +211,7 @@ int XMNSocket::OpenListenSocket()
         psocksum[i] = socket(AF_INET, SOCK_STREAM, 0);
         if (psocksum[i] <= 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket create listen socket failed.");
+            XMNLogInfo(XMN_LOG_EMERG, errno, "OpenListenSocket create listen socket failed.");
             exitcode = -1;
             goto exitlabel;
         }
@@ -223,7 +223,7 @@ int XMNSocket::OpenListenSocket()
         r = setsockopt(psocksum[i], SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(int));
         if (r != 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket setsockopt failed.");
+            XMNLogInfo(XMN_LOG_EMERG, errno, "OpenListenSocket setsockopt failed.");
             exitcode = -2;
             goto exitlabel;
         }
@@ -234,7 +234,7 @@ int XMNSocket::OpenListenSocket()
         r = SetNonBlocking(psocksum[i]);
         if (r != 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket SetNonBlocking failed.");
+            XMNLogInfo(XMN_LOG_EMERG, errno, "OpenListenSocket SetNonBlocking failed.");
             exitcode = -3;
             goto exitlabel;
         }
@@ -246,7 +246,7 @@ int XMNSocket::OpenListenSocket()
         r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(struct sockaddr));
         if (r != 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket bind failed.");
+            XMNLogInfo(XMN_LOG_EMERG, errno, "OpenListenSocket bind failed.");
             exitcode = -4;
             goto exitlabel;
         }
@@ -257,7 +257,7 @@ int XMNSocket::OpenListenSocket()
         r = listen(psocksum[i], XMN_LISTEN_BACKLOG);
         if (r != 0)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "OpenListenSocket listen failed.");
+            XMNLogInfo(XMN_LOG_EMERG, errno, "OpenListenSocket listen failed.");
             exitcode = -5;
             goto exitlabel;
         }
@@ -271,7 +271,7 @@ int XMNSocket::OpenListenSocket()
         pitem->pconnsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", portsum_[i]);
+        XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", portsum_[i]);
     }
     return 0;
 
@@ -290,7 +290,7 @@ int XMNSocket::CloseListenSocket()
     for (const auto &x : vlistenportsockinfolist_)
     {
         close(x->fd);
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的 socket 已经关闭！", x->port);
+        XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的 socket 已经关闭！", x->port);
     }
     return 0;
 }
@@ -342,7 +342,7 @@ int XMNSocket::ReadConf()
     /**
      * （3）获取每个 worker 进程的 epoll 连接的最大项数。
     */
-    worker_connection_count_ = std::stoi(config.GetConfigItem("WorkerConnections", "1024").c_str());
+    worker_connection_count_ = std::stoi(config.GetConfigItem("WorkerConnections", "1024"));
     if (worker_connection_count_ <= 0)
     {
         return -3;
@@ -351,7 +351,7 @@ int XMNSocket::ReadConf()
     /**
      * （4）获取连接回收的等待时间。
     */
-    recyconnsockinfowaittime_ = std::stoi(config.GetConfigItem("RecyConnSockInfoWaitTime", "60").c_str());
+    recyconnsockinfowaittime_ = std::stoi(config.GetConfigItem("RecyConnSockInfoWaitTime", "60"));
     if (recyconnsockinfowaittime_ <= 0)
     {
         return -4;
@@ -360,7 +360,7 @@ int XMNSocket::ReadConf()
     /**
      * （5）是否开启心跳监控。
     */
-    pingenable_ = std::stoi(config.GetConfigItem("PingEnable", "0").c_str());
+    pingenable_ = std::stoi(config.GetConfigItem("PingEnable", "0"));
     if (pingenable_ <= 0)
     {
         return -5;
@@ -369,7 +369,7 @@ int XMNSocket::ReadConf()
     /**
      * （6）心跳间隔时间。
     */
-    pingwaittime_ = std::stoi(config.GetConfigItem("PingWaitTime", "30").c_str());
+    pingwaittime_ = std::stoi(config.GetConfigItem("PingWaitTime", "30"));
     if (pingwaittime_ <= 0)
     {
         return -6;
@@ -379,7 +379,7 @@ int XMNSocket::ReadConf()
     /**
      * （7）Flood 攻击检测是否开启的标志。
     */
-    floodattackmonitorenable_ = std::stoi(config.GetConfigItem("FloodAttackMonitorEnable", "0").c_str());
+    floodattackmonitorenable_ = std::stoi(config.GetConfigItem("FloodAttackMonitorEnable", "0"));
     if (floodattackmonitorenable_ <= 0)
     {
         return -7;
@@ -388,7 +388,7 @@ int XMNSocket::ReadConf()
     /**
      * （8）相邻两次接收到数据包的最小时间间隔。
     */
-    floodtimeinterval_ = std::stoi(config.GetConfigItem("FloodTimeInterval", "100").c_str());
+    floodtimeinterval_ = std::stoi(config.GetConfigItem("FloodTimeInterval", "100"));
     if (floodtimeinterval_ <= 0)
     {
         return -8;
@@ -397,7 +397,7 @@ int XMNSocket::ReadConf()
     /**
      * （9）允许连续恶意包的最小数量。
     */
-    floodcount_ = std::stoi(config.GetConfigItem("FloodCount", "10").c_str());
+    floodcount_ = std::stoi(config.GetConfigItem("FloodCount", "10"));
     if (floodcount_ <= 0)
     {
         return -9;
@@ -669,7 +669,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         */
         if (errno == EINTR)
         {
-            xmn_log_info(XMN_LOG_INFO, errno, "EpollProcessEvents 中 epoll_wait 执行错误，因为有信号到来。");
+            XMNLogInfo(XMN_LOG_INFO, errno, "EpollProcessEvents 中 epoll_wait 执行错误，因为有信号到来。");
             return 0;
         }
         /**
@@ -677,7 +677,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         */
         else
         {
-            xmn_log_info(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 执行错误！");
+            XMNLogInfo(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 执行错误！");
             return -2;
         }
     }
@@ -695,7 +695,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         */
         else
         {
-            xmn_log_info(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 在设置一直堵塞的情况下返回了超时！");
+            XMNLogInfo(XMN_LOG_ALERT, errno, "EpollProcessEvents 中 epoll_wait 在设置一直堵塞的情况下返回了超时！");
             return -3;
         }
     }
@@ -730,7 +730,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
             //第1个事件关闭连接，fd == -1 。
             //第2个事件正常处理。
             //第3个事件则是第1个连接的事件，为过期事件。
-            xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 fd == -1 的过期事件 %p", pconnsockinfo);
+            XMNLogInfo(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 fd == -1 的过期事件 %p", pconnsockinfo);
             continue;
         }
         
@@ -741,7 +741,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
             //第2个事件建立连接，该新连接恰好用到了线程池中第1个事件释放的连接。
             //第3个事件是第1个事件对应的连接的事件，为过期事件。
             //判断的原理就是每次从连接池中获取连接时，instance 都会取反。
-            xmn_log_info(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 instance 改变的过期事件 %p", pconnsockinfo);
+            XMNLogInfo(XMN_LOG_DEBUG, 0, "EpollProcessEvents 遇到了 instance 改变的过期事件 %p", pconnsockinfo);
             continue;
         }
         */

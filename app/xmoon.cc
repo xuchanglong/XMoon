@@ -132,7 +132,7 @@ int main(int argc, char * const *argv)
         */
         if (r == 1)
         {
-            FreeResource();
+            //FreeResource();
             XMNLogStdErr(0, "父进程正常退出。");
             exitcode = 0;
             return exitcode;
@@ -141,7 +141,7 @@ int main(int argc, char * const *argv)
         /**
          * 创建进程失败。
         */
-        else if (r != 0)
+        else if (r == -1)
         {
             exitcode = 3;
             XMNLogStdErr(0, "进程创建失败。");

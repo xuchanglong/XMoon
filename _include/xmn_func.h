@@ -29,7 +29,7 @@ int XMNSetProcTitle(const std::string &strtitle);
 /******************************  日志打印相关函数  *******************************/
 int XMNLogInit();
 void XMNLogStdErr(int err, const char *fmt, ...);
-void xmn_log_info(int level, int err, const char *fmt, ...);
+void XMNLogInfo(int level, int err, const char *fmt, ...);
 
 u_char *xmn_log_errno(u_char *buf, u_char *last, int err);
 u_char *xmn_slprintf(u_char *buf, u_char *last, const char *fmt, ...);
@@ -56,9 +56,9 @@ void XMNMasterProcessCycle();
 /**
  * @function    创建守护进程。
  * @paras   none 。
- * @ret 0   子进程返回。
+ * @ret 1   主进程返回。
+ *      0   子进程返回。
  *      -1  创建失败。
- *      1   主进程返回。
  * @time    2019-08-17
 */
 int XMNCreateDaemon();

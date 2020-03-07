@@ -264,7 +264,7 @@ void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
     PutInConnSockInfo2Pool(pconnsockinfo);
     if (close(pconnsockinfo->fd) == -1)
     {
-        xmn_log_info(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", pconnsockinfo->fd);
+        XMNLogInfo(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", pconnsockinfo->fd);
     }
 
     return;

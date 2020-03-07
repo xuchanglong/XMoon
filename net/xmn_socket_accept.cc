@@ -74,7 +74,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             {
                 logerrorlevel = XMN_LOG_ERR;
             }
-            xmn_log_info(logerrorlevel, errnotmp, "EventAcceptHandler 中 accept4 或者 accept 执行失败！");
+            XMNLogInfo(logerrorlevel, errnotmp, "EventAcceptHandler 中 accept4 或者 accept 执行失败！");
 
             /**
              * accept4() 系统没有实现。
@@ -128,7 +128,7 @@ void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
             */
             if (close(linkfd) == -1)
             {
-                xmn_log_info(XMN_LOG_ALERT, errno, "EventAcceptHandler 中 close (%d) 失败！", linkfd);
+                XMNLogInfo(XMN_LOG_ALERT, errno, "EventAcceptHandler 中 close (%d) 失败！", linkfd);
             }
             return;
         }

@@ -70,7 +70,7 @@ void XMNLogStdErr(int err, const char *fmt, ...)
 
     if (g_xmn_log.fd > STDERR_FILENO)
     {
-        xmn_log_info(XMN_LOG_STDERR, err, (const char *)errstr);
+        XMNLogInfo(XMN_LOG_STDERR, err, (const char *)errstr);
     }
 
     return;
@@ -98,7 +98,7 @@ u_char *xmn_log_errno(u_char *buf, u_char *last, int err)
     return buf;
 }
 
-void xmn_log_info(int level, int err, const char *fmt, ...)
+void XMNLogInfo(int level, int err, const char *fmt, ...)
 {
     u_char *last;
     u_char errstr[XMN_MAX_ERROR_STR + 1]; 

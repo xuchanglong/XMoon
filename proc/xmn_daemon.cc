@@ -22,7 +22,7 @@ int XMNCreateDaemon()
      * 创建进程失败。
     */
     case -1:
-        xmn_log_info(XMN_LOG_ALERT, errno, "%s %s %d fork() failed.", __FILE__, __FUNCTION__, __LINE__);
+        XMNLogInfo(XMN_LOG_ALERT, errno, "%s %s %d fork() failed.", __FILE__, __FUNCTION__, __LINE__);
         return -1;
 
     /**
@@ -49,8 +49,8 @@ int XMNCreateDaemon()
     */
     if (setsid() == -1)
     {
-        xmn_log_info(XMN_LOG_EMERG, errno, "%s %s %d setsid() failed.", __FILE__, __FUNCTION__, __LINE__);
-        return -2;
+        XMNLogInfo(XMN_LOG_EMERG, errno, "%s %s %d setsid() failed.", __FILE__, __FUNCTION__, __LINE__);
+        return -1;
     }
 
     /**
@@ -64,24 +64,24 @@ int XMNCreateDaemon()
     int fd = open("/dev/null", O_RDWR);
     if (fd == -1)
     {
-        xmn_log_info(XMN_LOG_EMERG, errno, "%s %s %d open(\"/dev/null\") failed.", __FILE__, __FUNCTION__, __LINE__);
+        XMNLogInfo(XMN_LOG_EMERG, errno, "%s %s %d open(\"/dev/null\") failed.", __FILE__, __FUNCTION__, __LINE__);
         return -1;
     }
     if (dup2(fd, STDIN_FILENO) == -1)
     {
-        xmn_log_info(XMN_LOG_EMERG, errno, "%s %s %d dup2(STDIN) failed.", __FILE__, __FUNCTION__, __LINE__);
+        XMNLogInfo(XMN_LOG_EMERG, errno, "%s %s %d dup2(STDIN) failed.", __FILE__, __FUNCTION__, __LINE__);
         return -1;
     }
     if (dup2(fd, STDOUT_FILENO) == -1)
     {
-        xmn_log_info(XMN_LOG_EMERG, errno, "%s %s %d dup2(STDOUT) failed.", __FILE__, __FUNCTION__, __LINE__);
+        XMNLogInfo(XMN_LOG_EMERG, errno, "%s %s %d dup2(STDOUT) failed.", __FILE__, __FUNCTION__, __LINE__);
         return -1;
     }
     if (fd > STDERR_FILENO)
     {
         if (close(fd) == -1)
         {
-            xmn_log_info(XMN_LOG_EMERG, errno, "%s %s %d close(fd) failed.", __FILE__, __FUNCTION__, __LINE__);
+            XMNLogInfo(XMN_LOG_EMERG, errno, "%s %s %d close(fd) failed.", __FILE__, __FUNCTION__, __LINE__);
             return -1;
         }
     }
