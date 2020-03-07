@@ -32,18 +32,14 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
     */
     for (size_t i = 0; i < threadpoolsize_; i++)
     {
-        ThreadInfo *pthreadinfoitem = new ThreadInfo(this);
-
-        /**
-         * 线程创建完毕之后，该线程就会开始被系统调用，即：ThreadFunc 开始运行。
-        */
-        r = pthread_create(&pthreadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)pthreadinfoitem);
+        std::shared_ptr<ThreadInfo> threadinfoitem(new ThreadInfo(this));
+        r = pthread_create(&threadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)&threadinfoitem);
         if (r != 0)
         {
             XMNLogStdErr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
             return -1;
         }
-        vthreadinfo_.push_back(pthreadinfoitem);
+        vthreadinfo_.push_back(threadinfoitem);
     }
 
     /**

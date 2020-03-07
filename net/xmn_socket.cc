@@ -64,9 +64,9 @@ XMNSocket::~XMNSocket()
         x = nullptr;
     }
     vlistenportsockinfolist_.clear();
-    // 释放 portsum_ 。
-    portsum_.clear();
-    std::vector<size_t>().swap(portsum_);
+    // 释放 vportsum_ 。
+    vportsum_.clear();
+    std::vector<size_t>().swap(vportsum_);
 }
 
 int XMNSocket::Initialize()
@@ -242,7 +242,7 @@ int XMNSocket::OpenListenSocket()
         /**
          * 绑定 IP 和 port 。
         */
-        addr.sin_port = htons(portsum_[i]);
+        addr.sin_port = htons(vportsum_[i]);
         r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(struct sockaddr));
         if (r != 0)
         {
@@ -267,11 +267,11 @@ int XMNSocket::OpenListenSocket()
         */
         XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
-        pitem->port = portsum_[i];
+        pitem->port = vportsum_[i];
         pitem->pconnsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
-        XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", portsum_[i]);
+        XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", vportsum_[i]);
     }
     return 0;
 
@@ -330,7 +330,7 @@ int XMNSocket::ReadConf()
             listenport_count_--;
             continue;
         }
-        portsum_.push_back(tmp);
+        vportsum_.push_back(tmp);
         s.clear();
         s.str("");
     }

@@ -749,7 +749,7 @@ private:
     /**
      * 保存待监听的 port 。
     */
-    std::vector<size_t> portsum_;
+    std::vector<size_t> vportsum_;
 
     /**
      * 监听的 port 以及其对应的监听 socket 的 vector。

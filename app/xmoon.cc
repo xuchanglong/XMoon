@@ -38,7 +38,7 @@ int g_xmn_process_type = XMN_PROCESS_MASTER;
 sig_atomic_t g_xmn_reap = 0;
 bool g_isquit = false;
 
-int main(int argc, char * const *argv)
+int main(int argc, char *const *argv)
 {
     /**
      *  （1）变量初始化。 

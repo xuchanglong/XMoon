@@ -92,14 +92,17 @@ void XMNMasterProcessCycle()
         strtemp = g_argv[i];
         g_strmasterprocessname += " " + strtemp;
     }
-    XMNSetProcTitle(g_strmasterprocessname);
+    if (XMNSetProcTitle(g_strmasterprocessname) < 0)
+    {
+        XMNLogInfo(XMN_LOG_NOTICE, 0, "%s %d 标题过长", g_strmasterprocessname, g_xmn_pid);
+    }
     XMNLogInfo(XMN_LOG_NOTICE, 0, "%s %d 启动成功", g_strmasterprocessname, g_xmn_pid);
 
     /**
      * （3）创建 worker 子进程。
     */
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
-    const size_t kWorkerProcessCount = std::stoi(config.GetConfigItem("WorkerProcesses", "4").c_str());
+    const size_t kWorkerProcessCount = std::stoi(config.GetConfigItem("WorkerProcesses", "4"));
     XMNStartWorkerProcess(kWorkerProcessCount);
 
     /**
@@ -226,7 +229,7 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
      * （2）创建线程池。
     */
     XMNConfig &config = SingletonBase<XMNConfig>::GetInstance();
-    const size_t kThreadPoolSize = std::stoi(config.GetConfigItem("ThreadPoolSize", "100").c_str());
+    const size_t kThreadPoolSize = std::stoi(config.GetConfigItem("ThreadPoolSize", "100"));
 
     /**
      * TODO：这里需要判断该函数的返回值。

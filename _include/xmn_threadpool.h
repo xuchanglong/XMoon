@@ -113,7 +113,7 @@ private:
     /**
      * 保持线程池中每个线程的信息。
     */
-    std::vector<ThreadInfo *> vthreadinfo_;
+    std::vector<std::shared_ptr<ThreadInfo>> vthreadinfo_;
 
     /**
      * 线程是否退出的标识。
