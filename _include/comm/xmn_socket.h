@@ -20,6 +20,7 @@
 #include <list>
 #include <queue>
 #include <map>
+#include <memory>
 
 using CXMNSocket = class XMNSocket;
 using XMNEventHandler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
@@ -748,7 +749,7 @@ private:
     /**
      * 保存待监听的 port 。
     */
-    size_t *pportsum_;
+    std::vector<size_t> portsum_;
 
     /**
      * 监听的 port 以及其对应的监听 socket 的 vector。

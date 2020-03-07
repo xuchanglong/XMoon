@@ -22,7 +22,6 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
                          kPkgHeaderLen_(sizeof(XMNPkgHeader))
 {
     listenport_count_ = 0;
-    pportsum_ = nullptr;
     worker_connection_count_ = 0;
     epoll_handle_ = 0;
     pool_connsock_count_ = 0;
@@ -65,12 +64,9 @@ XMNSocket::~XMNSocket()
         x = nullptr;
     }
     vlistenportsockinfolist_.clear();
-
-    if (pportsum_ != nullptr)
-    {
-        delete[] pportsum_;
-        pportsum_ = nullptr;
-    }
+    // 释放 portsum_ 。
+    portsum_.clear();
+    std::vector<size_t>().swap(portsum_);
 }
 
 int XMNSocket::Initialize()
@@ -246,7 +242,7 @@ int XMNSocket::OpenListenSocket()
         /**
          * 绑定 IP 和 port 。
         */
-        addr.sin_port = htons(pportsum_[i]);
+        addr.sin_port = htons(portsum_[i]);
         r = bind(psocksum[i], (struct sockaddr *)&addr, sizeof(struct sockaddr));
         if (r != 0)
         {
@@ -271,11 +267,11 @@ int XMNSocket::OpenListenSocket()
         */
         XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
-        pitem->port = pportsum_[i];
+        pitem->port = portsum_[i];
         pitem->pconnsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
-        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", pportsum_[i]);
+        xmn_log_info(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", portsum_[i]);
     }
     return 0;
 
@@ -321,20 +317,26 @@ int XMNSocket::ReadConf()
     /**
      * （2）获取所有的 port 。
     */
-    pportsum_ = new size_t[listenport_count_];
     std::string str = "";
     std::stringstream s;
-    for (size_t i = 0; i < listenport_count_; ++i)
+    int portcount = listenport_count_;
+    for (size_t i = 0; i < portcount; ++i)
     {
         s << i;
         str = "ListenPort" + s.str();
-        pportsum_[i] = std::stoi(config.GetConfigItem(str).c_str());
-        if (pportsum_[i] <= 0)
+        int tmp = std::stoi(config.GetConfigItem(str));
+        if (tmp <= 0)
         {
-            return -2;
+            listenport_count_--;
+            continue;
         }
+        portsum_.push_back(tmp);
         s.clear();
         s.str("");
+    }
+    if (listenport_count_ == 0)
+    {
+        return -2;
     }
 
     /**
@@ -789,7 +791,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
                 */
                 XMNLogStdErr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
 但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为 %d。",
-                               eventstmp);
+                             eventstmp);
                 --pconnsockinfo->throwepollsendcount;
             }
             else
@@ -823,7 +825,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     if (pconnsockinfo->nosendmsgcount > 400)
     {
         XMNLogStdErr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
-                       pconnsockinfo->fd);
+                     pconnsockinfo->fd);
         ++discardsendpkgcount_;
         memory.FreeMemory(psenddata);
         ActivelyCloseSocket(pconnsockinfo);
@@ -968,9 +970,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                         XMNLogStdErr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
                     }
                     XMNLogStdErr(0,
-                                   "XMNSocket::SendDataThread()中理论发送 %d 个字节，实际发送 %d 个字节。",
-                                   pconnsockinfo->senddatalen,
-                                   sendsize);
+                                 "XMNSocket::SendDataThread()中理论发送 %d 个字节，实际发送 %d 个字节。",
+                                 pconnsockinfo->senddatalen,
+                                 sendsize);
                 }
                 continue;
             }
@@ -1147,14 +1149,14 @@ void XMNSocket::PrintInfo()
         XMNLogStdErr(0, "\n---------------------------------------------  begin ---------------------------------------------");
         XMNLogStdErr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
         XMNLogStdErr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
-                       connsock_pool_free_.size(),
-                       connsock_pool_.size(),
-                       recyconnsock_pool_.size());
+                     connsock_pool_free_.size(),
+                     connsock_pool_.size(),
+                     recyconnsock_pool_.size());
         XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
         XMNLogStdErr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
-                       recvmsgcount,
-                       sendmsgcount_,
-                       discardsendpkgcount_);
+                     recvmsgcount,
+                     sendmsgcount_,
+                     discardsendpkgcount_);
         XMNLogStdErr(0, "---------------------------------------------  end ---------------------------------------------");
 
         if (recvmsgcount > 100000)
