@@ -8,12 +8,8 @@ XMNConfig::XMNConfig()
 
 XMNConfig::~XMNConfig()
 {
-    for (auto &x : vconfig_item_set_)
-    {
-        delete x;
-        x = nullptr;
-    }
     vconfig_item_set_.clear();
+    std::vector<std::shared_ptr<ConfigItem>>().swap(vconfig_item_set_);
 }
 
 int XMNConfig::Load(const std::string &kstrConfigFilePath)
@@ -66,10 +62,10 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
         size_t pos = strbuftmp.find("=");
         if (pos != 0)
         {
-            ConfigItem *pitem = nullptr;
+            std::shared_ptr<ConfigItem> item;
             try
             {
-                pitem = new ConfigItem;
+                item = std::shared_ptr<ConfigItem>(new ConfigItem);
             }
             catch (const std::exception &e)
             {
@@ -78,10 +74,10 @@ int XMNConfig::Load(const std::string &kstrConfigFilePath)
             }
 
             //memset(pitem, 0, sizeof(ConfigItem) * 1);
-            pitem->stritem = ClearSpace(strbuftmp.substr(0, pos));
-            pitem->striteminfo = ClearSpace(strbuftmp.substr(pos + 1));
+            item->stritem = ClearSpace(strbuftmp.substr(0, pos));
+            item->striteminfo = ClearSpace(strbuftmp.substr(pos + 1));
 
-            vconfig_item_set_.push_back(pitem);
+            vconfig_item_set_.push_back(item);
         }
         strbuftmp.clear();
     }

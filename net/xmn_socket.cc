@@ -58,12 +58,8 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
 
 XMNSocket::~XMNSocket()
 {
-    for (auto &x : vlistenportsockinfolist_)
-    {
-        delete x;
-        x = nullptr;
-    }
     vlistenportsockinfolist_.clear();
+    std::vector<std::shared_ptr<XMNListenSockInfo>>().swap(vlistenportsockinfolist_);
     // 释放 vportsum_ 。
     vportsum_.clear();
     std::vector<size_t>().swap(vportsum_);
@@ -157,12 +153,8 @@ int XMNSocket::EndWorker()
     {
         pthread_join(x->threadhandle_, nullptr);
     }
-    for (auto &x : vthreadinfo_)
-    {
-        delete x;
-        x = nullptr;
-    }
     vthreadinfo_.clear();
+    std::vector<std::shared_ptr<ThreadInfo>>().swap(vthreadinfo_);
 
     /**
      * （2）回收线程池、发送消息队列和心跳监控 multimap 。
@@ -265,11 +257,11 @@ int XMNSocket::OpenListenSocket()
         /**
          * 将 port 和 soket 插入 vector 中。
         */
-        XMNListenSockInfo *pitem = new XMNListenSockInfo;
-        pitem->fd = psocksum[i];
-        pitem->port = vportsum_[i];
-        pitem->connsockinfo = nullptr;
-        vlistenportsockinfolist_.push_back(pitem);
+        std::shared_ptr<XMNListenSockInfo> item = std::shared_ptr<XMNListenSockInfo>(new XMNListenSockInfo);
+        item->fd = psocksum[i];
+        item->port = vportsum_[i];
+        item->connsockinfo = nullptr;
+        vlistenportsockinfolist_.push_back(item);
 
         XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", vportsum_[i]);
     }
@@ -621,7 +613,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     /**
      * （2）epoll_ctl()函数的调用。
     */
-    ev.data.ptr = (void *)connsockinfo;
+    ev.data.ptr = (void *)&connsockinfo;
     if (epoll_ctl(epoll_handle_, kOption, kSockFd, &ev) != 0)
     {
         XMNLogStdErr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");

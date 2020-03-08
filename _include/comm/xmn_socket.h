@@ -23,6 +23,7 @@
 #include <memory>
 
 using CXMNSocket = class XMNSocket;
+struct XMNConnSockInfo;
 using XMNEventHandler = void (CXMNSocket::*)(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
 /**
@@ -34,7 +35,6 @@ using XMNEventHandler = void (CXMNSocket::*)(std::shared_ptr<XMNConnSockInfo> &c
  * 存放每次从 epoll_wait 的双向链表中取出的 epoll_event 的最大数量。
 */
 #define XMN_EPOLL_WAIT_MAX_EVENTS 512
-
 /**
  *  @function   存放监听 socket 的相关的信息。
  *  @time   2019-08-25
@@ -577,10 +577,9 @@ private:
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   kSockFd accept 返回的 socket 。
      * @ret 绑定好的连接池中的一个连接。
-     *      nullptr 连接池中的连接为空。
      * @time    2019-09-19
     */
-    std::shared_ptr<XMNConnSockInfo> XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd);
+    std::shared_ptr<XMNConnSockInfo> PutOutConnSockInfofromPool(const int &kSockFd);
 
     /**
      * @function    将连接归还至连接池中。
@@ -754,7 +753,7 @@ private:
     /**
      * 监听的 port 以及其对应的监听 socket 的 vector。
     */
-    std::vector<XMNListenSockInfo *> vlistenportsockinfolist_;
+    std::vector<std::shared_ptr<XMNListenSockInfo>> vlistenportsockinfolist_;
 
     /**
      * 每个 worker 进程的 epoll 连接的最大项数。
