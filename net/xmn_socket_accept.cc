@@ -18,7 +18,7 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
     memset(&addr, 0, addrlen * 1);
     static bool isuseaccept4 = true;
     int linkfd = -1;
-    int listenfd = connsockinfo->plistensockinfo->fd;
+    int listenfd = connsockinfo->listensockinfo->fd;
     std::shared_ptr<XMNConnSockInfo> connsockinfo_new;
     /**
      * 用于临时存储 errno 的值，防止在对不同的错误进行处理时，其他代码修改了该值。
@@ -154,7 +154,7 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
         /**
          * 连接 socket 对应的连接对象和监听对象关联。
         */
-        connsockinfo_new->plistensockinfo = connsockinfo->plistensockinfo;
+        connsockinfo_new->listensockinfo = connsockinfo->listensockinfo;
 
         /**
          * 标记该连接是可读和可写的。

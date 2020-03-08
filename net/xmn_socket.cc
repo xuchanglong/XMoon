@@ -468,7 +468,7 @@ int XMNSocket::EpollInit()
         /**
          * 连接对象和监听对象进行关联。
         */
-        connsockinfo->plistensockinfo = x;
+        connsockinfo->listensockinfo = x;
 
         /**
          * 监听对象和连接对象进行关联。

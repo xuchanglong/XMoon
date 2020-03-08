@@ -93,7 +93,7 @@ public:
     /**
      * 该连接 socket 对应的监听 socket 的信息。
     */
-    XMNListenSockInfo *plistensockinfo;
+    std::shared_ptr<XMNListenSockInfo> listensockinfo;
 
     /**
      * 位域，失效的标志位。
