@@ -23,7 +23,7 @@
 #include <memory>
 
 using CXMNSocket = class XMNSocket;
-using XMNEventHandler = void (CXMNSocket::*)(struct XMNConnSockInfo *pconnsockinfo);
+using XMNEventHandler = void (CXMNSocket::*)(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
 /**
  * 存放已经完成连接的 socket 的队列的大小。
@@ -54,7 +54,7 @@ struct XMNListenSockInfo
     /**
      * 该监听 socket 对应的连接池中的连接。
     */
-    XMNConnSockInfo *pconnsockinfo;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
 };
 
 /**
@@ -259,7 +259,7 @@ struct XMNMsgHeader
     /**
      * 指定该消息记录对应的是哪个连接。
     */
-    XMNConnSockInfo *pconnsockinfo;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
 
     /**
      * 指定该消息对应的连接的序号，用于判断该连接是否是过期连接。
@@ -386,7 +386,7 @@ public:
      *                  EPOLLRDHUP：TCP连接的远端关闭或者半关闭。
      *                  等。
      *          kFlag   为操作类型 EPOLL_CTL_MOD 补充操作：0：增加   1：去掉
-     *          pconnsockinfo   该连接的信息。
+     *          connsockinfo   该连接的信息。
      * @ret  0   操作成功。
      * @time    2019-08-27
     */
@@ -394,7 +394,7 @@ public:
                             const uint32_t &kOption,
                             const uint32_t &kEvents,
                             const int &kFlag,
-                            XMNConnSockInfo *pconnsockinfo);
+                            std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    epoll 等待接收和处理事件。
@@ -451,16 +451,16 @@ protected:
      *          -2  未知错误。
      * @time    2019-09-26
     */
-    int SendData(XMNConnSockInfo *pconnsockinfo);
+    int SendData(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    sever 端主动地关闭 socket 的函数。
-     * @paras   pconnsockinfo   待关闭的连接信息。
+     * @paras   connsockinfo   待关闭的连接信息。
      * @ret  0   操作成功。
      *          -1  形参为空指针。
      * @time    2019-10-04
     */
-    int ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo);
+    int ActivelyCloseSocket(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
 private:
     /**
@@ -505,52 +505,52 @@ private:
     /**
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于处理新建立的连接。
-     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了监听 socket 。
+     * @paras   connsockinfo   连接池中的节点，该节点绑定了监听 socket 。
      * @ret  none .
      * @time    2019-08-27
     */
-    void EventAcceptHandler(XMNConnSockInfo *pconnsockinfo);
+    void EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于读取 client 发来的数据并做处理。
-     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
+     * @paras   connsockinfo   连接池中的节点，该节点绑定了连接 socket 。
      * @ret  none 。
      * @time    2019-09-26
     */
-    void WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo);
+    void WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    由 epoll_wait 驱动，EpollProcessEvents 调用的函数。
      *              用于向 client 发送数据。
-     * @paras   pconnsockinfo   连接池中的节点，该节点绑定了连接 socket 。
+     * @paras   connsockinfo   连接池中的节点，该节点绑定了连接 socket 。
      * @ret  none 。
      * @time    2019-09-26
     */
-    void WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo);
+    void WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
-     * @paras   pconnsockinfo   待接收数据的连接。
+     * @paras   connsockinfo   待接收数据的连接。
      * @time    2019-08-31
     */
-    ssize_t RecvData(XMNConnSockInfo *pconnsockinfo);
+    ssize_t RecvData(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    判断该包是否正常以及为接收包体做准备。
-     * @paras   pconnsokcinfo   待处理的连接。
+     * @paras   connsokcinfo   待处理的连接。
      * @ret  none 。
      * @time    2019-08-31
     */
-    void WaitRequestHandlerHeader(XMNConnSockInfo *pconnsokcinfo);
+    void WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    对接收的完整的包进行处理（压入消息队列中并初始化状态机）。
-     * @paras   pconnsokcinfo   待处理的连接。
+     * @paras   connsokcinfo   待处理的连接。
      * @ret  none 。
      * @time    2019-09-01
     */
-    void WaitRequestHandlerBody(XMNConnSockInfo *pconnsokcinfo);
+    void WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**************************************************************************************
      * 
@@ -576,27 +576,27 @@ private:
     /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   kSockFd accept 返回的 socket 。
-     * @ret  绑定好的连接池中的一个连接。
-     *          nullptr 连接池中的连接为空。
+     * @ret 绑定好的连接池中的一个连接。
+     *      nullptr 连接池中的连接为空。
      * @time    2019-09-19
     */
-    XMNConnSockInfo *PutOutConnSockInfofromPool(const int &kSockFd);
+    std::shared_ptr<XMNConnSockInfo> XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd);
 
     /**
      * @function    将连接归还至连接池中。
-     * @paras   pconnsockinfo   待归还的连接。
+     * @paras   connsockinfo   待归还的连接。
      * @ret  none 。
      * @time    2019-09-19
     */
-    void PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo);
+    void PutInConnSockInfo2Pool(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    将连接放入回收链表中。
-     * @paras   pconnsockinfo   待归还的连接。
+     * @paras   connsockinfo   待归还的连接。
      * @ret  none 。
      * @time    2019-09-19
     */
-    void PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo);
+    void PutInConnSockInfo2RecyList(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    定时将到时的连接归还至空闲连接池中。
@@ -612,7 +612,7 @@ private:
      * @ret  none 。
      * @time    2019-08-29
     */
-    void CloseConnection(XMNConnSockInfo *pfd);
+    void CloseConnection(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**************************************************************************************
      * 
@@ -651,11 +651,11 @@ private:
     **************************************************************************************/
     /**
      * @function    将指定的连接信息放入 multimap 中，等待心跳监控。
-     * @paras   pconnsockinfo   指定的连接的信息。
+     * @paras   connsockinfo   指定的连接的信息。
      * @ret  0   操作成功。
      * @time    2019-10-04
     */
-    int PutInConnSockInfo2PingMultiMap(XMNConnSockInfo *pconnsockinfo);
+    int PutInConnSockInfo2PingMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    从 multimap 中获取最早的时间，即：头部元素。
@@ -691,12 +691,12 @@ private:
 
     /**
      * @function    从心跳监控的 multimap 中删除指定的消息头。
-     * @paras   pconnsockinfo   待删除的连接。
+     * @paras   connsockinfo   待删除的连接。
      * @ret  0   操作成功。
      *          -1  形参为空指针。
      * @time    2019-10-04
     */
-    int PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo);
+    int PutOutMsgHeaderFromMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
     /**
      * @function    清空并释放心跳监控 multimap 。
@@ -717,7 +717,7 @@ private:
      * @ret  true    存在恶意行为，应该关闭该连接。
      * @time    2019-10-06
     */
-    bool TestFlood(XMNConnSockInfo *pconnsockinfo);
+    bool TestFlood(std::shared_ptr<XMNConnSockInfo> &connsockinfo);
 
 protected:
     /**
@@ -784,7 +784,12 @@ private:
     /**
      * 连接池列表。
     */
-    std::list<XMNConnSockInfo *> connsock_pool_;
+    std::list<std::shared_ptr<XMNConnSockInfo>> connsock_pool_;
+
+    /**
+     * 空闲连接的列表。
+    */
+    std::list<std::shared_ptr<XMNConnSockInfo>> connsock_pool_free_;
 
     /**
      * 连接池中所有连接的数量。
@@ -797,11 +802,6 @@ private:
     pthread_mutex_t connsock_pool_mutex_;
 
     /**
-     * 空闲连接的列表。
-    */
-    std::list<XMNConnSockInfo *> connsock_pool_free_;
-
-    /**
      * 空闲连接池中可用连接的数量。
     */
     std::atomic<size_t> pool_free_connsock_count_;
@@ -809,7 +809,7 @@ private:
     /**
      * 待回收的连接的列表。
     */
-    std::list<XMNConnSockInfo *> recyconnsock_pool_;
+    std::list<std::shared_ptr<XMNConnSockInfo>> recycleconnsock_pool_;
 
     /**
      * 待回收的连接的数量。

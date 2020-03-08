@@ -4,20 +4,15 @@
 #include "xmn_global.h"
 #include "xmn_func.h"
 
-int XMNSocket::PutInConnSockInfo2PingMultiMap(XMNConnSockInfo *pconnsockinfo)
+int XMNSocket::PutInConnSockInfo2PingMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
-    if (pconnsockinfo == nullptr)
-    {
-        return -1;
-    }
-
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     time_t nexttime = time(nullptr) + pingwaittime_;
 
     XMNLockMutex pinglock(&ping_multimap_mutex_);
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)memory.AllocMemory(kMsgHeaderLen_, false);
-    pmsgheader->currsequence = pconnsockinfo->currsequence;
-    pmsgheader->pconnsockinfo = pconnsockinfo;
+    pmsgheader->currsequence = connsockinfo->currsequence;
+    pmsgheader->connsockinfo = connsockinfo;
 
     ping_multimap_.insert(std::make_pair(nexttime, pmsgheader));
     ++ping_multimap_count_;
@@ -111,7 +106,7 @@ XMNMsgHeader *XMNSocket::GetOverTimeMsgHeader(const time_t &currenttime)
         time_t newputinmultimaptime = currenttime + pingwaittime_;
         XMNMsgHeader *pmsgheadertmp_new = (XMNMsgHeader *)memory.AllocMemory(kMsgHeaderLen_, false);
         pmsgheadertmp_new->currsequence = pmsgheadertmp->currsequence;
-        pmsgheadertmp_new->pconnsockinfo = pmsgheadertmp->pconnsockinfo;
+        pmsgheadertmp_new->connsockinfo = pmsgheadertmp->connsockinfo;
         ping_multimap_.insert(std::make_pair(newputinmultimaptime, pmsgheadertmp_new));
         ++ping_multimap_count_;
 
@@ -147,19 +142,15 @@ int XMNSocket::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime)
     return 0;
 }
 
-int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
+int XMNSocket::PutOutMsgHeaderFromMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
-    if (pconnsockinfo == nullptr)
-    {
-        return -1;
-    }
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex pinglock(&ping_multimap_mutex_);
 
     std::multimap<time_t, XMNMsgHeader *>::iterator it;
     for (it = ping_multimap_.begin(); it != ping_multimap_.end();)
     {
-        if (it->second->pconnsockinfo == pconnsockinfo)
+        if (it->second->connsockinfo == connsockinfo)
         {
             memory.FreeMemory(it->second);
             it = ping_multimap_.erase(it);

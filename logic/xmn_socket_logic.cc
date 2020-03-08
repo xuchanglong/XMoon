@@ -59,7 +59,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     {
         return -2;
     }
-    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo = pmsgheader->connsockinfo;
     /*
      * （2）对该业务逻辑处理进行加锁。
      * 解释：对于同一个用户，可能同时发送来多个请求过来，造成多个线程同时为该 用户服务。
@@ -68,7 +68,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
      * 很可能造成这个用户购买成功了 A，又购买成功了 B。
      * 所以根据上述考虑，同一个连接多个逻辑进行加锁处理。
     */
-    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
+    XMNLockMutex lockmutex_logic(&connsockinfo->logicprocmutex);
     /**
      * （3）获取发送来的所有数据。
     */
@@ -139,7 +139,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + kMsgHeaderLen_);
     char *ppkgbody = nullptr;
     unsigned short msgcode = 0;
-    XMNConnSockInfo *pconnsockinfo = nullptr;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
     /**
      * 拷贝连接块信息，防止在处理该消息时，该连接已经断开并且该连接块被其他新的连接所使用。
     */
@@ -182,8 +182,8 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
      * 如果 client 发来了数据包，server 激活线程池中一个线程去处理，在这个过程中 client 与 server 断开了连接，
      * 那么该消息就不必处理。
     */
-    pconnsockinfo = pmsgheader->pconnsockinfo;
-    if (pconnsockinfo->currsequence != pmsgheader->currsequence)
+    connsockinfo = pmsgheader->connsockinfo;
+    if (connsockinfo->currsequence != pmsgheader->currsequence)
     {
         goto lblexit;
     }
@@ -225,9 +225,9 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
         return -2;
     }
 
-    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
-    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
-    pconnsockinfo->lastpingtime = time(nullptr);
+    std::shared_ptr<XMNConnSockInfo> connsockinfo = pmsgheader->connsockinfo;
+    XMNLockMutex lockmutex_logic(&connsockinfo->logicprocmutex);
+    connsockinfo->lastpingtime = time(nullptr);
 
     SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);
 
@@ -259,16 +259,16 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
         return -1;
     }
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
-    if (pmsgheader->currsequence == pconnsockinfo->currsequence)
+    std::shared_ptr<XMNConnSockInfo> connsockinfo = pmsgheader->connsockinfo;
+    if (pmsgheader->currsequence == connsockinfo->currsequence)
     {
         /**
          * 此连接没有断开。
         */
-        if ((currenttime - pconnsockinfo->lastpingtime) > (pingwaittime_ * 3))
+        if ((currenttime - connsockinfo->lastpingtime) > (pingwaittime_ * 3))
         {
             XMNLogStdErr(0, "超时不发心跳包，连接被关闭。");
-            ActivelyCloseSocket(pconnsockinfo);
+            ActivelyCloseSocket(connsockinfo);
         }
         memory.FreeMemory(pmsgheader);
     }

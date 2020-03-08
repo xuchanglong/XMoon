@@ -268,7 +268,7 @@ int XMNSocket::OpenListenSocket()
         XMNListenSockInfo *pitem = new XMNListenSockInfo;
         pitem->fd = psocksum[i];
         pitem->port = vportsum_[i];
-        pitem->pconnsockinfo = nullptr;
+        pitem->connsockinfo = nullptr;
         vlistenportsockinfolist_.push_back(pitem);
 
         XMNLogInfo(XMN_LOG_INFO, 0, "监听端口 %d 的socket 创建成功！", vportsum_[i]);
@@ -460,14 +460,14 @@ int XMNSocket::EpollInit()
     /**
      * （3）循环遍历所有监听 socket ，为每个 socket 绑定一个连接池中的连接，用于记录相关信息。
     */
-    XMNConnSockInfo *pconnsockinfo = nullptr;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
     for (auto &x : vlistenportsockinfolist_)
     {
         /**
          * 从连接池中取出空闲节点。
         */
-        pconnsockinfo = PutOutConnSockInfofromPool(x->fd);
-        if (pconnsockinfo == nullptr)
+        connsockinfo = PutOutConnSockInfofromPool(x->fd);
+        if (connsockinfo == nullptr)
         {
             XMNLogStdErr(errno, "EpollInit 中 PutOutConnSockInfofromPool() 执行失败！");
             return -2;
@@ -476,18 +476,18 @@ int XMNSocket::EpollInit()
         /**
          * 连接对象和监听对象进行关联。
         */
-        pconnsockinfo->plistensockinfo = x;
+        connsockinfo->plistensockinfo = x;
 
         /**
          * 监听对象和连接对象进行关联。
         */
-        x->pconnsockinfo = pconnsockinfo;
+        x->connsockinfo = connsockinfo;
 
         /**
          * 对监听 socket 读事件设置处理函数，开始让监听 sokcet 履行职责。
         */
-        pconnsockinfo->r_ready = 1;
-        pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
+        connsockinfo->r_ready = 1;
+        connsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
 
         /*
         if (EpollAddEvent(
@@ -505,7 +505,7 @@ int XMNSocket::EpollInit()
                                 EPOLL_CTL_ADD,
                                 EPOLLIN | EPOLLRDHUP,
                                 0,
-                                pconnsockinfo) != 0)
+                                connsockinfo) != 0)
         {
             return -3;
         }
@@ -562,7 +562,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
                                    const uint32_t &kOption,
                                    const uint32_t &kEvents,
                                    const int &kFlag,
-                                   XMNConnSockInfo *pconnsockinfo)
+                                   std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
     /**
      * （1）epoll_event 变量赋值。
@@ -573,14 +573,14 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     {
         ev.events = kEvents;
         //ev.data.ptr = (void *)pconnsockinfo;
-        pconnsockinfo->events = kEvents;
+        connsockinfo->events = kEvents;
     }
     else if (kOption == EPOLL_CTL_MOD)
     {
         /**
          * 恢复标记。
         */
-        ev.events = pconnsockinfo->events;
+        ev.events = connsockinfo->events;
         if (kFlag == 0)
         {
             /**
@@ -607,7 +607,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
             return -3;
         }
 
-        pconnsockinfo->events = ev.events;
+        connsockinfo->events = ev.events;
     }
     else if (kOption == EPOLL_CTL_DEL)
     {
@@ -621,7 +621,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     /**
      * （2）epoll_ctl()函数的调用。
     */
-    ev.data.ptr = (void *)pconnsockinfo;
+    ev.data.ptr = (void *)connsockinfo;
     if (epoll_ctl(epoll_handle_, kOption, kSockFd, &ev) != 0)
     {
         XMNLogStdErr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
@@ -706,7 +706,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
     /**
      * 执行到这里说明收到了事件。
     */
-    XMNConnSockInfo *pconnsockinfo = nullptr;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
     uint32_t eventstmp;
     //int instance = 0;
     for (size_t i = 0; i < eventcount; ++i)
@@ -714,7 +714,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         /**
          *  获取该事件对应的连接的相关信息。
         */
-        pconnsockinfo = (XMNConnSockInfo *)(wait_events_ + i)->data.ptr;
+        connsockinfo = std::shared_ptr<XMNConnSockInfo>((XMNConnSockInfo *)(wait_events_ + i)->data.ptr);
 
         /*
         instance = (uintptr_t)pconnsockinfo & 1;
@@ -772,7 +772,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         */
         if (eventstmp & EPOLLIN)
         {
-            (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
+            (this->*(connsockinfo->rhandler))(connsockinfo);
         }
 
         /**
@@ -792,11 +792,11 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
                 XMNLogStdErr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
 但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为 %d。",
                              eventstmp);
-                --pconnsockinfo->throwepollsendcount;
+                --connsockinfo->throwepollsendcount;
             }
             else
             {
-                (this->*(pconnsockinfo->whandler))(pconnsockinfo);
+                (this->*(connsockinfo->whandler))(connsockinfo);
             }
 
             //XMNLogStdErr(0, "收到可写事件。");
@@ -811,7 +811,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex lockmutex_senddata(&senddata_queue_mutex_);
     XMNMsgHeader *pmsgheader = (XMNMsgHeader *)psenddata;
-    XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo = pmsgheader->connsockinfo;
 
     /**
      * 安全防范。
@@ -822,17 +822,17 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
         memory.FreeMemory(psenddata);
         return -1;
     }
-    if (pconnsockinfo->nosendmsgcount > 400)
+    if (connsockinfo->nosendmsgcount > 400)
     {
         XMNLogStdErr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
-                     pconnsockinfo->fd);
+                     connsockinfo->fd);
         ++discardsendpkgcount_;
         memory.FreeMemory(psenddata);
-        ActivelyCloseSocket(pconnsockinfo);
+        ActivelyCloseSocket(connsockinfo);
         return -2;
     }
 
-    ++pconnsockinfo->nosendmsgcount;
+    ++connsockinfo->nosendmsgcount;
     senddata_queue_.push(psenddata);
     ++queue_senddata_count_;
 
@@ -873,7 +873,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     XMNMsgHeader *pmsgheader = nullptr;
     XMNPkgHeader *ppkgheader = nullptr;
     char *psendalldata = nullptr;
-    XMNConnSockInfo *pconnsockinfo = nullptr;
+    std::shared_ptr<XMNConnSockInfo> connsockinfo;
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     int err = 0;
     ssize_t sendsize = 0;
@@ -910,25 +910,25 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
 
             pmsgheader = (XMNMsgHeader *)psendalldata;
             ppkgheader = (XMNPkgHeader *)(psendalldata + psocket->kMsgHeaderLen_);
-            pconnsockinfo = pmsgheader->pconnsockinfo;
+            connsockinfo = pmsgheader->connsockinfo;
 
             /**
              * （3）判断消息是否过期。
             */
-            if (pconnsockinfo->currsequence != pmsgheader->currsequence)
+            if (connsockinfo->currsequence != pmsgheader->currsequence)
             {
                 memory.FreeMemory(psendalldata);
                 psendalldata = nullptr;
-                pconnsockinfo->psenddata = nullptr;
-                pconnsockinfo->senddatalen = 0;
-                pconnsockinfo->throwepollsendcount = 0;
+                connsockinfo->psenddata = nullptr;
+                connsockinfo->senddatalen = 0;
+                connsockinfo->throwepollsendcount = 0;
                 continue;
             }
 
             /**
              * （4）发送消息。
             */
-            if (pconnsockinfo->throwepollsendcount > 0)
+            if (connsockinfo->throwepollsendcount > 0)
             {
                 /**
                  * 说明该消息已经确定靠 epoll 驱动发送了，所以程序不用再向下执行了。
@@ -937,41 +937,41 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 continue;
             }
 
-            --pconnsockinfo->nosendmsgcount;
-            pconnsockinfo->psendalldataforfree = psendalldata;
-            pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
-            pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
+            --connsockinfo->nosendmsgcount;
+            connsockinfo->psendalldataforfree = psendalldata;
+            connsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
+            connsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
             //XMNLogStdErr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
-            sendsize = psocket->SendData(pconnsockinfo);
+            sendsize = psocket->SendData(connsockinfo);
             if (sendsize > 0)
             {
-                if (sendsize == pconnsockinfo->senddatalen)
+                if (sendsize == connsockinfo->senddatalen)
                 {
                     /**
                      * 全部正常发送成功。
                     */
-                    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                    pconnsockinfo->psendalldataforfree = nullptr;
-                    pconnsockinfo->psenddata = nullptr;
-                    pconnsockinfo->senddatalen = 0;
-                    pconnsockinfo->throwepollsendcount = 0;
+                    memory.FreeMemory(connsockinfo->psendalldataforfree);
+                    connsockinfo->psendalldataforfree = nullptr;
+                    connsockinfo->psenddata = nullptr;
+                    connsockinfo->senddatalen = 0;
+                    connsockinfo->throwepollsendcount = 0;
                 }
                 else
                 {
                     /**
                      * 数据不能全部发送，说明发送缓冲区已经满了。
                     */
-                    pconnsockinfo->psenddata = pconnsockinfo->psenddata + sendsize;
-                    pconnsockinfo->senddatalen = pconnsockinfo->senddatalen - sendsize;
-                    ++pconnsockinfo->throwepollsendcount;
-                    if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
+                    connsockinfo->psenddata = connsockinfo->psenddata + sendsize;
+                    connsockinfo->senddatalen = connsockinfo->senddatalen - sendsize;
+                    ++connsockinfo->throwepollsendcount;
+                    if (psocket->EpollOperationEvent(connsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, connsockinfo) != 0)
                     {
                         XMNLogStdErr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
                     }
                     XMNLogStdErr(0,
                                  "XMNSocket::SendDataThread()中理论发送 %d 个字节，实际发送 %d 个字节。",
-                                 pconnsockinfo->senddatalen,
+                                 connsockinfo->senddatalen,
                                  sendsize);
                 }
                 continue;
@@ -984,11 +984,11 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送端已断开连接。
                 */
-                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                pconnsockinfo->psendalldataforfree = nullptr;
-                pconnsockinfo->psenddata = nullptr;
-                pconnsockinfo->senddatalen = 0;
-                pconnsockinfo->throwepollsendcount = 0;
+                memory.FreeMemory(connsockinfo->psendalldataforfree);
+                connsockinfo->psendalldataforfree = nullptr;
+                connsockinfo->psenddata = nullptr;
+                connsockinfo->senddatalen = 0;
+                connsockinfo->throwepollsendcount = 0;
                 continue;
             }
             else if (sendsize == -1)
@@ -996,8 +996,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送缓冲区已满。
                 */
-                ++pconnsockinfo->throwepollsendcount;
-                if (psocket->EpollOperationEvent(pconnsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, pconnsockinfo) != 0)
+                ++connsockinfo->throwepollsendcount;
+                if (psocket->EpollOperationEvent(connsockinfo->fd, EPOLL_CTL_MOD, EPOLLOUT, 0, connsockinfo) != 0)
                 {
                     XMNLogStdErr(0, "XMNSocket::SendDataThread()中执行EpollOperationEvent()失败。");
                 }
@@ -1005,11 +1005,11 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
             else
             {
-                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                pconnsockinfo->psendalldataforfree = nullptr;
-                pconnsockinfo->psenddata = nullptr;
-                pconnsockinfo->senddatalen = 0;
-                pconnsockinfo->throwepollsendcount = 0;
+                memory.FreeMemory(connsockinfo->psendalldataforfree);
+                connsockinfo->psendalldataforfree = nullptr;
+                connsockinfo->psenddata = nullptr;
+                connsockinfo->senddatalen = 0;
+                connsockinfo->throwepollsendcount = 0;
                 continue;
             }
 
@@ -1019,12 +1019,12 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     return nullptr;
 }
 
-int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
+int XMNSocket::SendData(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
     size_t n = 0;
     while (true)
     {
-        n = send(pconnsockinfo->fd, pconnsockinfo->psenddata, pconnsockinfo->senddatalen, 0);
+        n = send(connsockinfo->fd, connsockinfo->psenddata, connsockinfo->senddatalen, 0);
         /**
          * （1）成功地发送了数据。
         */
@@ -1075,32 +1075,32 @@ int XMNSocket::FreeSendDataQueue()
     return 0;
 }
 
-int XMNSocket::ActivelyCloseSocket(XMNConnSockInfo *pconnsockinfo)
+int XMNSocket::ActivelyCloseSocket(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
-    if (pconnsockinfo == nullptr)
+    if (connsockinfo == nullptr)
     {
         return -1;
     }
 
     if (pingenable_)
     {
-        PutOutMsgHeaderFromMultiMap(pconnsockinfo);
+        PutOutMsgHeaderFromMultiMap(connsockinfo);
     }
-    if (pconnsockinfo->fd != -1)
+    if (connsockinfo->fd != -1)
     {
-        close(pconnsockinfo->fd);
-        pconnsockinfo->fd = -1;
+        close(connsockinfo->fd);
+        connsockinfo->fd = -1;
     }
-    if (pconnsockinfo->throwepollsendcount > 0)
+    if (connsockinfo->throwepollsendcount > 0)
     {
-        --pconnsockinfo->throwepollsendcount;
+        --connsockinfo->throwepollsendcount;
     }
-    PutInConnSockInfo2RecyList(pconnsockinfo);
+    PutInConnSockInfo2RecyList(connsockinfo);
 
     return 0;
 }
 
-bool XMNSocket::TestFlood(XMNConnSockInfo *pconnsockinfo)
+bool XMNSocket::TestFlood(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
 {
     struct timeval scurrenttime;
     uint64_t currenttime = 0;
@@ -1108,17 +1108,17 @@ bool XMNSocket::TestFlood(XMNConnSockInfo *pconnsockinfo)
 
     gettimeofday(&scurrenttime, nullptr);
     currenttime = scurrenttime.tv_sec * 1000 + scurrenttime.tv_usec / 1000;
-    if (currenttime - pconnsockinfo->floodlasttime < floodtimeinterval_)
+    if (currenttime - connsockinfo->floodlasttime < floodtimeinterval_)
     {
-        pconnsockinfo->floodattackcount++;
+        connsockinfo->floodattackcount++;
     }
     else
     {
-        pconnsockinfo->floodattackcount = 0;
+        connsockinfo->floodattackcount = 0;
     }
-    pconnsockinfo->floodlasttime = currenttime;
+    connsockinfo->floodlasttime = currenttime;
 
-    if (pconnsockinfo->floodattackcount >= floodcount_)
+    if (connsockinfo->floodattackcount >= floodcount_)
     {
         ret = true;
     }
@@ -1151,7 +1151,7 @@ void XMNSocket::PrintInfo()
         XMNLogStdErr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
                      connsock_pool_free_.size(),
                      connsock_pool_.size(),
-                     recyconnsock_pool_.size());
+                     recycleconnsock_pool_.size());
         XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
         XMNLogStdErr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
                      recvmsgcount,
