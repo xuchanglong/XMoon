@@ -20,7 +20,7 @@ struct XMNSignal
     /**
      * 信号的名称。
     */
-    std::string psigname;
+    char *psigname;
 
     /**
      *  信号的处理函数。
