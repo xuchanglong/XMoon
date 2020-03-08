@@ -35,8 +35,8 @@ time_t XMNSocket::GetEarliestTime()
 
 void *XMNSocket::PingThread(void *pthreadinfo)
 {
-    ThreadInfo *pthreadinfo_new = (ThreadInfo *)pthreadinfo;
-    XMNSocket *psocket = pthreadinfo_new->pthis_;
+    std::shared_ptr<ThreadInfo> threadinfo_new = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    XMNSocket *psocket = threadinfo_new->pthis_;
 
     time_t current_time;
     int err = 0;

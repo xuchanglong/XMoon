@@ -774,7 +774,7 @@ private:
     /**
      * 保存每个 worker 进程专用的供 socket 类使用的线程的信息。
     */
-    std::vector<ThreadInfo *> vthreadinfo_;
+    std::vector<std::shared_ptr<ThreadInfo>> vthreadinfo_;
 
     /**************************************************************************************
      * 

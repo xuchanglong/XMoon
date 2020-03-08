@@ -193,8 +193,8 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
     {
         return nullptr;
     }
-    ThreadInfo *pthreadinfo_n = (ThreadInfo *)pthreadinfo;
-    XMNSocket *pthis = pthreadinfo_n->pthis_;
+    std::shared_ptr<ThreadInfo> threadinfo_n = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    XMNSocket *pthis = threadinfo_n->pthis_;
     XMNConnSockInfo *pconnsockinfo = nullptr;
     while (true)
     {

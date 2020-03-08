@@ -128,17 +128,17 @@ int XMNSocket::InitializeWorker()
      * b、创建用于发送数据的线程。
      * c、创建用于监控心跳包收发的线程。
     */
-    ThreadInfo *pthreadinfo_recysockinfo = nullptr;
-    vthreadinfo_.push_back(pthreadinfo_recysockinfo = new ThreadInfo(this));
-    pthread_create(&pthreadinfo_recysockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recysockinfo);
+    std::shared_ptr<ThreadInfo> threadinfo_recyclesockinfo(new ThreadInfo(this));
+    vthreadinfo_.push_back(threadinfo_recyclesockinfo);
+    pthread_create(&threadinfo_recyclesockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)&threadinfo_recyclesockinfo);
 
-    ThreadInfo *pthreadinfo_senddata = nullptr;
-    vthreadinfo_.push_back(pthreadinfo_senddata = new ThreadInfo(this));
-    pthread_create(&pthreadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
+    std::shared_ptr<ThreadInfo> threadinfo_senddata(new ThreadInfo(this));
+    vthreadinfo_.push_back(threadinfo_senddata);
+    pthread_create(&threadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)&threadinfo_senddata);
 
-    ThreadInfo *pthreadinfo_ping = nullptr;
-    vthreadinfo_.push_back(pthreadinfo_ping = new ThreadInfo(this));
-    pthread_create(&pthreadinfo_ping->threadhandle_, nullptr, PingThread, (void *)pthreadinfo_ping);
+    std::shared_ptr<ThreadInfo> threadinfo_ping(new ThreadInfo(this));
+    vthreadinfo_.push_back(threadinfo_ping);
+    pthread_create(&threadinfo_ping->threadhandle_, nullptr, PingThread, (void *)&threadinfo_ping);
     return 0;
 }
 
@@ -868,8 +868,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     /**
      * （1）定义变量。
     */
-    ThreadInfo *pthreadinfo_new = (ThreadInfo *)pthreadinfo;
-    XMNSocket *psocket = pthreadinfo_new->pthis_;
+    std::shared_ptr<ThreadInfo> threadinfo_new = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    XMNSocket *psocket = threadinfo_new->pthis_;
     XMNMsgHeader *pmsgheader = nullptr;
     XMNPkgHeader *ppkgheader = nullptr;
     char *psendalldata = nullptr;
