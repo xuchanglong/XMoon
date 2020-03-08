@@ -324,7 +324,7 @@ public:
      * @paras   none 。
      * @ret  0   操作成功。
      *          -1  connsock_pool_mutex_    初始化失败。
-     *          -2  connsock_pool_recy_mutex_   初始化失败。
+     *          -2  connsock_pool_recycle_mutex_   初始化失败。
      * @time    2019-09-21
     */
     virtual int InitializeWorker();
@@ -819,7 +819,7 @@ private:
     /**
      * 有关回收连接到空闲列表操作的互斥量。
     */
-    pthread_mutex_t connsock_pool_recy_mutex_;
+    pthread_mutex_t connsock_pool_recycle_mutex_;
 
     /**
      * 待回收的连接的等待时间。

@@ -97,9 +97,9 @@ int XMNSocket::InitializeWorker()
         XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_mutex_) 执行失败。");
         return -1;
     }
-    if (pthread_mutex_init(&connsock_pool_recy_mutex_, nullptr) != 0)
+    if (pthread_mutex_init(&connsock_pool_recycle_mutex_, nullptr) != 0)
     {
-        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recy_mutex_) 执行失败。");
+        XMNLogStdErr(0, "XMNSocket::InitializeWorker 中 pthread_mutex_init(&connsock_pool_recycle_mutex_) 执行失败。");
         return -2;
     }
     if (pthread_mutex_init(&senddata_queue_mutex_, nullptr) != 0)
@@ -175,7 +175,7 @@ int XMNSocket::EndWorker()
      * （3）销毁所有的互斥量、信号量。
     */
     pthread_mutex_destroy(&connsock_pool_mutex_);
-    pthread_mutex_destroy(&connsock_pool_recy_mutex_);
+    pthread_mutex_destroy(&connsock_pool_recycle_mutex_);
     pthread_mutex_destroy(&senddata_queue_mutex_);
     pthread_mutex_destroy(&ping_multimap_mutex_);
     sem_destroy(&senddata_queue_sem_);
