@@ -8,6 +8,7 @@
 #include <vector>
 #include <atomic>
 #include <list>
+#include <memory>
 
 class XMNThreadPool : public NonCopyable
 {

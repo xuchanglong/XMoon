@@ -68,12 +68,12 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         return nullptr;
     }
     int r = 0;
-    ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
-    XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
+    std::shared_ptr<ThreadInfo> threadinfo = *(std::shared_ptr<ThreadInfo> *)pthreaddata;
+    XMNThreadPool *pthreadpool = threadinfo->pthreadpool_;
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     char *pmsg = nullptr;
 
-    size_t pid = pthread_self();
+    const size_t pid = pthread_self();
 
     /**
      * 从消息链表中取出数据。
@@ -94,7 +94,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             /**
              * 标记该线程已经开始运行。
             */
-            pthreadinfo->isrunning_ = true;
+            threadinfo->isrunning_ = true;
             /**
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
@@ -177,13 +177,8 @@ int XMNThreadPool::Destroy()
     pthread_cond_destroy(&thread_cond_);
     pthread_mutex_destroy(&thread_mutex_);
 
-    for (auto &x : vthreadinfo_)
-    {
-        delete x;
-        x = nullptr;
-    }
     vthreadinfo_.clear();
-
+    std::vector<std::shared_ptr<ThreadInfo>>().swap(vthreadinfo_);
     return 0;
 }
 
