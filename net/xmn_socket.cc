@@ -124,17 +124,17 @@ int XMNSocket::InitializeWorker()
      * b、创建用于发送数据的线程。
      * c、创建用于监控心跳包收发的线程。
     */
-    std::shared_ptr<ThreadInfo> threadinfo_recyclesockinfo(new ThreadInfo(this));
-    vthreadinfo_.push_back(threadinfo_recyclesockinfo);
-    pthread_create(&threadinfo_recyclesockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)&threadinfo_recyclesockinfo);
+    ThreadInfo *pthreadinfo_recyclesockinfo = new ThreadInfo(this);
+    pthread_create(&pthreadinfo_recyclesockinfo->threadhandle_, nullptr, ConnSockInfoRecycleThread, (void *)pthreadinfo_recyclesockinfo);
+    vthreadinfo_.push_back(std::shared_ptr<ThreadInfo>(pthreadinfo_recyclesockinfo));
 
-    std::shared_ptr<ThreadInfo> threadinfo_senddata(new ThreadInfo(this));
-    vthreadinfo_.push_back(threadinfo_senddata);
-    pthread_create(&threadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)&threadinfo_senddata);
+    ThreadInfo *pthreadinfo_senddata = new ThreadInfo(this);
+    pthread_create(&pthreadinfo_senddata->threadhandle_, nullptr, SendDataThread, (void *)pthreadinfo_senddata);
+    vthreadinfo_.push_back(std::shared_ptr<ThreadInfo>(pthreadinfo_senddata));
 
-    std::shared_ptr<ThreadInfo> threadinfo_ping(new ThreadInfo(this));
-    vthreadinfo_.push_back(threadinfo_ping);
-    pthread_create(&threadinfo_ping->threadhandle_, nullptr, PingThread, (void *)&threadinfo_ping);
+    ThreadInfo *pthreadinfo_ping = new ThreadInfo(this);
+    pthread_create(&pthreadinfo_ping->threadhandle_, nullptr, PingThread, (void *)pthreadinfo_ping);
+    vthreadinfo_.push_back(std::shared_ptr<ThreadInfo>(pthreadinfo_ping));
     return 0;
 }
 

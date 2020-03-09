@@ -194,5 +194,6 @@ int XMNLogInit()
         g_xmn_log.fd = STDERR_FILENO; 
         return -1;
     }
+    XMNLogInfo(XMN_LOG_NOTICE, 0, "\n\nStart run!");
     return 0;
 }

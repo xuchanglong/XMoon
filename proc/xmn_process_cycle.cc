@@ -224,7 +224,6 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
         XMNLogInfo(XMN_LOG_ALERT, errno, "XMNWorkerProcessInit 在编号为 %d 的子进程中初始化失败！", kNum);
         return -1;
     }
-
     /**
      * （2）创建线程池。
     */
@@ -238,7 +237,6 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
     {
         return -2;
     }
-
     /**
      * （3）socket 相关变量初始化。
      * TODO：这里需要判断该函数的返回值。
@@ -247,7 +245,6 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
     {
         return -3;
     }
-
     /**
      * （4）初始化 epoll ，并向 epoll 添加监听事件。
      * TODO：这里需要判断该函数的返回值。
@@ -257,7 +254,6 @@ static int XMNWorkerProcessInit(const size_t &kNum, const std::string &kstrProcN
     {
         return -4;
     }
-
     /**
      * （5）设置进程标题。
     */

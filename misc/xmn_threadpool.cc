@@ -32,14 +32,14 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
     */
     for (size_t i = 0; i < threadpoolsize_; i++)
     {
-        std::shared_ptr<ThreadInfo> threadinfoitem(new ThreadInfo(this));
-        r = pthread_create(&threadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)&threadinfoitem);
+        ThreadInfo *pthreadinfoitem = new ThreadInfo(this);
+        r = pthread_create(&pthreadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)pthreadinfoitem);
         if (r != 0)
         {
             XMNLogStdErr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
             return -1;
         }
-        vthreadinfo_.push_back(threadinfoitem);
+        vthreadinfo_.push_back(std::shared_ptr<ThreadInfo>(pthreadinfoitem));
     }
 
     /**
@@ -68,12 +68,11 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         return nullptr;
     }
     int r = 0;
-    std::shared_ptr<ThreadInfo> threadinfo = *(std::shared_ptr<ThreadInfo> *)pthreaddata;
-    XMNThreadPool *pthreadpool = threadinfo->pthreadpool_;
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+    ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
+    XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
     char *pmsg = nullptr;
 
-    const size_t pid = pthread_self();
+    const pthread_t pid = pthread_self();
 
     /**
      * 从消息链表中取出数据。
@@ -94,7 +93,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             /**
              * 标记该线程已经开始运行。
             */
-            threadinfo->isrunning_ = true;
+            pthreadinfo->isrunning_ = true;
             /**
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
@@ -138,7 +137,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         */
         --pthreadpool->threadrunningcount_;
     }
-    return nullptr;
+    return 0;
 }
 
 int XMNThreadPool::Destroy()

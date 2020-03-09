@@ -133,7 +133,7 @@ int main(int argc, char *const *argv)
         if (r == 1)
         {
             //FreeResource();
-            XMNLogStdErr(0, "父进程正常退出。");
+            //XMNLogStdErr(0, "父进程正常退出。");
             exitcode = 0;
             return exitcode;
         }
