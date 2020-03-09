@@ -20,7 +20,7 @@ struct XMNSignal
     /**
      * 信号的名称。
     */
-    char *psigname;
+    std::string strsigname;
 
     /**
      *  信号的处理函数。
@@ -81,7 +81,7 @@ XMNSignal g_signalinfo[] = {
     /**
      *  信号 > 0，故用 0 表示末尾。 
      */
-    {0, nullptr, nullptr}};
+    {0, "", nullptr}};
 
 int XMNSignalInit()
 {
@@ -140,12 +140,12 @@ int XMNSignalInit()
         */
         if (sigaction(psig->signum, &sa, nullptr) < 0)
         {
-            XMNLogInfo(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->psigname);
+            XMNLogInfo(XMN_LOG_EMERG, errno, "sigaction(%s) failed.", psig->strsigname);
             return -1;
         }
         else
         {
-            //XMNLogStdErr(XMN_LOG_STDERR, "sigaction(%s) succesed!", psig->psigname);
+            //XMNLogStdErr(XMN_LOG_STDERR, "sigaction(%s) succesed!", psig->strsigname);
         }
     }
     return 0;
@@ -218,11 +218,11 @@ static void SignalHandler(int signum, siginfo_t *psiginfo, void *pcontent)
     */
     if (psiginfo && psiginfo->si_pid)
     {
-        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %d %s", signum, psi->psigname, psiginfo->si_pid, action);
+        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %d %s", signum, psi->strsigname, psiginfo->si_pid, action);
     }
     else
     {
-        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->psigname, action);
+        XMNLogInfo(XMN_LOG_NOTICE, errno, "Signal %d (%s) received from %s", signum, psi->strsigname, action);
     }
 
     /**
