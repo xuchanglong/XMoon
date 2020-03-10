@@ -4,7 +4,7 @@
 #include "xmn_global.h"
 #include "xmn_func.h"
 
-int XMNSocket::PutInConnSockInfo2PingMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+int XMNSocket::PutInConnSockInfo2PingMultiMap(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     time_t nexttime = time(nullptr) + pingwaittime_;
@@ -30,7 +30,7 @@ time_t XMNSocket::GetEarliestTime()
 
 void *XMNSocket::PingThread(void *pthreadinfo)
 {
-    std::shared_ptr<ThreadInfo> threadinfo_new = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    std::shared_ptr<ThreadInfo> threadinfo_new((ThreadInfo *)pthreadinfo);
     XMNSocket *psocket = threadinfo_new->pthis_;
 
     time_t current_time;
@@ -142,7 +142,7 @@ int XMNSocket::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime)
     return 0;
 }
 
-int XMNSocket::PutOutMsgHeaderFromMultiMap(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+int XMNSocket::PutOutMsgHeaderFromMultiMap(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNLockMutex pinglock(&ping_multimap_mutex_);

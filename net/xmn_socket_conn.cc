@@ -154,7 +154,7 @@ std::shared_ptr<XMNConnSockInfo> XMNSocket::PutOutConnSockInfofromPool(const int
     return connsockinfo;
 }
 
-void XMNSocket::PutInConnSockInfo2Pool(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+void XMNSocket::PutInConnSockInfo2Pool(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_mutex_);
     connsockinfo->ClearConnSockInfo();
@@ -163,7 +163,7 @@ void XMNSocket::PutInConnSockInfo2Pool(std::shared_ptr<XMNConnSockInfo> &connsoc
     return;
 }
 
-void XMNSocket::PutInConnSockInfo2RecyList(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+void XMNSocket::PutInConnSockInfo2RecyList(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_recycle_mutex_);
 
@@ -193,7 +193,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
     {
         return nullptr;
     }
-    std::shared_ptr<ThreadInfo> threadinfo_n = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    std::shared_ptr<ThreadInfo> threadinfo_n ((ThreadInfo *)pthreadinfo);
     XMNSocket *pthis = threadinfo_n->pthis_;
     std::shared_ptr<XMNConnSockInfo> connsockinfo;
     while (true)
@@ -256,7 +256,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
     return nullptr;
 }
 
-void XMNSocket::CloseConnection(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+void XMNSocket::CloseConnection(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     /**
      * 先回收连接的目的是防止 close 失败导致连接无法回收。

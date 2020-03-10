@@ -554,7 +554,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
                                    const uint32_t &kOption,
                                    const uint32_t &kEvents,
                                    const int &kFlag,
-                                   std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+                                   std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     /**
      * （1）epoll_event 变量赋值。
@@ -564,7 +564,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     if (kOption == EPOLL_CTL_ADD)
     {
         ev.events = kEvents;
-        //ev.data.ptr = (void *)pconnsockinfo;
+        ev.data.ptr = (void *)connsockinfo.get();
         connsockinfo->events = kEvents;
     }
     else if (kOption == EPOLL_CTL_MOD)
@@ -613,7 +613,7 @@ int XMNSocket::EpollOperationEvent(const int &kSockFd,
     /**
      * （2）epoll_ctl()函数的调用。
     */
-    ev.data.ptr = (void *)&connsockinfo;
+    ev.data.ptr = (void *)connsockinfo.get();
     if (epoll_ctl(epoll_handle_, kOption, kSockFd, &ev) != 0)
     {
         XMNLogStdErr(0, "XMNSocket::EpollOperationEvent 中 epoll_ctl 执行失败。");
@@ -706,7 +706,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
         /**
          *  获取该事件对应的连接的相关信息。
         */
-        connsockinfo = std::shared_ptr<XMNConnSockInfo>((XMNConnSockInfo *)(wait_events_ + i)->data.ptr);
+        connsockinfo = std::shared_ptr<XMNConnSockInfo>((XMNConnSockInfo *)((wait_events_ + i)->data.ptr));
 
         /*
         instance = (uintptr_t)pconnsockinfo & 1;
@@ -771,8 +771,10 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          * 写事件。server 可以向 client 发送数据了，包括正常的通信数据以及关闭连接数据。
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
+        XMNLogInfo(XMN_LOG_ALERT, eventstmp, "2");
         if (eventstmp & EPOLLOUT)
         {
+            XMNLogInfo(XMN_LOG_ALERT, 0, "3");
             if (eventstmp & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 /**
@@ -860,7 +862,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     /**
      * （1）定义变量。
     */
-    std::shared_ptr<ThreadInfo> threadinfo_new = *(std::shared_ptr<ThreadInfo> *)pthreadinfo;
+    std::shared_ptr<ThreadInfo> threadinfo_new ((ThreadInfo *)pthreadinfo);
     XMNSocket *psocket = threadinfo_new->pthis_;
     XMNMsgHeader *pmsgheader = nullptr;
     XMNPkgHeader *ppkgheader = nullptr;
@@ -1011,7 +1013,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
     return nullptr;
 }
 
-int XMNSocket::SendData(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+int XMNSocket::SendData(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     size_t n = 0;
     while (true)
@@ -1067,7 +1069,7 @@ int XMNSocket::FreeSendDataQueue()
     return 0;
 }
 
-int XMNSocket::ActivelyCloseSocket(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+int XMNSocket::ActivelyCloseSocket(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     if (connsockinfo == nullptr)
     {
@@ -1092,7 +1094,7 @@ int XMNSocket::ActivelyCloseSocket(std::shared_ptr<XMNConnSockInfo> &connsockinf
     return 0;
 }
 
-bool XMNSocket::TestFlood(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+bool XMNSocket::TestFlood(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     struct timeval scurrenttime;
     uint64_t currenttime = 0;

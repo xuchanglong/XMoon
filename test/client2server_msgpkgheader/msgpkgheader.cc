@@ -113,8 +113,6 @@ int main()
         {
             break;
         }
-
-        //usleep(10);
         sleep(5);
     }
     close(clientfd);

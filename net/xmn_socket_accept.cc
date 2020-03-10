@@ -8,7 +8,7 @@
 #include "xmn_macro.h"
 #include "xmn_func.h"
 
-void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinfo)
+void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
 {
     /**
      * （1）变量申请。
@@ -105,7 +105,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
             }
             return;
         }
-
         /**
          * （4）判断当前在线用户是否已经超过了指定的上限值。
         */
@@ -115,7 +114,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
             XMNLogStdErr(0, "XMNSocket::EventAcceptHandler()中新连入的连接将被关闭，因为已经超过了指定的在线用户数量的上限。");
             return;
         }
-
         /**
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
          * 从连接池中取走一个连接。
@@ -132,7 +130,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
             }
             return;
         }
-
         /**
          * 执行到这里说明已经成功地从连接池中拿到了一个连接。
          * 将 client 信息拷贝到 clientsockaddrinfo 中。
@@ -150,7 +147,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
                 return;
             }
         }
-
         /**
          * 连接 socket 对应的连接对象和监听对象关联。
         */
@@ -167,7 +163,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
         */
         connsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
         connsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;
-
         /**
         * （5）将新建立的连接加入到 epoll 的红黑树中。
         */
@@ -181,7 +176,6 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo> &connsockinf
             CloseConnection(connsockinfo_new);
             return;
         }
-
         /**
         * （6）将该连接信息放入心跳监控 multimap 中。
         */

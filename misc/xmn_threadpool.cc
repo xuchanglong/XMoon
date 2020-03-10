@@ -68,8 +68,8 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         return nullptr;
     }
     int r = 0;
-    ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
-    XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
+    std::shared_ptr<ThreadInfo>  threadinfo((ThreadInfo *)pthreaddata);
+    XMNThreadPool *pthreadpool = threadinfo->pthreadpool_;
     char *pmsg = nullptr;
 
     const pthread_t pid = pthread_self();
@@ -93,7 +93,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             /**
              * 标记该线程已经开始运行。
             */
-            pthreadinfo->isrunning_ = true;
+            threadinfo->isrunning_ = true;
             /**
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
@@ -104,7 +104,6 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 运行到这里，说明线程从消息链表中取出了数据或者线程要退出，即：isquit_ == true 。
         */
-
         /**
          * 解锁。
         */
