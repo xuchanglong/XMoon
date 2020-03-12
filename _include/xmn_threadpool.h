@@ -73,11 +73,11 @@ public:
 
     /**
      * @function    将接收到的数据压入消息链表中。
-     * @paras   pdata   接收到的数据。
+     * @paras   data   接收到的数据。
      * @ret  none 。
      * @time    2019-09-01
     */
-    int PutInRecvMsgList_Signal(char *pdata);
+    int PutInRecvMsgList_Signal(std::shared_ptr<char> data);
 
     /**
      * @function    获取消息的数量
@@ -103,7 +103,7 @@ private:
      *       nullptr 获取消息失败。
      * @time    2019-09-06
     */
-    char *PutOutRecvMsgList();
+    std::shared_ptr<char> PutOutRecvMsgList();
 
 private:
     /**
@@ -144,7 +144,7 @@ private:
     /**
      * 存放接收的数据的消息链表。
     */
-    std::list<char *> recvmsglist_;
+    std::list<std::shared_ptr<char>> recvmsglist_;
 };
 
 #endif

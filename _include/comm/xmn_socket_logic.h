@@ -37,7 +37,7 @@ public:
     void SendNoBodyData2Client(XMNMsgHeader *pmsgheader, const uint16_t &kMsgCode);
 
 public:
-    virtual void ThreadRecvProcFunc(char *pmsgbuf);
+    virtual void ThreadRecvProcFunc(std::shared_ptr<char> msgbuf);
     virtual int PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t currenttime);
 };
 

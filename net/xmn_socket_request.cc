@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-void XMNSocket::WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+void XMNSocket::WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     /**
      * （1）从接收缓冲区中取数据。
@@ -108,7 +108,7 @@ void XMNSocket::WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo>  connsoc
     return;
 }
 
-ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     ssize_t n = 0;
     char *pbuff = connsockinfo->precvdatastart;
@@ -192,10 +192,10 @@ ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
     return n;
 }
 
-void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     /**
-     * （1）判断该包是否正常,若不正常，则直接将状态机复原为初始状态。
+     * （1）判断该包是否正常，若不正常则直接将状态机复原为初始状态。
     */
     unsigned short pkglen = 0;
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)connsockinfo->precvdatastart;
@@ -220,7 +220,7 @@ void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo>  conns
             */
             return;
         }
-        connsockinfo->precvalldata = pbuffall;
+        connsockinfo->recvalldata = std::shared_ptr<char>(pbuffall);
         connsockinfo->isfree = true;
 
         /**
@@ -259,7 +259,7 @@ void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo>  conns
     return;
 }
 
-void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     bool isflood = false;
     if (floodattackmonitorenable_)
@@ -269,7 +269,8 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo>  connsoc
         {
             XMNLogStdErr(0, "3");
             XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-            memory.FreeMemory(connsockinfo->precvalldata);
+            // TODO：有可能内存泄漏。
+            //memory.FreeMemory(connsockinfo->recvalldata);
         }
         else
         {
@@ -279,7 +280,7 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo>  connsoc
             /**
              * TODO：返回值为-1暂时没有想好怎么处理。
             */
-            g_threadpool.PutInRecvMsgList_Signal(connsockinfo->precvalldata);
+            g_threadpool.PutInRecvMsgList_Signal(connsockinfo->recvalldata);
         }
     }
 
@@ -290,7 +291,7 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo>  connsoc
     connsockinfo->recvstatus = PKG_HD_INIT;
     connsockinfo->precvdatastart = connsockinfo->dataheader;
     connsockinfo->recvdatalen = kPkgHeaderLen_;
-    connsockinfo->precvalldata = nullptr;
+    //connsockinfo->precvalldata = nullptr;
 
     /**
      * （3）若是 flood 攻击，则断开连接。
@@ -304,12 +305,12 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo>  connsoc
     return;
 }
 
-void XMNSocket::ThreadRecvProcFunc(char *pmsgbuf)
+void XMNSocket::ThreadRecvProcFunc(std::shared_ptr<char> msgbuf)
 {
     ;
 }
 
-void XMNSocket::WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+void XMNSocket::WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo> connsockinfo)
 {
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     /**

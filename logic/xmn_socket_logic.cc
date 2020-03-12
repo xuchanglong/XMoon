@@ -130,13 +130,13 @@ int XMNSocketLogic::HandleLogin(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t
     return 0;
 }
 
-void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
+void XMNSocketLogic::ThreadRecvProcFunc(std::shared_ptr<char> msgbuf)
 {
     /**
      * （1）变量声明。
     */
-    XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pmsgbuf;
-    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(pmsgbuf + kMsgHeaderLen_);
+    XMNMsgHeader *pmsgheader = (XMNMsgHeader *)msgbuf.get();
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(msgbuf.get() + kMsgHeaderLen_);
     char *ppkgbody = nullptr;
     unsigned short msgcode = 0;
     std::shared_ptr<XMNConnSockInfo> connsockinfo;
@@ -165,7 +165,7 @@ void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
     }
     else
     {
-        ppkgbody = pmsgbuf + kMsgHeaderLen_ + kPkgHeaderLen_;
+        ppkgbody = msgbuf.get() + kMsgHeaderLen_ + kPkgHeaderLen_;
         int crc32src = ntohl(ppkgheader->crc32);
         int crc32 = SingletonBase<XMNCRC32>::GetInstance().GetCRC32((unsigned char *)ppkgbody, pkgbodylen);
         if (crc32 != crc32src)

@@ -172,7 +172,7 @@ public:
     /**
      * 存放最终需要接收的所有数据，即：消息头 + 包头 + 包体。
     */
-    char *precvalldata;
+    std::shared_ptr<char> recvalldata;
 
     /**
      * 标记 precvalldata 是否需要释放。
@@ -423,7 +423,7 @@ public:
      * @ret  none 。
      * @time    2019-09-15
     */
-    virtual void ThreadRecvProcFunc(char *pmsgbuf);
+    virtual void ThreadRecvProcFunc(std::shared_ptr<char> msgbuf);
 
     /**************************************************************************************
      * 

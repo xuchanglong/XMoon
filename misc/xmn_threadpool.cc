@@ -68,9 +68,9 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         return nullptr;
     }
     int r = 0;
-    std::shared_ptr<ThreadInfo>  threadinfo((ThreadInfo *)pthreaddata);
+    std::shared_ptr<ThreadInfo> threadinfo((ThreadInfo *)pthreaddata);
     XMNThreadPool *pthreadpool = threadinfo->pthreadpool_;
-    char *pmsg = nullptr;
+    std::shared_ptr<char> msg;
 
     const pthread_t pid = pthread_self();
 
@@ -85,7 +85,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
-        while ((!isquit_) && ((pmsg = pthreadpool->PutOutRecvMsgList()) == nullptr))
+        while ((!isquit_) && ((msg = pthreadpool->PutOutRecvMsgList()).get() == nullptr))
         {
             /**
              * 运行到这里，说明线程没有接收到退出命令且也没有从消息链表中拿到了消息。
@@ -123,7 +123,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         */
         //XMNLogStdErr(0, "业务逻辑开始执行，pid = %d", pid);
         //sleep(5);
-        g_socket.ThreadRecvProcFunc(pmsg);
+        g_socket.ThreadRecvProcFunc(msg);
 
         //pmemory->FreeMemory((void *)pmsg);
         /**
@@ -208,13 +208,9 @@ int XMNThreadPool::Call()
     return 0;
 }
 
-int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
+int XMNThreadPool::PutInRecvMsgList_Signal(std::shared_ptr<char> data)
 {
     int r = 0;
-    if (pdata == nullptr)
-    {
-        return -1;
-    }
     //XMNLogStdErr(errno, "已接收到完整数据包。");
     /**
      * （1）向消息链表中压入 client 发来的数据。
@@ -225,7 +221,7 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
         XMNLogStdErr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_lock 执行失败。");
     }
 
-    recvmsglist_.push_back(pdata);
+    recvmsglist_.push_back(data);
 
     r = pthread_mutex_unlock(&thread_mutex_);
     if (r != 0)
@@ -239,17 +235,17 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *pdata)
     return 0;
 }
 
-char *XMNThreadPool::PutOutRecvMsgList()
+std::shared_ptr<char> XMNThreadPool::PutOutRecvMsgList()
 {
     if (recvmsglist_.empty())
     {
         return nullptr;
     }
 
-    char *pbuf = recvmsglist_.front();
+    std::shared_ptr<char> buf = recvmsglist_.front();
     recvmsglist_.pop_front();
 
-    return pbuf;
+    return buf;
 }
 
 size_t XMNThreadPool::RecvMsgListSize()
