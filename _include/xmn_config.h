@@ -54,7 +54,7 @@ private:
     /**
      * 配置文件中所有条目的信息的集合。
      */
-    std::vector<std::shared_ptr<ConfigItem>> vconfig_item_set_;
+    std::vector<ConfigItem *> vconfig_item_set_;
     /**
     * 测试接口,正常使用时禁止使用。
     */

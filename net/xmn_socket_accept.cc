@@ -8,7 +8,7 @@
 #include "xmn_macro.h"
 #include "xmn_func.h"
 
-void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinfo)
+void XMNSocket::EventAcceptHandler(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * （1）变量申请。
@@ -18,8 +18,8 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
     memset(&addr, 0, addrlen * 1);
     static bool isuseaccept4 = true;
     int linkfd = -1;
-    int listenfd = connsockinfo->listensockinfo->fd;
-    std::shared_ptr<XMNConnSockInfo> connsockinfo_new;
+    int listenfd = pconnsockinfo->plistensockinfo->fd;
+    XMNConnSockInfo *pconnsockinfo_new = nullptr;
     /**
      * 用于临时存储 errno 的值，防止在对不同的错误进行处理时，其他代码修改了该值。
     */
@@ -118,8 +118,8 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
          * 执行到这里，说明 accept 或者 accept4 执行成功了。 
          * 从连接池中取走一个连接。
         */
-        connsockinfo_new = PutOutConnSockInfofromPool(linkfd);
-        if (connsockinfo_new == nullptr)
+        pconnsockinfo_new = PutOutConnSockInfofromPool(linkfd);
+        if (pconnsockinfo_new == nullptr)
         {
             /**
              *  连接池中的连接不够用，那么直接将 linkfd 关闭即可。
@@ -134,7 +134,7 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
          * 执行到这里说明已经成功地从连接池中拿到了一个连接。
          * 将 client 信息拷贝到 clientsockaddrinfo 中。
         */
-        memcpy(&connsockinfo_new->clientsockaddrinfo, &addr, sizeof(struct sockaddr) * 1);
+        memcpy(&pconnsockinfo_new->clientsockaddrinfo, &addr, sizeof(struct sockaddr) * 1);
 
         if (!isuseaccept4)
         {
@@ -143,26 +143,26 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
                 /**
                  * 立即回收连接至连接池并关闭 socket 。
                 */
-                CloseConnection(connsockinfo_new);
+                CloseConnection(pconnsockinfo_new);
                 return;
             }
         }
         /**
          * 连接 socket 对应的连接对象和监听对象关联。
         */
-        connsockinfo_new->listensockinfo = connsockinfo->listensockinfo;
+        pconnsockinfo_new->plistensockinfo = pconnsockinfo->plistensockinfo;
 
         /**
          * 标记该连接是可读和可写的。
         */
-        connsockinfo_new->r_ready = 1;
-        connsockinfo_new->w_ready = 1;
+        pconnsockinfo_new->r_ready = 1;
+        pconnsockinfo_new->w_ready = 1;
 
         /**
          *  设置数据来时读和写的处理函数。
         */
-        connsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
-        connsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;
+        pconnsockinfo_new->rhandler = &XMNSocket::WaitReadRequestHandler;
+        pconnsockinfo_new->whandler = &XMNSocket::WaitWriteRequestHandler;
         /**
         * （5）将新建立的连接加入到 epoll 的红黑树中。
         */
@@ -170,10 +170,10 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
                                     EPOLL_CTL_ADD,
                                     EPOLLIN | EPOLLRDHUP,
                                     0,
-                                    connsockinfo_new);
+                                    pconnsockinfo_new);
         if (r != 0)
         {
-            CloseConnection(connsockinfo_new);
+            CloseConnection(pconnsockinfo_new);
             return;
         }
         /**
@@ -181,7 +181,7 @@ void XMNSocket::EventAcceptHandler(std::shared_ptr<XMNConnSockInfo>  connsockinf
         */
         if (pingenable_)
         {
-            PutInConnSockInfo2PingMultiMap(connsockinfo_new);
+            PutInConnSockInfo2PingMultiMap(pconnsockinfo_new);
         }
         break;
     } while (true);

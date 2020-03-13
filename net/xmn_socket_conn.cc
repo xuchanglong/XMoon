@@ -102,10 +102,10 @@ void XMNSocket::InitConnSockInfoPool()
     for (size_t i = 0; i < worker_connection_count_; ++i)
     {
         XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(kConnSockInfoLen, false);
-        std::shared_ptr<XMNConnSockInfo> connsockinfo(new (pconnsockinfo) XMNConnSockInfo());
-        connsockinfo->InitConnSockInfo();
-        connsock_pool_.push_back(connsockinfo);
-        connsock_pool_free_.push_back(connsockinfo);
+        pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
+        pconnsockinfo->InitConnSockInfo();
+        connsock_pool_.push_back(pconnsockinfo);
+        connsock_pool_free_.push_back(pconnsockinfo);
     }
     pool_connsock_count_ = connsock_pool_.size();
     pool_free_connsock_count_ = connsock_pool_free_.size();
@@ -113,27 +113,27 @@ void XMNSocket::InitConnSockInfoPool()
 
 void XMNSocket::FreeConnSockInfoPool()
 {
-    std::shared_ptr<XMNConnSockInfo> connsockinfo;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     while (!connsock_pool_.empty())
     {
-        //connsockinfo = connsock_pool_.front();
+        pconnsockinfo = connsock_pool_.front();
         connsock_pool_.pop_front();
-        //pconnsockinfo->~XMNConnSockInfo();
-        //memory.FreeMemory((void *)pconnsockinfo);
+        pconnsockinfo->~XMNConnSockInfo();
+        memory.FreeMemory((void *)pconnsockinfo);
     }
 }
 
-std::shared_ptr<XMNConnSockInfo> XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd)
+XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd)
 {
     XMNLockMutex connsockpoolmutex(&connsock_pool_mutex_);
-    std::shared_ptr<XMNConnSockInfo> connsockinfo;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
     if (pool_free_connsock_count_)
     {
         /**
          * 空闲连接池中有连接。
         */
-        connsockinfo = connsock_pool_free_.front();
+        pconnsockinfo = connsock_pool_free_.front();
         connsock_pool_free_.pop_front();
         --pool_free_connsock_count_;
     }
@@ -144,26 +144,26 @@ std::shared_ptr<XMNConnSockInfo> XMNSocket::PutOutConnSockInfofromPool(const int
         */
         XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
         XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(sizeof(XMNConnSockInfo), false);
-        connsockinfo = std::shared_ptr<XMNConnSockInfo>(new (pconnsockinfo) XMNConnSockInfo());
-        connsock_pool_.push_back(connsockinfo);
+        pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
+        connsock_pool_.push_back(pconnsockinfo);
         ++pool_connsock_count_;
     }
-    connsockinfo->InitConnSockInfo();
-    connsockinfo->fd = kSockFd;
+    pconnsockinfo->InitConnSockInfo();
+    pconnsockinfo->fd = kSockFd;
 
-    return connsockinfo;
+    return pconnsockinfo;
 }
 
-void XMNSocket::PutInConnSockInfo2Pool(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_mutex_);
-    connsockinfo->ClearConnSockInfo();
-    connsock_pool_free_.push_back(connsockinfo);
+    pconnsockinfo->ClearConnSockInfo();
+    connsock_pool_free_.push_back(pconnsockinfo);
     ++pool_free_connsock_count_;
     return;
 }
 
-void XMNSocket::PutInConnSockInfo2RecyList(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::PutInConnSockInfo2RecyList(XMNConnSockInfo *pconnsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_recycle_mutex_);
 
@@ -172,15 +172,15 @@ void XMNSocket::PutInConnSockInfo2RecyList(std::shared_ptr<XMNConnSockInfo> conn
     */
     for (const auto &x : recycleconnsock_pool_)
     {
-        if (x == connsockinfo)
+        if (x == pconnsockinfo)
         {
             return;
         }
     }
 
-    connsockinfo->putinrecylisttime = time(nullptr);
-    ++connsockinfo->currsequence;
-    recycleconnsock_pool_.push_back(connsockinfo);
+    pconnsockinfo->putinrecylisttime = time(nullptr);
+    ++pconnsockinfo->currsequence;
+    recycleconnsock_pool_.push_back(pconnsockinfo);
     ++pool_recyconnsock_count_;
 
     --onlineuser_count_;
@@ -193,9 +193,9 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
     {
         return nullptr;
     }
-    std::shared_ptr<ThreadInfo> threadinfo_n ((ThreadInfo *)pthreadinfo);
-    XMNSocket *pthis = threadinfo_n->pthis_;
-    std::shared_ptr<XMNConnSockInfo> connsockinfo;
+    ThreadInfo *pthreadinfo_n = (ThreadInfo *)pthreadinfo;
+    XMNSocket *pthis = pthreadinfo_n->pthis_;
+    XMNConnSockInfo *pconnsockinfo = nullptr;
     while (true)
     {
         usleep(200 * 1000);
@@ -203,11 +203,11 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
         {
             time_t curtime = time(nullptr);
             pthread_mutex_lock(&pthis->connsock_pool_recycle_mutex_);
-            std::list<std::shared_ptr<XMNConnSockInfo>>::iterator it;
+            std::list<XMNConnSockInfo *>::iterator it;
             for (it = pthis->recycleconnsock_pool_.begin(); it != pthis->recycleconnsock_pool_.end();)
             {
-                connsockinfo = *it;
-                if (!g_isquit && (curtime - connsockinfo->putinrecylisttime) < pthis->recyconnsockinfowaittime_)
+                pconnsockinfo = *it;
+                if (!g_isquit && (curtime - pconnsockinfo->putinrecylisttime) < pthis->recyconnsockinfowaittime_)
                 {
                     /**
                      * 没有到时间 ，继续等待。
@@ -218,7 +218,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
                 /**
                  * 有到达等待时间的连接则回收。
                 */
-                if (connsockinfo->throwepollsendcount != 0)
+                if (pconnsockinfo->throwepollsendcount != 0)
                 {
                     /**
                      * 这种情况不应该发生，记录一下，以备寻找错误。
@@ -228,7 +228,7 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
 
                 it = pthis->recycleconnsock_pool_.erase(it);
                 --pthis->pool_recyconnsock_count_;
-                pthis->PutInConnSockInfo2Pool(connsockinfo);
+                pthis->PutInConnSockInfo2Pool(pconnsockinfo);
 
                 //XMNLogStdErr(0,"connsockinfo is recycled.");
             }
@@ -239,13 +239,13 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
             if (pthis->pool_recyconnsock_count_)
             {
                 pthread_mutex_lock(&pthis->connsock_pool_recycle_mutex_);
-                std::list<std::shared_ptr<XMNConnSockInfo>>::iterator it;
+                std::list<XMNConnSockInfo *>::iterator it;
                 for (it = pthis->recycleconnsock_pool_.begin(); it != pthis->recycleconnsock_pool_.end();)
                 {
-                    connsockinfo = *it;
+                    pconnsockinfo = *it;
                     it = pthis->recycleconnsock_pool_.erase(it);
                     --pthis->pool_recyconnsock_count_;
-                    pthis->PutInConnSockInfo2Pool(connsockinfo);
+                    pthis->PutInConnSockInfo2Pool(pconnsockinfo);
                 }
                 pthread_mutex_unlock(&pthis->connsock_pool_recycle_mutex_);
             }
@@ -256,15 +256,15 @@ void *XMNSocket::ConnSockInfoRecycleThread(void *pthreadinfo)
     return nullptr;
 }
 
-void XMNSocket::CloseConnection(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * 先回收连接的目的是防止 close 失败导致连接无法回收。
     */
-    PutInConnSockInfo2Pool(connsockinfo);
-    if (close(connsockinfo->fd) == -1)
+    PutInConnSockInfo2Pool(pconnsockinfo);
+    if (close(pconnsockinfo->fd) == -1)
     {
-        XMNLogInfo(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", connsockinfo->fd);
+        XMNLogInfo(XMN_LOG_ALERT, errno, "CloseConnection 中 close (%d) 失败！", pconnsockinfo->fd);
     }
 
     return;

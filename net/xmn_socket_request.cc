@@ -10,12 +10,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-void XMNSocket::WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::WaitReadRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * （1）从接收缓冲区中取数据。
     */
-    ssize_t recvcount = RecvData(connsockinfo);
+    ssize_t recvcount = RecvData(pconnsockinfo);
     if (recvcount <= 0)
     {
         return;
@@ -31,92 +31,92 @@ void XMNSocket::WaitReadRequestHandler(std::shared_ptr<XMNConnSockInfo> connsock
      * （2）开始接收包头数据。
     */
     //XMNLogStdErr(0, "Data is arrived.");
-    if (connsockinfo->recvstatus == PKG_HD_INIT)
+    if (pconnsockinfo->recvstatus == PKG_HD_INIT)
     {
         /**
          * 完整地接收到了包头数据。
         */
         if (recvcount == kPkgHeaderLen_)
         {
-            WaitRequestHandlerHeader(connsockinfo);
+            WaitRequestHandlerHeader(pconnsockinfo);
         }
         /**
          * 接收的数据不足一个包头的长度，需要为下次接收数据做准备。
         */
         else
         {
-            connsockinfo->recvstatus = PKG_HD_RECVING;
-            connsockinfo->precvdatastart += recvcount;
-            connsockinfo->recvdatalen -= recvcount;
+            pconnsockinfo->recvstatus = PKG_HD_RECVING;
+            pconnsockinfo->precvdatastart += recvcount;
+            pconnsockinfo->recvdatalen -= recvcount;
         }
     }
 
     /**
      * （2）上回包头数据没有接收完整，现在继续接收包头数据。
     */
-    else if (connsockinfo->recvstatus == PKG_HD_RECVING)
+    else if (pconnsockinfo->recvstatus == PKG_HD_RECVING)
     {
         /**
          * 包头接收完毕。
         */
-        if (connsockinfo->recvdatalen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
-            WaitRequestHandlerHeader(connsockinfo);
+            WaitRequestHandlerHeader(pconnsockinfo);
         }
         else
         {
-            connsockinfo->recvstatus = PKG_HD_RECVING;
-            connsockinfo->precvdatastart += recvcount;
-            connsockinfo->recvdatalen -= recvcount;
+            pconnsockinfo->recvstatus = PKG_HD_RECVING;
+            pconnsockinfo->precvdatastart += recvcount;
+            pconnsockinfo->recvdatalen -= recvcount;
         }
     }
 
     /**
      * （3）包头数据接收完整了，现在开始接收包体数据。
     */
-    else if (connsockinfo->recvstatus == PKG_BD_INIT)
+    else if (pconnsockinfo->recvstatus == PKG_BD_INIT)
     {
-        if (connsockinfo->recvdatalen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
-            WaitRequestHandlerBody(connsockinfo);
+            WaitRequestHandlerBody(pconnsockinfo);
         }
         else
         {
-            connsockinfo->recvstatus = PKG_BD_RECVING;
-            connsockinfo->precvdatastart += recvcount;
-            connsockinfo->recvdatalen -= recvcount;
+            pconnsockinfo->recvstatus = PKG_BD_RECVING;
+            pconnsockinfo->precvdatastart += recvcount;
+            pconnsockinfo->recvdatalen -= recvcount;
         }
     }
 
     /**
      * （4）上回包体数据没有接收完整，现在继续接收包体数据。
     */
-    else if (connsockinfo->recvstatus == PKG_BD_RECVING)
+    else if (pconnsockinfo->recvstatus == PKG_BD_RECVING)
     {
-        if (connsockinfo->recvdatalen == recvcount)
+        if (pconnsockinfo->recvdatalen == recvcount)
         {
-            WaitRequestHandlerBody(connsockinfo);
+            WaitRequestHandlerBody(pconnsockinfo);
         }
         else
         {
-            connsockinfo->recvstatus = PKG_BD_RECVING;
-            connsockinfo->precvdatastart += recvcount;
-            connsockinfo->recvdatalen -= recvcount;
+            pconnsockinfo->recvstatus = PKG_BD_RECVING;
+            pconnsockinfo->precvdatastart += recvcount;
+            pconnsockinfo->recvdatalen -= recvcount;
         }
     }
 
     return;
 }
 
-ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
 {
     ssize_t n = 0;
-    char *pbuff = connsockinfo->precvdatastart;
-    const size_t kBuffLen = connsockinfo->recvdatalen;
+    char *pbuff = pconnsockinfo->precvdatastart;
+    const size_t kBuffLen = pconnsockinfo->recvdatalen;
     /**
      * （1）接收数据。
     */
-    n = recv(connsockinfo->fd, pbuff, kBuffLen, 0);
+    n = recv(pconnsockinfo->fd, pbuff, kBuffLen, 0);
 
     /**
      * （2）对 recv 的返回值进行判断处理。
@@ -126,7 +126,7 @@ ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo> connsockinfo)
         /**
          * 客户端已正常关闭，即：完成了 4 次挥手。
         */
-        if (close(connsockinfo->fd) == -1)
+        if (close(pconnsockinfo->fd) == -1)
         {
             XMNLogStdErr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
@@ -135,7 +135,7 @@ ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo> connsockinfo)
         /**
          * 延时回收连接。
         */
-        PutInConnSockInfo2RecyList(connsockinfo);
+        PutInConnSockInfo2RecyList(pconnsockinfo);
         return 0;
     }
     else if (n < 0)
@@ -176,35 +176,35 @@ ssize_t XMNSocket::RecvData(std::shared_ptr<XMNConnSockInfo> connsockinfo)
             XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了未知错误。");
         }
 
-        if (close(connsockinfo->fd) == -1)
+        if (close(pconnsockinfo->fd) == -1)
         {
             XMNLogStdErr(0, "XMNSocket::RecvData 中 close 执行失败。");
         }
         //CloseConnection(pconnsockinfo);
-        XMNLogStdErr(0, "connsockinfo put in recylist.");
+        XMNLogStdErr(0, "pconnsockinfo put in recylist.");
         /**
          * 延时回收连接。
         */
-        PutInConnSockInfo2RecyList(connsockinfo);
+        PutInConnSockInfo2RecyList(pconnsockinfo);
         return -1;
     }
 
     return n;
 }
 
-void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::WaitRequestHandlerHeader(XMNConnSockInfo *pconnsockinfo)
 {
     /**
      * （1）判断该包是否正常，若不正常则直接将状态机复原为初始状态。
     */
     unsigned short pkglen = 0;
-    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)connsockinfo->precvdatastart;
+    XMNPkgHeader *ppkgheader = (XMNPkgHeader *)pconnsockinfo->precvdatastart;
     pkglen = ntohs(ppkgheader->pkglen);
     if ((pkglen < kPkgHeaderLen_) || (pkglen > PKG_MAX_LEN))
     {
-        connsockinfo->recvstatus = PKG_HD_INIT;
-        connsockinfo->precvdatastart = connsockinfo->dataheader;
-        connsockinfo->recvdatalen = kPkgHeaderLen_;
+        pconnsockinfo->recvstatus = PKG_HD_INIT;
+        pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+        pconnsockinfo->recvdatalen = kPkgHeaderLen_;
     }
     else
     {
@@ -220,15 +220,15 @@ void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> connso
             */
             return;
         }
-        connsockinfo->recvalldata = std::shared_ptr<char>(pbuffall);
-        connsockinfo->isfree = true;
+        pconnsockinfo->precvalldata = pbuffall;
+        pconnsockinfo->isfree = true;
 
         /**
          * a、处理消息头。
         */
         XMNMsgHeader *pmsgheader = (XMNMsgHeader *)pbuffall;
-        pmsgheader->connsockinfo = connsockinfo;
-        pmsgheader->currsequence = connsockinfo->currsequence;
+        pmsgheader->pconnsockinfo = pconnsockinfo;
+        pmsgheader->currsequence = pconnsockinfo->currsequence;
 
         /**
          * b、处理包头。
@@ -242,7 +242,7 @@ void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> connso
         */
         if (pkglen == kPkgHeaderLen_)
         {
-            WaitRequestHandlerBody(connsockinfo);
+            WaitRequestHandlerBody(pconnsockinfo);
         }
 
         /**
@@ -250,21 +250,21 @@ void XMNSocket::WaitRequestHandlerHeader(std::shared_ptr<XMNConnSockInfo> connso
         */
         else
         {
-            connsockinfo->recvstatus = PKG_BD_INIT;
-            connsockinfo->precvdatastart = pbuffall + kPkgHeaderLen_;
-            connsockinfo->recvdatalen = pkglen - kPkgHeaderLen_;
+            pconnsockinfo->recvstatus = PKG_BD_INIT;
+            pconnsockinfo->precvdatastart = pbuffall + kPkgHeaderLen_;
+            pconnsockinfo->recvdatalen = pkglen - kPkgHeaderLen_;
         }
     }
 
     return;
 }
 
-void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
 {
     bool isflood = false;
     if (floodattackmonitorenable_)
     {
-        isflood = TestFlood(connsockinfo);
+        isflood = TestFlood(pconnsockinfo);
         if (isflood)
         {
             XMNLogStdErr(0, "3");
@@ -280,17 +280,17 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo> connsock
             /**
              * TODO：返回值为-1暂时没有想好怎么处理。
             */
-            g_threadpool.PutInRecvMsgList_Signal(connsockinfo->recvalldata);
+            g_threadpool.PutInRecvMsgList_Signal(pconnsockinfo->precvalldata);
         }
     }
 
     /**
      * （2）更新状态机至初始状态。
     */
-    connsockinfo->isfree = false;
-    connsockinfo->recvstatus = PKG_HD_INIT;
-    connsockinfo->precvdatastart = connsockinfo->dataheader;
-    connsockinfo->recvdatalen = kPkgHeaderLen_;
+    pconnsockinfo->isfree = false;
+    pconnsockinfo->recvstatus = PKG_HD_INIT;
+    pconnsockinfo->precvdatastart = pconnsockinfo->dataheader;
+    pconnsockinfo->recvdatalen = kPkgHeaderLen_;
     //connsockinfo->precvalldata = nullptr;
 
     /**
@@ -299,35 +299,35 @@ void XMNSocket::WaitRequestHandlerBody(std::shared_ptr<XMNConnSockInfo> connsock
     if (isflood)
     {
         //XMNLogStdErr(0, "该连接存在恶意攻击，已断开连接。");
-        ActivelyCloseSocket(connsockinfo);
+        ActivelyCloseSocket(pconnsockinfo);
     }
 
     return;
 }
 
-void XMNSocket::ThreadRecvProcFunc(std::shared_ptr<char> msgbuf)
+void XMNSocket::ThreadRecvProcFunc(char *pmsgbuf)
 {
     ;
 }
 
-void XMNSocket::WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo> connsockinfo)
+void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
 {
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     /**
      * （1）发送消息。
     */
-    ssize_t sendsize = SendData(connsockinfo);
+    ssize_t sendsize = SendData(pconnsockinfo);
 
     /**
      * （2）对发送数据的结果进行处理。
     */
-    if (sendsize > 0 && sendsize != connsockinfo->senddatalen)
+    if (sendsize > 0 && sendsize != pconnsockinfo->senddatalen)
     {
         /**
          * 发送成功，但是没有发全，下次继续发送。
         */
-        connsockinfo->psenddata = connsockinfo->psenddata + sendsize;
-        connsockinfo->senddatalen = connsockinfo->senddatalen - sendsize;
+        pconnsockinfo->psenddata = pconnsockinfo->psenddata + sendsize;
+        pconnsockinfo->senddatalen = pconnsockinfo->senddatalen - sendsize;
         return;
     }
     else if (sendsize == -1)
@@ -339,17 +339,17 @@ void XMNSocket::WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo> connsoc
         XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发现发送缓冲区已满的问题。");
         return;
     }
-    else if (sendsize > 0 && sendsize == connsockinfo->senddatalen)
+    else if (sendsize > 0 && sendsize == pconnsockinfo->senddatalen)
     {
         /**
          * 发送成功且发全。
          * 在 epoll 红黑树中删掉该 socket 。
         */
-        if (EpollOperationEvent(connsockinfo->fd,
+        if (EpollOperationEvent(pconnsockinfo->fd,
                                 EPOLL_CTL_MOD,
                                 EPOLLOUT,
                                 1,
-                                connsockinfo) != 0)
+                                pconnsockinfo) != 0)
         {
             XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()中EpollOperationEvent()执行失败。");
         }
@@ -369,9 +369,9 @@ void XMNSocket::WaitWriteRequestHandler(std::shared_ptr<XMNConnSockInfo> connsoc
     {
         XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
     }
-    memory.FreeMemory(connsockinfo->psendalldataforfree);
-    connsockinfo->psendalldataforfree = nullptr;
-    connsockinfo->psenddata = nullptr;
-    connsockinfo->senddatalen = 0;
-    --connsockinfo->throwepollsendcount;
+    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+    pconnsockinfo->psendalldataforfree = nullptr;
+    pconnsockinfo->psenddata = nullptr;
+    pconnsockinfo->senddatalen = 0;
+    --pconnsockinfo->throwepollsendcount;
 }

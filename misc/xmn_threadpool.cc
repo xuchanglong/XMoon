@@ -39,7 +39,7 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
             XMNLogStdErr(errno, "XMNThreadPool::Create()中创建线程 %d 失败，返回的错误码为 %d 。", i, errno);
             return -1;
         }
-        vthreadinfo_.push_back(std::shared_ptr<ThreadInfo>(pthreadinfoitem));
+        vthreadinfo_.push_back(pthreadinfoitem);
     }
 
     /**
@@ -68,9 +68,9 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         return nullptr;
     }
     int r = 0;
-    std::shared_ptr<ThreadInfo> threadinfo((ThreadInfo *)pthreaddata);
-    XMNThreadPool *pthreadpool = threadinfo->pthreadpool_;
-    std::shared_ptr<char> msg;
+    ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
+    XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
+    char *pmsg = nullptr;
 
     const pthread_t pid = pthread_self();
 
@@ -85,7 +85,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
-        while ((!isquit_) && ((msg = pthreadpool->PutOutRecvMsgList()).get() == nullptr))
+        while ((!isquit_) && ((pmsg = pthreadpool->PutOutRecvMsgList()) == nullptr))
         {
             /**
              * 运行到这里，说明线程没有接收到退出命令且也没有从消息链表中拿到了消息。
@@ -93,7 +93,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             /**
              * 标记该线程已经开始运行。
             */
-            threadinfo->isrunning_ = true;
+            pthreadinfo->isrunning_ = true;
             /**
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
@@ -123,7 +123,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         */
         //XMNLogStdErr(0, "业务逻辑开始执行，pid = %d", pid);
         //sleep(5);
-        g_socket.ThreadRecvProcFunc(msg);
+        g_socket.ThreadRecvProcFunc(pmsg);
 
         //pmemory->FreeMemory((void *)pmsg);
         /**
@@ -176,7 +176,7 @@ int XMNThreadPool::Destroy()
     pthread_mutex_destroy(&thread_mutex_);
 
     vthreadinfo_.clear();
-    std::vector<std::shared_ptr<ThreadInfo>>().swap(vthreadinfo_);
+    std::vector<ThreadInfo *>().swap(vthreadinfo_);
     return 0;
 }
 
@@ -208,7 +208,7 @@ int XMNThreadPool::Call()
     return 0;
 }
 
-int XMNThreadPool::PutInRecvMsgList_Signal(std::shared_ptr<char> data)
+int XMNThreadPool::PutInRecvMsgList_Signal(char *data)
 {
     int r = 0;
     //XMNLogStdErr(errno, "已接收到完整数据包。");
@@ -235,17 +235,17 @@ int XMNThreadPool::PutInRecvMsgList_Signal(std::shared_ptr<char> data)
     return 0;
 }
 
-std::shared_ptr<char> XMNThreadPool::PutOutRecvMsgList()
+char *XMNThreadPool::PutOutRecvMsgList()
 {
     if (recvmsglist_.empty())
     {
         return nullptr;
     }
 
-    std::shared_ptr<char> buf = recvmsglist_.front();
+    char *pbuf = recvmsglist_.front();
     recvmsglist_.pop_front();
 
-    return buf;
+    return pbuf;
 }
 
 size_t XMNThreadPool::RecvMsgListSize()

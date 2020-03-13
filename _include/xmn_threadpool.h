@@ -77,7 +77,7 @@ public:
      * @ret  none 。
      * @time    2019-09-01
     */
-    int PutInRecvMsgList_Signal(std::shared_ptr<char> data);
+    int PutInRecvMsgList_Signal(char *data);
 
     /**
      * @function    获取消息的数量
@@ -103,7 +103,7 @@ private:
      *       nullptr 获取消息失败。
      * @time    2019-09-06
     */
-    std::shared_ptr<char> PutOutRecvMsgList();
+    char *PutOutRecvMsgList();
 
 private:
     /**
@@ -114,7 +114,7 @@ private:
     /**
      * 保持线程池中每个线程的信息。
     */
-    std::vector<std::shared_ptr<ThreadInfo>> vthreadinfo_;
+    std::vector<ThreadInfo *> vthreadinfo_;
 
     /**
      * 线程是否退出的标识。
@@ -144,7 +144,7 @@ private:
     /**
      * 存放接收的数据的消息链表。
     */
-    std::list<std::shared_ptr<char>> recvmsglist_;
+    std::list<char *> recvmsglist_;
 };
 
 #endif
