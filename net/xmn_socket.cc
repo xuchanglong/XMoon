@@ -772,9 +772,9 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
             {
                 /**
                  * server 在红黑树中挂了一个可写通知，但是 client 却关闭了，则此处会被执行。
-                 * EPOLLERR：对应的连接发生了错误。
+                 * EPOLLERR：对端异常关闭。
                  * EPOLLHUP：对应的连接被挂起。
-                 * EPOLLRDHUP：表示TCP连接，远端处于关闭或者办关闭的状态。
+                 * EPOLLRDHUP：表示TCP连接，远端处于关闭或者半关闭的状态。
                 */
                 XMNLogStdErr(0, " XMNSocket::EpollProcessEvents()中 eventstmp & EPOLLOUT成立，\
 但是flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)也成立，eventstmp 的值为 %d。",

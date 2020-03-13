@@ -125,6 +125,8 @@ public:
 
     /**
      * 读事件相关处理函数。
+     * 在 listen 状态下，该变量保存的是建立连接的函数，即：EventAcceptHandler 。
+     * 在连接建立成功之后，该变量保存的是对接收的数据进行处理的函数，即：WaitReadRequestHandler 。
     */
     XMNEventHandler rhandler;
 
