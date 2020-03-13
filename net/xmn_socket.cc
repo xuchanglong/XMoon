@@ -765,10 +765,9 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          * 写事件。server 可以向 client 发送数据了，包括正常的通信数据以及关闭连接数据。
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
-        XMNLogInfo(XMN_LOG_ALERT, eventstmp, "2");
+        XMNLogInfo(XMN_LOG_ALERT, eventstmp, "test");
         if (eventstmp & EPOLLOUT)
         {
-            XMNLogInfo(XMN_LOG_ALERT, 0, "3");
             if (eventstmp & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 /**
