@@ -755,7 +755,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          * 读事件。触发条件，
          * （1）客户端新连入，执行的函数是 EventAcceptHandler 。
          * （2）读取数据，执行的函数是 WaitReadRequestHandler 。
-         * （3）对端正常关闭，执行的函数是 WaitReadRequestHandler，通过 recv 的返回值来判断是否对端是否已经断开。
+         * （3）对端正常关闭，执行的函数是 WaitReadRequestHandler，通过 recv 的返回值，即：0，来判断是否对端是否已经断开。
         */
         if (eventstmp & EPOLLIN)
         {
