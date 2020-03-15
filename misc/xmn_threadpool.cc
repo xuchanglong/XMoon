@@ -14,7 +14,7 @@ XMNThreadPool::XMNThreadPool()
 {
     threadpoolsize_ = 0;
     threadrunningcount_ = 0;
-    lasttime_ = 0;
+    allthreadswork_lasttime_ = 0;
 }
 
 XMNThreadPool::~XMNThreadPool()
@@ -198,9 +198,9 @@ int XMNThreadPool::Call()
     if (threadpoolsize_ == threadrunningcount_)
     {
         time_t currtime = time(nullptr);
-        if (currtime - lasttime_ > 10)
+        if (currtime - allthreadswork_lasttime_ > 10)
         {
-            lasttime_ = currtime;
+            allthreadswork_lasttime_ = currtime;
             XMNLogStdErr(0, "线程池满负荷运转，可考虑扩容线程池。");
         }
     }
@@ -211,7 +211,6 @@ int XMNThreadPool::Call()
 int XMNThreadPool::PutInRecvMsgList_Signal(char *data)
 {
     int r = 0;
-    //XMNLogStdErr(errno, "已接收到完整数据包。");
     /**
      * （1）向消息链表中压入 client 发来的数据。
     */

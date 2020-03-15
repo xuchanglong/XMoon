@@ -125,6 +125,7 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
     {
         /**
          * 客户端已正常关闭，即：完成了 4 次挥手。
+         * send()的返回值为 0 时，也是在这里回收连接的。
         */
         if (close(pconnsockinfo->fd) == -1)
         {
@@ -141,39 +142,38 @@ ssize_t XMNSocket::RecvData(XMNConnSockInfo *pconnsockinfo)
     else if (n < 0)
     {
         /**
-         * recv 没有数据了，一般在 ET 模式下出现该 errno，
-         * 用来标识接收缓冲区中已经没有数据了。
-         * 如果是 LT 模式，不应该出现该 errno，因为 LT 模式下，
-         * 没有数据时 epoll_wait 是不会返回的。
+         * recv 没有数据了，一般在 ET 模式下出现该 errno，用来标识接收缓冲区中已经没有数据了。
+         * 如果是 LT 模式，不应该出现该 errno，因为 LT 模式下，没有数据时 epoll_wait 是不会返回的。
         */
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        int err = errno;
+        if (err == EAGAIN || err == EWOULDBLOCK)
         {
-            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 EAGAIN 或者 EWOULDBLOCK 错误。");
+            XMNLogStdErr(err, "XMNSocket::RecvData() 返回了 EAGAIN 或者 EWOULDBLOCK 错误。");
             return 0;
         }
         /**
-         * TODO：这里需要补充该 errno 的值的意义。
+         * recv 函数被中断，不是错误。
         */
-        else if (errno == EINTR)
+        else if (err == EINTR)
         {
-            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 EINTR 错误。");
+            XMNLogInfo(XMN_LOG_ALERT, err, "XMNSocket::RecvData() 返回了 EINTR 错误。");
             return 0;
         }
         /**
          * 下面的错误都是异常，需要关闭连接 socket 并回收连接至连接池。
         */
-        if (errno == ECONNRESET)
+        if (err == ECONNRESET)
         {
             /**
              * client 向 server 发送了 RST 包，发送该包的原因是 client 正在通信，
              * 而 client 突然被关闭，导致了与 server 没有进行正常的 4 次挥手，
              * 而是发送了 RST 包。
             */
-            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了 ECONNRESET 错误，即：client -> server rst 包。");
+            XMNLogStdErr(err, "XMNSocket::RecvData() 返回了 ECONNRESET 错误，即：client -> server rst 包。");
         }
         else
         {
-            XMNLogStdErr(errno, "XMNSocket::RecvData() 返回了未知错误。");
+            XMNLogStdErr(err, "XMNSocket::RecvData() 返回了未知错误。");
         }
 
         if (close(pconnsockinfo->fd) == -1)
@@ -267,10 +267,8 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
         isflood = TestFlood(pconnsockinfo);
         if (isflood)
         {
-            XMNLogStdErr(0, "3");
             XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-            // TODO：有可能内存泄漏。
-            //memory.FreeMemory(connsockinfo->recvalldata);
+            memory.FreeMemory(pconnsockinfo->precvalldata);
         }
         else
         {
@@ -330,15 +328,6 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
         pconnsockinfo->senddatalen = pconnsockinfo->senddatalen - sendsize;
         return;
     }
-    else if (sendsize == -1)
-    {
-        /**
-         * 发送缓冲区已满不太可能，因为 epoll 驱动通知系统可以发送，
-         * 结果发送缓冲区已满，不正常。
-        */
-        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发现发送缓冲区已满的问题。");
-        return;
-    }
     else if (sendsize > 0 && sendsize == pconnsockinfo->senddatalen)
     {
         /**
@@ -355,11 +344,24 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
         }
         XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()发送数据完毕。");
     }
+    else if (sendsize == -1)
+    {
+        /**
+         * 发送缓冲区已满不太可能，因为 epoll 驱动通知系统可以发送，
+         * 结果发送缓冲区已满，不正常。
+        */
+        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发现发送缓冲区已满的问题。");
+        return;
+    }
+    else if (sendsize == -2)
+    {
+        XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行 SendData 时发生了未知错误。");
+    }
 
     /**
-     * （3）收尾工作。
+     * （3）执行到这里有如下情况。
      * a、数据完整地发送完毕。
-     * b、对端断开连接。
+     * b、对端断开连接，回收连接。
      * c、未知错误。
     */
     /**
@@ -374,4 +376,12 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     pconnsockinfo->psenddata = nullptr;
     pconnsockinfo->senddatalen = 0;
     --pconnsockinfo->throwepollsendcount;
+    /**
+     * TODO：增加连接池的回收，用于处理未知的错误。
+     * time 2020-03-15
+    */
+    if (sendsize < 0)
+    {
+        ActivelyCloseSocket(pconnsockinfo);
+    }
 }

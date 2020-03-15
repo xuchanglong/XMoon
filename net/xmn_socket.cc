@@ -757,6 +757,7 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          * （2）读取数据，执行的函数是 WaitReadRequestHandler 。
          * （3）对端正常关闭，执行的函数是 WaitReadRequestHandler，通过 recv 的返回值，即：0，来判断是否对端是否已经断开。
         */
+        XMNLogInfo(XMN_LOG_ALERT, 0, (std::string("events = ") + std::to_string(eventstmp)).c_str());
         if (eventstmp & EPOLLIN)
         {
             (this->*(pconnsockinfo->rhandler))(pconnsockinfo);
@@ -766,9 +767,11 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
          * 写事件。server 可以向 client 发送数据了，包括正常的通信数据以及关闭连接数据。
          * 因为 events_type & (EPOLLERR | EPOLLHUP) 时，events_type |= EPOLLIN | EPOLLOUT 。
         */
-        XMNLogInfo(XMN_LOG_ALERT, eventstmp, "test");
         if (eventstmp & EPOLLOUT)
         {
+            /**
+             * SendDataThread 中某个连接的数据没有一次性发送成功（包括发送缓冲区已满）时，才将 EPOLLOUT，加入到红黑树中。
+            */
             if (eventstmp & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
                 /**
@@ -1013,41 +1016,31 @@ int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
     while (true)
     {
         n = send(pconnsockinfo->fd, pconnsockinfo->psenddata, pconnsockinfo->senddatalen, 0);
-        /**
-         * （1）成功地发送了数据。
-        */
-        if (n > 0)
+        if (n < 0)
         {
-            return n;
-        }
-        /**
-         * （2）异常处理。
-        */
-        else if (n == 0)
-        {
-            /**
-             * a、发送的数据量为0，对于本网络库该可能性理论上不存在。
-             * b、发送超时，对端已经关闭连接。
-            */
-            return 0;
-        }
-        if (errno == EAGAIN)
-        {
-            return -1;
-        }
-        else if (errno == EINTR)
-        {
-            /**
-             * send()被中断打断，下次再次运行试一下。
-            */
-            XMNLogStdErr(0, "XMNSocket::SendData()中send()运行被中断打断。");
-        }
-        else
-        {
-            return -2;
+            int err = errno;
+            if (err == EAGAIN)
+            {
+                return -1;
+            }
+            else if (err == EINTR)
+            {
+                /**
+                 * send()被中断打断，下次再次运行试一下。
+                */
+                XMNLogStdErr(0, "XMNSocket::SendData()中send()运行被中断打断。");
+                continue;
+            }
+            else
+            {
+                return -2;
+            }
         }
     }
-    return 0;
+    /**
+     * 运行到这里说明 n >= 0 。
+    */
+    return n;
 }
 
 int XMNSocket::FreeSendDataQueue()
@@ -1095,6 +1088,7 @@ bool XMNSocket::TestFlood(XMNConnSockInfo *pconnsockinfo)
     bool ret = false;
 
     gettimeofday(&scurrenttime, nullptr);
+    // 转化为微秒。
     currenttime = scurrenttime.tv_sec * 1000 + scurrenttime.tv_usec / 1000;
     if (currenttime - pconnsockinfo->floodlasttime < floodtimeinterval_)
     {

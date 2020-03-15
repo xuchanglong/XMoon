@@ -152,24 +152,29 @@ public:
      * 
     **************************************************************************************/
     /**
+     * 状态机变量1：
      * 接收当前数据包的状态。
     */
     RecvStatus recvstatus;
 
     /**
-     * 存放包头数据。
-    */
-    char dataheader[XMN_PKG_HEADER_SIZE];
-
-    /**
+     * 状态机变量2：
      * 存放当前需要接收的数据的首地址，供 RecvData 函数使用。
+     * 在接收包头数据时，该指针指向了 dataheader 。
+     * 在接收包体数据时，该指针指向了 precvalldata 。
     */
     char *precvdatastart;
 
     /**
+     * 状态机变量3：
      * 当前需要接收的数据的字节数。
     */
     size_t recvdatalen;
+
+    /**
+     * 存放包头数据。
+    */
+    char dataheader[XMN_PKG_HEADER_SIZE];
 
     /**
      * 存放最终需要接收的所有数据，即：消息头 + 包头 + 包体。
@@ -446,11 +451,10 @@ protected:
     /**
      * @function    向 client 发送消息。
      * @paras   none 。
-     * @ret  > 0 发送成功，返回值就是已发送的数据的字节数。
-     *          0   发送超时，对端已关闭。
-     *              发送的数据本身是0个字节。
-     *          -1  发送缓冲区已满。
-     *          -2  未知错误。
+     * @ret > 0 发送成功，返回值就是已发送的数据的字节数。
+     *      0   对端已关闭。
+     *      -1  发送缓冲区已满。
+     *      -2  未知错误。
      * @time    2019-09-26
     */
     int SendData(XMNConnSockInfo *pconnsockinfo);
@@ -534,6 +538,9 @@ private:
     /**
      * @function    从指定的连接中接收 bufflen 字节的数据到 pbuff 中。
      * @paras   pconnsockinfo   待接收数据的连接。
+     * @ret > 0 接收到的数据的字节数。
+     *      = 0 client 已经关闭。
+     *      < 0 有异常。
      * @time    2019-08-31
     */
     ssize_t RecvData(XMNConnSockInfo *pconnsockinfo);
@@ -714,6 +721,8 @@ private:
     **************************************************************************************/
     /**
      * @function    测试当前连接对应的 client 是否存在恶意行为。
+     *              方法：判断当前收到包的时间和上次收到包的时间的时间差，若时间差小于 floodtimeinterval_
+     *                   且次数超过 floodcount_，则认为该连接存在恶意行为。 
      * @paras   none 。
      * @ret  true    存在恶意行为，应该关闭该连接。
      * @time    2019-10-06
@@ -737,7 +746,9 @@ protected:
      * 
     **************************************************************************************/
     /**
-     * 心跳超时时间。
+     * 两个功能：
+     * 1、对于连接来说，每隔 pingwaittime_ 时间，HandlePing 线程就会检查一次该连接是否已经朝时了。
+     * 2、上述的超时时间就是 pingwaittime_ * 3 ，如果超时则断开连接。
     */
     size_t pingwaittime_;
 
@@ -869,6 +880,7 @@ private:
 
     /**
      * 被心跳监控的连接信息的 multimap 。
+     * time_t   表示下次
     */
     std::multimap<time_t, XMNMsgHeader *> ping_multimap_;
 

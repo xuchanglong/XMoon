@@ -137,9 +137,9 @@ private:
     static pthread_cond_t thread_cond_;
 
     /**
-     * 记录上次线程不够用时发生的时间。
+     * 记录上次线程池中的线程全都工作时的时间。
     */
-    time_t lasttime_;
+    time_t allthreadswork_lasttime_;
 
     /**
      * 存放接收的数据的消息链表。
