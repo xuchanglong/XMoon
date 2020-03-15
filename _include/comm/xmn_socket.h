@@ -674,7 +674,10 @@ private:
     time_t GetEarliestTime();
 
     /**
-     * @function    对心跳包进行监控的执行线程。
+     * @function    对心跳包进行监控的执行线程，执行过程：
+     *                  当发现某个连接的上次心跳包的通信时间与当前时间差值超过 3*pingwaittime_ 时，
+     *               认为该连接的对端已经关闭，server 端可以主动断开连接。
+     *                  该线程的检查周期当当前时间超过 ping_multimap_ 中最早的时间时，则按照上述步骤检查一遍。   
      * @paras   pthreadinfo 该线程的相关信息。
      * @ret  none 。
      * @time    2019-10-04
@@ -880,7 +883,9 @@ private:
 
     /**
      * 被心跳监控的连接信息的 multimap 。
-     * time_t   表示下次
+     * 
+     * time_t   表示下次要进行心跳包通信的最长时间。
+     * XMNMsgHeader 当前连接的消息头。
     */
     std::multimap<time_t, XMNMsgHeader *> ping_multimap_;
 
