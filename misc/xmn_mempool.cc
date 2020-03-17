@@ -1,8 +1,7 @@
 #include "xmn_mempool.h"
 
-XMNMemPool::XMNMemPool(size_t trunkcount)
+XMNMemPool::XMNMemPool(const size_t kCount) : kCount_(kCount), kMemBlockSize_(sizeof(T))
 {
-    trunkcount_ = trunkcount;
     pfreehead_ = nullptr;
 }
 
@@ -11,16 +10,16 @@ XMNMemPool::~XMNMemPool()
     ;
 }
 
-void *XMNMemPool::Allocate(size_t size)
+void *XMNMemPool::Allocate()
 {
     AddressObj *pobj = nullptr;
     if (pfreehead_ == nullptr)
     {
-        pfreehead_ = (AddressObj *)malloc(size * trunkcount_);
+        pfreehead_ = (AddressObj *)malloc(kMemBlockSize_ * kCount_);
         pobj = pfreehead_;
-        for (size_t i = 0; i < trunkcount_ - 1; i++)
+        for (size_t i = 0; i < kCount_ - 1; i++)
         {
-            pobj->next = (AddressObj *)((char *)pobj + size);
+            pobj->next = (AddressObj *)((char *)pobj + kMemBlockSize_);
             pobj = pobj->next;
         }
         pobj->next = nullptr;
@@ -30,9 +29,9 @@ void *XMNMemPool::Allocate(size_t size)
     return pobj;
 }
 
-void XMNMemPool::DeAllocate(void *phead)
+void XMNMemPool::DeAllocate(void *pobj)
 {
-    AddressObj *pobj = (AddressObj *)phead;
-    pobj->next = pfreehead_;
-    pfreehead_ = pobj;
+    AddressObj *pobjtmp = (AddressObj *)pobj;
+    pobjtmp->next = pfreehead_;
+    pfreehead_ = pobjtmp;
 }

@@ -11,19 +11,20 @@
 #include <unistd.h>
 #include <cstdlib>
 
+template<typename T>
 class XMNMemPool : public NonCopyable
 {
 public:
-    XMNMemPool(size_t trunkcount = 5);
+    XMNMemPool(const size_t kCount = 5);
     ~XMNMemPool();
 
 public:
     /**
-     * @function    分配 trunkcount_ 个大小为 size 的类的连续内存。
+     * @function    从内存池中获取一个内存块，如果没有则再申请 kCount_ 个内存块。。
      * @paras   size    类的大小。
      * @ret 该连续内存的首地址。
     */
-    void *Allocate(size_t size);
+    void *Allocate();
 
     /**
      * @function    待释放的大小为 size 的类的内存块。
@@ -47,7 +48,12 @@ private:
     /**
      * 当可用内存块用完之后一次性再分配的内存块的数量。
     */
-    size_t trunkcount_;
+    const size_t kCount_;
+
+    /**
+     * 每个内存块大小。
+    */
+    const size_t kMemBlockSize_;
 };
 
 #endif
