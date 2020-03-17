@@ -44,7 +44,6 @@ enum RecvStatus
 /**
  * 使得结构体中各个成员紧密的挨在一起，保证所有的系统收发的包头的字节数是一样的。
 */
-#pragma pack(1)
 
 struct XMNPkgHeader
 {
@@ -62,8 +61,6 @@ struct XMNPkgHeader
      * CRC32 校验，用于防止接收到的数据和 client 发送的数据不符的问题。
     */
     int crc32;
-};
-
-#pragma pack()
+} __attribute__((packed));
 
 #endif

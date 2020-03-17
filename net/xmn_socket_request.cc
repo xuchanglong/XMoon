@@ -5,6 +5,7 @@
 #include "comm/xmn_socket_comm.h"
 #include "xmn_lockmutex.hpp"
 #include "xmn_global.h"
+#include "xmn_mempool.hpp"
 
 #include <errno.h>
 #include <arpa/inet.h>
@@ -371,7 +372,8 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     {
         XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
     }
-    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+    //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+    SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
     pconnsockinfo->psendalldataforfree = nullptr;
     pconnsockinfo->psenddata = nullptr;
     pconnsockinfo->senddatalen = 0;

@@ -4,6 +4,7 @@
 #include "xmn_lockmutex.hpp"
 #include "xmn_macro.h"
 #include "xmn_global.h"
+#include "xmn_mempool.hpp"
 
 #include <pthread.h>
 #include <string.h>
@@ -76,7 +77,8 @@ void XMNConnSockInfo::ClearConnSockInfo()
 
     if (psendalldataforfree != nullptr)
     {
-        memory.FreeMemory((void *)psendalldataforfree);
+        //memory.FreeMemory((void *)psendalldataforfree);
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
         psendalldataforfree = nullptr;
     }
 

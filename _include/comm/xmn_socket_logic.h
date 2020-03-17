@@ -2,6 +2,24 @@
 #define XMOON__INCLUDE_XMNSOCKETLOGIC_H_
 
 #include "comm/xmn_socket.h"
+#include "comm/xmn_socket_logic_comm.h"
+
+struct RegisterInfoAll
+{
+    XMNMsgHeader msgheader;
+    XMNPkgHeader pkgheader;
+    RegisterInfo registerinfo;
+
+} __attribute__((packed));
+
+struct LoginInfoAll
+{
+    XMNMsgHeader msgheader;
+    XMNPkgHeader pkgheader;
+    RegisterInfo registerinfo;
+
+} __attribute__((packed));
+
 class XMNSocketLogic : public XMNSocket
 {
 public:

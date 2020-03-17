@@ -4,6 +4,7 @@
 #include "xmn_macro.h"
 #include "xmn_lockmutex.hpp"
 #include "xmn_memory.h"
+#include "xmn_mempool.hpp"
 
 #include "sys/socket.h"
 #include "sys/types.h"
@@ -797,7 +798,8 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     if (queue_senddata_count_ > 50000)
     {
         ++discardsendpkgcount_;
-        memory.FreeMemory(psenddata);
+        //memory.FreeMemory(psenddata);
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psenddata);
         return -1;
     }
     if (pconnsockinfo->nosendmsgcount > 400)
@@ -805,7 +807,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
         XMNLogStdErr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
                      pconnsockinfo->fd);
         ++discardsendpkgcount_;
-        memory.FreeMemory(psenddata);
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psenddata);
         ActivelyCloseSocket(pconnsockinfo);
         return -2;
     }
@@ -894,7 +896,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             */
             if (pconnsockinfo->currsequence != pmsgheader->currsequence)
             {
-                memory.FreeMemory(psendalldata);
+                //memory.FreeMemory(psendalldata);
+                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldata);
                 psendalldata = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -927,7 +930,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                     /**
                      * 全部正常发送成功。
                     */
-                    memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                    //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                    SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                     pconnsockinfo->psendalldataforfree = nullptr;
                     pconnsockinfo->psenddata = nullptr;
                     pconnsockinfo->senddatalen = 0;
@@ -960,7 +964,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送端已断开连接。
                 */
-                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -981,7 +986,8 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
             else
             {
-                memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
+                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -1041,7 +1047,8 @@ int XMNSocket::FreeSendDataQueue()
     {
         ptmp = senddata_queue_.front();
         senddata_queue_.pop();
-        memory.FreeMemory(ptmp);
+        //memory.FreeMemory(ptmp);
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(ptmp);
     }
     return 0;
 }

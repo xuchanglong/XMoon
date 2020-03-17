@@ -1,6 +1,6 @@
 #include "comm/xmn_socket_logic.h"
-#include "comm/xmn_socket_logic_comm.h"
 #include "xmn_memory.h"
+#include "xmn_mempool.hpp"
 #include "xmn_func.h"
 #include "xmn_crc32.h"
 #include "xmn_lockmutex.hpp"
@@ -92,7 +92,8 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     */
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNCRC32 &crc32 = SingletonBase<XMNCRC32>::GetInstance();
-    char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
+    //char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
+    char *psenddata = (char *)SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().Allocate();
     // a、消息头。
     XMNMsgHeader *pmsgheader_send = (XMNMsgHeader *)psenddata;
     memcpy(pmsgheader_send, pmsgheader, sizeof(XMNMsgHeader));

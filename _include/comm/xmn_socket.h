@@ -273,7 +273,7 @@ struct XMNMsgHeader
      * 因为同一个 XMNConnSockInfo 可能对应出多个连接。
     */
     uint64_t currsequence;
-};
+} __attribute__((packed));
 
 class XMNSocket : public NonCopyable
 {
