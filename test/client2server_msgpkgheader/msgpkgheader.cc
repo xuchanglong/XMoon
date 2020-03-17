@@ -109,7 +109,7 @@ int main()
             std::cout << "心跳包接收成功。" << std::endl;
         }
 
-        if (sendping > 3)
+        if (senddatacount > 3)
         {
             break;
         }

@@ -17,6 +17,7 @@
 
 #include <cstdio>
 #include <sstream>
+#include <string>
 
 XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
                          kPkgHeaderLen_(sizeof(XMNPkgHeader))
@@ -476,18 +477,6 @@ int XMNSocket::EpollInit()
         pconnsockinfo->r_ready = 1;
         pconnsockinfo->rhandler = &XMNSocket::EventAcceptHandler;
 
-        /*
-        if (EpollAddEvent(
-                (*it)->fd,     //socekt句柄
-                1, 0,          //读，写【只关心读事件，所以参数2：readevent=1,而参数3：writeevent=0】
-                0,             //其他补充标记
-                EPOLL_CTL_ADD, //事件类型【增加，还有删除/修改】
-                pconnsockinfo  //连接池中的连接
-                ) == -1)
-        {
-            return -3;
-        }
-        */
         if (EpollOperationEvent(x->fd,
                                 EPOLL_CTL_ADD,
                                 EPOLLIN | EPOLLRDHUP,
@@ -789,8 +778,6 @@ int XMNSocket::EpollProcessEvents(const int &kTimer)
             {
                 (this->*(pconnsockinfo->whandler))(pconnsockinfo);
             }
-
-            //XMNLogStdErr(0, "收到可写事件。");
         }
     }
 
@@ -843,9 +830,8 @@ char *XMNSocket::PutOutSendDataFromQueue()
         psenddata = senddata_queue_.front();
         senddata_queue_.pop();
         --queue_senddata_count_;
-        return psenddata;
     }
-    return nullptr;
+    return psenddata;
 }
 
 void *XMNSocket::SendDataThread(void *pthreadinfo)
@@ -933,7 +919,6 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             pconnsockinfo->psenddata = psendalldata + psocket->kMsgHeaderLen_;
             pconnsockinfo->senddatalen = (size_t)ntohs(ppkgheader->pkglen);
 
-            //XMNLogStdErr(0, "即将发送的数据大小为 %d", pconnsockinfo->senddatalen);
             sendsize = psocket->SendData(pconnsockinfo);
             if (sendsize > 0)
             {
@@ -1036,6 +1021,11 @@ int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
                 return -2;
             }
         }
+        else
+        {
+            break;
+        }
+        
     }
     /**
      * 运行到这里说明 n >= 0 。
@@ -1116,7 +1106,7 @@ void XMNSocket::PrintInfo()
         /**
          * 接收消息的链表中元素的数量，即：接收到的数据中尚未处理完的消息的数量。
         */
-        size_t recvmsgcount = g_threadpool.RecvMsgListSize();
+        size_t recvmsgcount = g_threadpool.RecvDataQueueSize();
 
         /**
          * 当前在线的 client 数量。
@@ -1128,18 +1118,18 @@ void XMNSocket::PrintInfo()
         */
         size_t sendmsgcount_ = queue_senddata_count_;
 
-        XMNLogStdErr(0, "\n---------------------------------------------  begin ---------------------------------------------");
+        XMNLogStdErr(0, "\n--------------------  begin --------------------");
         XMNLogStdErr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
         XMNLogStdErr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
                      connsock_pool_free_.size(),
                      connsock_pool_.size(),
                      recycleconnsock_pool_.size());
         XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
-        XMNLogStdErr(0, "当前收消息队列和发消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
+        XMNLogStdErr(0, "当前接收消息队列和发送消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",
                      recvmsgcount,
                      sendmsgcount_,
                      discardsendpkgcount_);
-        XMNLogStdErr(0, "---------------------------------------------  end ---------------------------------------------");
+        XMNLogStdErr(0, "--------------------  end --------------------");
 
         if (recvmsgcount > 100000)
         {

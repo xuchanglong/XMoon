@@ -412,12 +412,12 @@ public:
     int EpollProcessEvents(const int &kTimer);
 
     /**
-     * @function    返回消息链表中元素的数量。
+     * @function    返回消息队列中元素的数量。
      * @paras   none 。
      * @ret   消息链表中元素的数量。
      * @time    2019-09-06
     */
-    size_t RecvMsgListSize();
+    size_t RecvDataQueueSize();
 
     /**************************************************************************************
      * 

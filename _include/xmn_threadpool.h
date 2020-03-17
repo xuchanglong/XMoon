@@ -72,12 +72,12 @@ public:
     int Call();
 
     /**
-     * @function    将接收到的数据压入消息链表中。
+     * @function    将接收到的数据压入消息队列中。
      * @paras   data   接收到的数据。
      * @ret  none 。
      * @time    2019-09-01
     */
-    int PutInRecvMsgList_Signal(char *data);
+    int PutInRecvDataQueue_Signal(char *data);
 
     /**
      * @function    获取消息的数量
@@ -85,7 +85,7 @@ public:
      * @ret  消息的数量
      * @time    2019-09-12
     */
-    size_t RecvMsgListSize();
+    size_t RecvDataQueueSize();
 
 private:
     /**
@@ -97,13 +97,14 @@ private:
     static void *ThreadFunc(void *pthreaddata);
 
     /**
-     * @function    从消息链表中获取消息。
+     * @function    从消息队列中获取消息。
      * @paras   none 。
      * @ret  非0 获取消息成功。
      *       nullptr 获取消息失败。
      * @time    2019-09-06
+     * @notice  该函数内部不加锁的原因时该函数的使用时已经在上锁的状态。
     */
-    char *PutOutRecvMsgList();
+    char *PutOutRecvDataQueue();
 
 private:
     /**
@@ -142,9 +143,19 @@ private:
     time_t allthreadswork_lasttime_;
 
     /**
-     * 存放接收的数据的消息链表。
+     * 接收消息队列的同步互斥量。
+    */
+    static pthread_mutex_t recvdata_queue_mutex_;
+
+    /**
+     * 存放接收的数据的消息队列。
     */
     std::queue<char *> recvdata_queue_;
+
+    /**
+     * 存放接收的数据的消息队列的大小。
+    */
+    std::atomic<size_t> queue_recvdata_count_;
 };
 
 #endif

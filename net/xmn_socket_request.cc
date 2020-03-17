@@ -278,7 +278,7 @@ void XMNSocket::WaitRequestHandlerBody(XMNConnSockInfo *pconnsockinfo)
             /**
              * TODO：返回值为-1暂时没有想好怎么处理。
             */
-            g_threadpool.PutInRecvMsgList_Signal(pconnsockinfo->precvalldata);
+            g_threadpool.PutInRecvDataQueue_Signal(pconnsockinfo->precvalldata);
         }
     }
 
