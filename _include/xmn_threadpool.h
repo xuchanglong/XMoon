@@ -7,7 +7,7 @@
 #include <string.h>
 #include <vector>
 #include <atomic>
-#include <list>
+#include <queue>
 #include <memory>
 
 class XMNThreadPool : public NonCopyable
@@ -144,7 +144,7 @@ private:
     /**
      * 存放接收的数据的消息链表。
     */
-    std::list<char *> recvmsglist_;
+    std::queue<char *> recvdata_queue_;
 };
 
 #endif

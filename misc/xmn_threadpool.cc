@@ -220,7 +220,7 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *data)
         XMNLogStdErr(r, "XMNThreadPool::inMsgRecvQueueAndSignal 中的 pthread_mutex_lock 执行失败。");
     }
 
-    recvmsglist_.push_back(data);
+    recvdata_queue_.push_back(data);
 
     r = pthread_mutex_unlock(&thread_mutex_);
     if (r != 0)
@@ -236,18 +236,18 @@ int XMNThreadPool::PutInRecvMsgList_Signal(char *data)
 
 char *XMNThreadPool::PutOutRecvMsgList()
 {
-    if (recvmsglist_.empty())
+    if (recvdata_queue_.empty())
     {
         return nullptr;
     }
 
-    char *pbuf = recvmsglist_.front();
-    recvmsglist_.pop_front();
+    char *pbuf = recvdata_queue_.front();
+    recvdata_queue_.pop();
 
     return pbuf;
 }
 
 size_t XMNThreadPool::RecvMsgListSize()
 {
-    return recvmsglist_.size();
+    return recvdata_queue_.size();
 }
