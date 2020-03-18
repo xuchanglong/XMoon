@@ -68,6 +68,15 @@ public:
     ~XMNConnSockInfo();
 
 public:
+    enum MemMode
+    {
+        GENERALMODE,
+        REGISTERMODE,
+        PINGMODE,
+        LOGINMODE
+    };
+
+public:
     /**
      * 将该连接的状态恢复至初始状态。
     */
@@ -77,6 +86,14 @@ public:
      * 释放连接关联的资源的内存。
     */
     void ClearConnSockInfo();
+
+    /**
+     * @function    根据不同的内存模型采用不同的方式释放内存。
+     * @paras   none 。
+     * @time    2020-03-18
+    */
+    void FreeSendDataMem();
+    void FreeSendDataMem(char *pdata);
 
 public:
     /**
@@ -221,6 +238,11 @@ public:
      * 连接放入回收链表时的时间。
     */
     time_t putinrecylisttime;
+
+    /**
+     * 标记发送端内存的申请方式。
+    */
+    MemMode memmode;
 
     /**************************************************************************************
      * 

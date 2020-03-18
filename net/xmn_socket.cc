@@ -161,7 +161,6 @@ int XMNSocket::EndWorker()
     /**
      * （2）回收线程池、发送消息队列和心跳监控 multimap 。
     */
-    //FreeConnSockInfoPool();
     FreeSendDataQueue();
     FreePingMultiMap();
 
@@ -798,11 +797,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     if (queue_senddata_count_ > 50000)
     {
         ++discardsendpkgcount_;
-        // TODO：对不同的处理函数要有不同的处理。
-        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-        //memory.FreeMemory(psenddata);
-        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psenddata);
+        pconnsockinfo->FreeSendDataMem(psenddata);
         return -1;
     }
     if (pconnsockinfo->nosendmsgcount > 400)
@@ -810,7 +805,7 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
         XMNLogStdErr(0, "XMNSocket::PutInSendDataQueue()发现某用户（%d）挤压了太多待发送的数据，需切断与他的连接！",
                      pconnsockinfo->fd);
         ++discardsendpkgcount_;
-        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psenddata);
+        pconnsockinfo->FreeSendDataMem(psenddata);
         ActivelyCloseSocket(pconnsockinfo);
         return -2;
     }
@@ -899,11 +894,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             */
             if (pconnsockinfo->currsequence != pmsgheader->currsequence)
             {
-                // TODO：对不同的处理函数要有不同的处理。
-                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-                //memory.FreeMemory(psendalldata);
-                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldata);
+                pconnsockinfo->FreeSendDataMem(psendalldata);
                 psendalldata = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -936,11 +927,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                     /**
                      * 全部正常发送成功。
                     */
-                    // TODO：对不同的处理函数要有不同的处理。
-                    // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-                    //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                    SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
+                    pconnsockinfo->FreeSendDataMem();
                     pconnsockinfo->psendalldataforfree = nullptr;
                     pconnsockinfo->psenddata = nullptr;
                     pconnsockinfo->senddatalen = 0;
@@ -973,11 +960,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送端已断开连接。
                 */
-                // TODO：对不同的处理函数要有不同的处理。
-                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-                //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
+                pconnsockinfo->FreeSendDataMem();
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -998,11 +981,7 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
             else
             {
-                // TODO：对不同的处理函数要有不同的处理。
-                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-                //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
-                SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
+                pconnsockinfo->FreeSendDataMem();
                 pconnsockinfo->psendalldataforfree = nullptr;
                 pconnsockinfo->psenddata = nullptr;
                 pconnsockinfo->senddatalen = 0;
@@ -1061,11 +1040,8 @@ int XMNSocket::FreeSendDataQueue()
     {
         ptmp = senddata_queue_.front();
         senddata_queue_.pop();
-        // TODO：对不同的处理函数要有不同的处理。
-        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-
-        //memory.FreeMemory(ptmp);
-        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(ptmp);
+        // TODO：这里添加释放内存的代码。
+        // 因为无法判断该队列中的消息属于什么种类，故暂时无法释放。
     }
     return 0;
 }

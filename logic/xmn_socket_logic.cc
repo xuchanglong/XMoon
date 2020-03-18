@@ -69,6 +69,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
      * 所以根据上述考虑，同一个连接多个逻辑进行加锁处理。
     */
     XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex_);
+    pconnsockinfo->memmode = XMNConnSockInfo::REGISTERMODE;
     /**
      * （3）获取发送来的所有数据。
     */
@@ -90,7 +91,6 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     /**
      * （5）组合回复的数据。
     */
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNCRC32 &crc32 = SingletonBase<XMNCRC32>::GetInstance();
     char *psenddata = (char *)SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().Allocate();
     // a、消息头。
@@ -119,8 +119,6 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
      * （7）将待发送的数据压入发送队列中。
     */
     PutInSendDataQueue(psenddata);
-
-    //XMNLogStdErr(0, "执行了 XMNSocketLogic::HandleRegister 函数。");
     return 0;
 }
 
@@ -227,6 +225,7 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
 
     XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
     XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex_);
+    pconnsockinfo->memmode = XMNConnSockInfo::PINGMODE;
     pconnsockinfo->lastpingtime = time(nullptr);
 
     SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);

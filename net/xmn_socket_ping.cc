@@ -169,11 +169,8 @@ int XMNSocket::PutOutMsgHeaderFromMultiMap(XMNConnSockInfo *pconnsockinfo)
 
 void XMNSocket::FreePingMultiMap()
 {
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    for (auto &x : ping_multimap_)
-    {
-        SingletonBase<XMNMemPool<XMNMsgHeader>>::GetInstance().DeAllocate(x.second);
-        --ping_multimap_count_;
-    }
+    // 由系统回收 SingletonBase<XMNMemPool<XMNMsgHeader>>::GetInstance() 的内存。
+    ping_multimap_count_ = 0;
     ping_multimap_.clear();
+    std::multimap<time_t, XMNMsgHeader *>().swap(ping_multimap_);
 }

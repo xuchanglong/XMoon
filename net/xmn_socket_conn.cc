@@ -77,18 +77,56 @@ void XMNConnSockInfo::ClearConnSockInfo()
 
     if (psendalldataforfree != nullptr)
     {
-        // TODO：对不同的处理函数要有不同的处理。
-        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
-        
-        //memory.FreeMemory((void *)psendalldataforfree);
-        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
-        psendalldataforfree = nullptr;
+        FreeSendDataMem();
     }
 
     /**
      * 其他变量清零。
     */
     throwepollsendcount = 0;
+}
+
+void XMNConnSockInfo::FreeSendDataMem()
+{
+    if (memmode == GENERALMODE)
+    {
+        XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+        memory.FreeMemory((void *)psendalldataforfree);
+    }
+    else if (memmode == REGISTERMODE)
+    {
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
+    }
+    else if (memmode == PINGMODE)
+    {
+        SingletonBase<XMNMemPool<NoBodyInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
+    }
+    else if (memmode == LOGINMODE)
+    {
+        SingletonBase<XMNMemPool<LoginInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
+    }
+    psendalldataforfree = nullptr;
+}
+
+void XMNConnSockInfo::FreeSendDataMem(char *pdata)
+{
+    if (memmode == GENERALMODE)
+    {
+        XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
+        memory.FreeMemory((void *)pdata);
+    }
+    else if (memmode == REGISTERMODE)
+    {
+        SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pdata);
+    }
+    else if (memmode == PINGMODE)
+    {
+        SingletonBase<XMNMemPool<NoBodyInfoAll>>::GetInstance().DeAllocate(pdata);
+    }
+    else if (memmode == LOGINMODE)
+    {
+        SingletonBase<XMNMemPool<LoginInfoAll>>::GetInstance().DeAllocate(pdata);
+    }
 }
 
 /**************************************************************************************
