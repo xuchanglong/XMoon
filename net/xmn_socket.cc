@@ -1040,9 +1040,11 @@ int XMNSocket::FreeSendDataQueue()
     {
         ptmp = senddata_queue_.front();
         senddata_queue_.pop();
-        // TODO：这里添加释放内存的代码。
-        // 因为无法判断该队列中的消息属于什么种类，故暂时无法释放。
+        XMNMsgHeader *pmsgheader = (XMNMsgHeader *)ptmp;
+        XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
+        pconnsockinfo->FreeSendDataMem(ptmp);
     }
+    std::queue<char *>().swap(senddata_queue_);
     return 0;
 }
 
