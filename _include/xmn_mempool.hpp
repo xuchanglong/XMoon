@@ -10,6 +10,8 @@
 
 #include <unistd.h>
 #include <cstdlib>
+#include <atomic>
+#include <pthread.h>
 
 template <typename T>
 class XMNMemPool : public NonCopyable
@@ -18,9 +20,14 @@ public:
     XMNMemPool() : kCount_(10), kMemBlockSize_(sizeof(T))
     {
         pfreehead_ = nullptr;
+        memblockcount_ = 0;
+        mtx_ = PTHREAD_MUTEX_INITIALIZER;
     }
 
-    ~XMNMemPool(){};
+    ~XMNMemPool()
+    {
+        pthread_mutex_destroy(&mtx_);
+    };
 
 public:
     /**
@@ -31,6 +38,9 @@ public:
     void *Allocate()
     {
         AddressObj *pobj = nullptr;
+
+        pthread_mutex_lock(&mtx_);
+
         if (pfreehead_ == nullptr)
         {
             pfreehead_ = (AddressObj *)malloc(kMemBlockSize_ * kCount_);
@@ -44,6 +54,9 @@ public:
         }
         pobj = pfreehead_;
         pfreehead_ = pobj->next;
+        memblockcount_++;
+
+        pthread_mutex_unlock(&mtx_);
         return pobj;
     }
 
@@ -59,9 +72,22 @@ public:
             return;
         }
         AddressObj *pobjtmp = (AddressObj *)pobj;
+
+        pthread_mutex_lock(&mtx_);
+
         pobjtmp->next = pfreehead_;
         pfreehead_ = pobjtmp;
+        memblockcount_--;
+
+        pthread_mutex_unlock(&mtx_);
         return;
+    }
+
+    size_t Size()
+    {
+        pthread_mutex_lock(&mtx_);
+        return memblockcount_;
+        pthread_mutex_unlock(&mtx_);
     }
 
 private:
@@ -85,6 +111,16 @@ private:
      * 每个内存块大小。
     */
     const size_t kMemBlockSize_;
+
+    /**
+     * 已申请的内存块的数量。
+    */
+    std::atomic<size_t> memblockcount_;
+
+    /**
+     * 内存池锁。
+    */
+    pthread_mutex_t mtx_;
 };
 
 #endif
