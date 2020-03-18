@@ -225,5 +225,5 @@ void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
 
 size_t XMNSocket::ConnectPoolSize()
 {
-    return SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().Size();
+    return SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().MemBlockCount();
 }

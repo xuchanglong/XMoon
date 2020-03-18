@@ -1127,7 +1127,7 @@ void XMNSocket::PrintInfo()
         XMNLogStdErr(0, "\n--------------------  begin --------------------");
         XMNLogStdErr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
         XMNLogStdErr(0, "连接池中当前连接数量 / 要释放的连接（%d，%d）。",
-                     SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().Size(),
+                     SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().UsedMemBlockCount(),
                      recycleconnsock_pool_.size());
         XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
         XMNLogStdErr(0, "当前接收消息队列和发送消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",

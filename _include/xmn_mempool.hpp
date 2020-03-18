@@ -26,6 +26,13 @@ public:
 
     ~XMNMemPool()
     {
+        AddressObj *pobj = nullptr;
+        while (pfreehead_)
+        {
+            pobj = pfreehead_;
+            pfreehead_ = pobj->next;
+            free((void *)pobj);
+        }
         pthread_mutex_destroy(&mtx_);
     };
 
@@ -55,6 +62,7 @@ public:
         pobj = pfreehead_;
         pfreehead_ = pobj->next;
         memblockcount_++;
+        usedmemblockcount_++;
 
         pthread_mutex_unlock(&mtx_);
         return pobj;
@@ -77,17 +85,21 @@ public:
 
         pobjtmp->next = pfreehead_;
         pfreehead_ = pobjtmp;
-        memblockcount_--;
+        //memblockcount_--;
+        usedmemblockcount_--;
 
         pthread_mutex_unlock(&mtx_);
         return;
     }
 
-    size_t Size()
+    size_t MemBlockCount()
     {
-        pthread_mutex_lock(&mtx_);
         return memblockcount_;
-        pthread_mutex_unlock(&mtx_);
+    }
+
+    size_t UsedMemBlockCount()
+    {
+        return usedmemblockcount_;
     }
 
 private:
@@ -116,6 +128,11 @@ private:
      * 已申请的内存块的数量。
     */
     std::atomic<size_t> memblockcount_;
+
+    /**
+     * 已使用的内存块的数量。
+    */
+    std::atomic<size_t> usedmemblockcount_;
 
     /**
      * 内存池锁。
