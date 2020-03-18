@@ -7,6 +7,7 @@
 #define XMOON__INCLUDE_XMNMEMPOOL_H_
 
 #include "base/noncopyable.h"
+#include "base/singletonbase.h"
 
 #include <unistd.h>
 #include <cstdlib>
@@ -16,6 +17,8 @@
 template <typename T>
 class XMNMemPool : public NonCopyable
 {
+    friend class SingletonBase<XMNMemPool<T>>;
+
 public:
     XMNMemPool() : kCount_(10), kMemBlockSize_(sizeof(T))
     {
