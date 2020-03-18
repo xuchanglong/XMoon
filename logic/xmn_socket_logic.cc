@@ -92,7 +92,6 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
     */
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNCRC32 &crc32 = SingletonBase<XMNCRC32>::GetInstance();
-    //char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_ + sizeof(RegisterInfo), false);
     char *psenddata = (char *)SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().Allocate();
     // a、消息头。
     XMNMsgHeader *pmsgheader_send = (XMNMsgHeader *)psenddata;
@@ -237,7 +236,7 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
 void XMNSocketLogic::SendNoBodyData2Client(XMNMsgHeader *pmsgheader, const uint16_t &kMsgCode)
 {
     XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    char *psenddata = (char *)memory.AllocMemory(kMsgHeaderLen_ + kPkgHeaderLen_, false);
+    char *psenddata = (char *)SingletonBase<XMNMemPool<NoBodyInfoAll>>::GetInstance().Allocate();
 
     memcpy(psenddata, pmsgheader, sizeof(char) * kMsgHeaderLen_);
     XMNPkgHeader *ppkgheader = (XMNPkgHeader *)(psenddata + kMsgHeaderLen_);
@@ -257,7 +256,6 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
     {
         return -1;
     }
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
     XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
     if (pmsgheader->currsequence == pconnsockinfo->currsequence)
     {
@@ -269,13 +267,14 @@ int XMNSocketLogic::PingTimeOutChecking(XMNMsgHeader *pmsgheader, time_t current
             XMNLogStdErr(0, "超时不发心跳包，连接被关闭。");
             ActivelyCloseSocket(pconnsockinfo);
         }
-        memory.FreeMemory(pmsgheader);
+        SingletonBase<XMNMemPool<XMNMsgHeader>>::GetInstance().DeAllocate(pmsgheader);
     }
     else
     {
         /**
          * 此连接已经断开。
         */
-        memory.FreeMemory(pmsgheader);
+        SingletonBase<XMNMemPool<XMNMsgHeader>>::GetInstance().DeAllocate(pmsgheader);
     }
+    return 0;
 }

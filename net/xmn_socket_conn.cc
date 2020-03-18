@@ -77,8 +77,10 @@ void XMNConnSockInfo::ClearConnSockInfo()
 
     if (psendalldataforfree != nullptr)
     {
-        //memory.FreeMemory((void *)psendalldataforfree);
         // TODO：对不同的处理函数要有不同的处理。
+        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+        
+        //memory.FreeMemory((void *)psendalldataforfree);
         SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
         psendalldataforfree = nullptr;
     }

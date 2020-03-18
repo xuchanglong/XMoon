@@ -798,6 +798,9 @@ int XMNSocket::PutInSendDataQueue(char *psenddata)
     if (queue_senddata_count_ > 50000)
     {
         ++discardsendpkgcount_;
+        // TODO：对不同的处理函数要有不同的处理。
+        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
         //memory.FreeMemory(psenddata);
         SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psenddata);
         return -1;
@@ -896,6 +899,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             */
             if (pconnsockinfo->currsequence != pmsgheader->currsequence)
             {
+                // TODO：对不同的处理函数要有不同的处理。
+                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
                 //memory.FreeMemory(psendalldata);
                 SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldata);
                 psendalldata = nullptr;
@@ -930,6 +936,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                     /**
                      * 全部正常发送成功。
                     */
+                    // TODO：对不同的处理函数要有不同的处理。
+                    // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
                     //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                     SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                     pconnsockinfo->psendalldataforfree = nullptr;
@@ -964,6 +973,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
                 /**
                  * 发送端已断开连接。
                 */
+                // TODO：对不同的处理函数要有不同的处理。
+                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
                 //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                 SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
@@ -986,6 +998,9 @@ void *XMNSocket::SendDataThread(void *pthreadinfo)
             }
             else
             {
+                // TODO：对不同的处理函数要有不同的处理。
+                // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
                 //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
                 SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
                 pconnsockinfo->psendalldataforfree = nullptr;
@@ -1046,6 +1061,9 @@ int XMNSocket::FreeSendDataQueue()
     {
         ptmp = senddata_queue_.front();
         senddata_queue_.pop();
+        // TODO：对不同的处理函数要有不同的处理。
+        // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+
         //memory.FreeMemory(ptmp);
         SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(ptmp);
     }

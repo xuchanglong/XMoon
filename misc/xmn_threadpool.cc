@@ -131,7 +131,6 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         //sleep(5);
         g_socket.ThreadRecvProcFunc(pmsg);
 
-        //pmemory->FreeMemory((void *)pmsg);
         /**
          * 业务处理结束。
         */

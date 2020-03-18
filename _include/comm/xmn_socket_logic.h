@@ -9,14 +9,19 @@ struct RegisterInfoAll
     XMNMsgHeader msgheader;
     XMNPkgHeader pkgheader;
     RegisterInfo registerinfo;
+} __attribute__((packed));
 
+struct NoBodyInfoAll
+{
+    XMNMsgHeader msgheader;
+    XMNPkgHeader pkgheader;
 } __attribute__((packed));
 
 struct LoginInfoAll
 {
     XMNMsgHeader msgheader;
     XMNPkgHeader pkgheader;
-    RegisterInfo registerinfo;
+    Logininfo logininfo;
 
 } __attribute__((packed));
 

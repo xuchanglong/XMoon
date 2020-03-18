@@ -372,6 +372,9 @@ void XMNSocket::WaitWriteRequestHandler(XMNConnSockInfo *pconnsockinfo)
     {
         XMNLogStdErr(0, "XMNSocket::WaitWriteRequestHandler()执行失败。");
     }
+    // TODO：对不同的处理函数要有不同的处理。
+    // 有的需要用 FreeMemory，有的需要用 DeAllocate 。
+    
     //memory.FreeMemory(pconnsockinfo->psendalldataforfree);
     SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(pconnsockinfo->psendalldataforfree);
     pconnsockinfo->psendalldataforfree = nullptr;
