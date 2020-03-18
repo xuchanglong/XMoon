@@ -18,7 +18,7 @@
 XMNConnSockInfo::XMNConnSockInfo()
 {
     memset(this, 0, sizeof(struct XMNConnSockInfo));
-    int r = pthread_mutex_init(&logicprocmutex, nullptr);
+    int r = pthread_mutex_init(&logicprocmutex_, nullptr);
     if (r != 0)
     {
         XMNLogStdErr(0, "XMNConnSockInfo::XMNConnSockInfo() 调用 pthread_mutex_init 失败，错误代码：%d", r);
@@ -27,7 +27,7 @@ XMNConnSockInfo::XMNConnSockInfo()
 
 XMNConnSockInfo::~XMNConnSockInfo()
 {
-    int r = pthread_mutex_destroy(&logicprocmutex);
+    int r = pthread_mutex_destroy(&logicprocmutex_);
     if (r != 0)
     {
         XMNLogStdErr(0, "XMNConnSockInfo::~XMNConnSockInfo() 调用 pthread_mutex_destroy 失败，错误代码：%d", r);
@@ -78,6 +78,7 @@ void XMNConnSockInfo::ClearConnSockInfo()
     if (psendalldataforfree != nullptr)
     {
         //memory.FreeMemory((void *)psendalldataforfree);
+        // TODO：对不同的处理函数要有不同的处理。
         SingletonBase<XMNMemPool<RegisterInfoAll>>::GetInstance().DeAllocate(psendalldataforfree);
         psendalldataforfree = nullptr;
     }
@@ -93,63 +94,14 @@ void XMNConnSockInfo::ClearConnSockInfo()
  ***************** XMNSocket 相关函数 **************** 
  * 
 **************************************************************************************/
-void XMNSocket::InitConnSockInfoPool()
-{
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    const size_t kConnSockInfoLen = sizeof(XMNConnSockInfo);
-
-    /**
-     * 为连接池创建 worker_connection_count_ 个连接，后续可以再增加。
-    */
-    for (size_t i = 0; i < worker_connection_count_; ++i)
-    {
-        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(kConnSockInfoLen, false);
-        pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
-        pconnsockinfo->InitConnSockInfo();
-        connsock_pool_.push_back(pconnsockinfo);
-        connsock_pool_free_.push_back(pconnsockinfo);
-    }
-    pool_connsock_count_ = connsock_pool_.size();
-    pool_free_connsock_count_ = connsock_pool_free_.size();
-}
-
-void XMNSocket::FreeConnSockInfoPool()
-{
-    XMNConnSockInfo *pconnsockinfo = nullptr;
-    XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-    while (!connsock_pool_.empty())
-    {
-        pconnsockinfo = connsock_pool_.front();
-        connsock_pool_.pop_front();
-        pconnsockinfo->~XMNConnSockInfo();
-        memory.FreeMemory((void *)pconnsockinfo);
-    }
-}
 
 XMNConnSockInfo *XMNSocket::PutOutConnSockInfofromPool(const int &kSockFd)
 {
     XMNLockMutex connsockpoolmutex(&connsock_pool_mutex_);
-    XMNConnSockInfo *pconnsockinfo = nullptr;
-    if (pool_free_connsock_count_)
-    {
-        /**
-         * 空闲连接池中有连接。
-        */
-        pconnsockinfo = connsock_pool_free_.front();
-        connsock_pool_free_.pop_front();
-        --pool_free_connsock_count_;
-    }
-    else
-    {
-        /**
-         * 空闲连接池中无连接，再创建一个连接。
-        */
-        XMNMemory &memory = SingletonBase<XMNMemory>::GetInstance();
-        XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)memory.AllocMemory(sizeof(XMNConnSockInfo), false);
-        pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
-        connsock_pool_.push_back(pconnsockinfo);
-        ++pool_connsock_count_;
-    }
+
+    XMNConnSockInfo *pconnsockinfo = (XMNConnSockInfo *)SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().Allocate();
+    pconnsockinfo = new (pconnsockinfo) XMNConnSockInfo();
+
     pconnsockinfo->InitConnSockInfo();
     pconnsockinfo->fd = kSockFd;
 
@@ -160,8 +112,7 @@ void XMNSocket::PutInConnSockInfo2Pool(XMNConnSockInfo *pconnsockinfo)
 {
     XMNLockMutex connsockinfomutex(&connsock_pool_mutex_);
     pconnsockinfo->ClearConnSockInfo();
-    connsock_pool_free_.push_back(pconnsockinfo);
-    ++pool_free_connsock_count_;
+    SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().DeAllocate(pconnsockinfo);
     return;
 }
 
@@ -270,4 +221,9 @@ void XMNSocket::CloseConnection(XMNConnSockInfo *pconnsockinfo)
     }
 
     return;
+}
+
+size_t XMNSocket::ConnectPoolSize()
+{
+    return SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().Size();
 }

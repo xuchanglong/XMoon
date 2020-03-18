@@ -68,7 +68,7 @@ int XMNSocketLogic::HandleRegister(XMNMsgHeader *pmsgheader, char *ppkgbody, siz
      * 很可能造成这个用户购买成功了 A，又购买成功了 B。
      * 所以根据上述考虑，同一个连接多个逻辑进行加锁处理。
     */
-    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
+    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex_);
     /**
      * （3）获取发送来的所有数据。
     */
@@ -227,7 +227,7 @@ int XMNSocketLogic::HandlePing(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t 
     }
 
     XMNConnSockInfo *pconnsockinfo = pmsgheader->pconnsockinfo;
-    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex);
+    XMNLockMutex lockmutex_logic(&pconnsockinfo->logicprocmutex_);
     pconnsockinfo->lastpingtime = time(nullptr);
 
     SendNoBodyData2Client(pmsgheader, CMD_LOGIC_PING);

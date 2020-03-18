@@ -26,8 +26,8 @@ XMNSocket::XMNSocket() : kMsgHeaderLen_(sizeof(XMNMsgHeader)),
     listenport_count_ = 0;
     worker_connection_count_ = 0;
     epoll_handle_ = 0;
-    pool_connsock_count_ = 0;
-    pool_free_connsock_count_ = 0;
+    //pool_connsock_count_ = 0;
+    //pool_free_connsock_count_ = 0;
     pool_recyconnsock_count_ = 0;
     queue_senddata_count_ = 0;
     recyconnsockinfowaittime_ = 0;
@@ -161,7 +161,7 @@ int XMNSocket::EndWorker()
     /**
      * （2）回收线程池、发送消息队列和心跳监控 multimap 。
     */
-    FreeConnSockInfoPool();
+    //FreeConnSockInfoPool();
     FreeSendDataQueue();
     FreePingMultiMap();
 
@@ -415,7 +415,7 @@ int XMNSocket::EpollInit()
     /**
      * （2）连接池初始化。
     */
-    InitConnSockInfoPool();
+    //InitConnSockInfoPool();
 
     /**
      * （2）创建指定数量的连接池和空闲连接的单向链表。
@@ -438,7 +438,7 @@ int XMNSocket::EpollInit()
         pconnsock_pool_[conn_count].fd = -1;
         pconnsock_pool_[conn_count].instance = 1;
         pconnsock_pool_[conn_count].currsequence = 0;
-        pconnsock_pool_[conn_count].logicprocmutex = PTHREAD_MUTEX_INITIALIZER;
+        pconnsock_pool_[conn_count].logicprocmutex_ = PTHREAD_MUTEX_INITIALIZER;
 
         next = &pconnsock_pool_[conn_count];
     } while (conn_count);
@@ -1031,7 +1031,6 @@ int XMNSocket::SendData(XMNConnSockInfo *pconnsockinfo)
         {
             break;
         }
-        
     }
     /**
      * 运行到这里说明 n >= 0 。
@@ -1127,9 +1126,8 @@ void XMNSocket::PrintInfo()
 
         XMNLogStdErr(0, "\n--------------------  begin --------------------");
         XMNLogStdErr(0, "当前在线人数 / 总人数（%d，%d）", onlineusercount, worker_connection_count_);
-        XMNLogStdErr(0, "连接池中空闲连接 / 总连接 / 要释放的连接（%d，%d，%d）。",
-                     connsock_pool_free_.size(),
-                     connsock_pool_.size(),
+        XMNLogStdErr(0, "连接池中当前连接数量 / 要释放的连接（%d，%d）。",
+                     SingletonBase<XMNMemPool<XMNConnSockInfo>>::GetInstance().Size(),
                      recycleconnsock_pool_.size());
         XMNLogStdErr(0, "当前时间队列的大小（%d）", ping_multimap_.size());
         XMNLogStdErr(0, "当前接收消息队列和发送消息队列的大小分别为（%d，%d），被丢弃的待发送的消息的数量为（%d）",

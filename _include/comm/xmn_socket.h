@@ -144,7 +144,7 @@ public:
     /**
      * 业务逻辑处理的互斥量。
     */
-    pthread_mutex_t logicprocmutex;
+    pthread_mutex_t logicprocmutex_;
 
     /**************************************************************************************
      * 
@@ -567,22 +567,6 @@ private:
      * 
     **************************************************************************************/
     /**
-     * @function    初始化连接池。
-     * @paras   none 。
-     * @ret  none 。
-     * @time    2019-09-19
-    */
-    void InitConnSockInfoPool();
-
-    /**
-     * @function    释放连接池所占的内存。
-     * @paras   none 。
-     * @ret  none 。
-     * @time    2019-09-19
-    */
-    void FreeConnSockInfoPool();
-
-    /**
      * @function    从连接池中取出一个连接，将 accept 返回的 socket 和该连接进行关联。
      * @paras   kSockFd accept 返回的 socket 。
      * @ret 绑定好的连接池中的一个连接。
@@ -621,6 +605,14 @@ private:
      * @time    2019-08-29
     */
     void CloseConnection(XMNConnSockInfo *pconnsockinfo);
+
+    /**
+     * @function    返回连接池大小。
+     * @paras   none 。
+     * @ret  返回连接池大小
+     * @time    2020-03-18
+    */
+    inline size_t ConnectPoolSize();
 
     /**************************************************************************************
      * 
@@ -797,29 +789,9 @@ private:
      * 
     **************************************************************************************/
     /**
-     * 连接池列表。
-    */
-    std::list<XMNConnSockInfo *> connsock_pool_;
-
-    /**
-     * 空闲连接的列表。
-    */
-    std::list<XMNConnSockInfo *> connsock_pool_free_;
-
-    /**
-     * 连接池中所有连接的数量。
-    */
-    std::atomic<size_t> pool_connsock_count_;
-
-    /**
      * 有关连接池操作的互斥量。
     */
     pthread_mutex_t connsock_pool_mutex_;
-
-    /**
-     * 空闲连接池中可用连接的数量。
-    */
-    std::atomic<size_t> pool_free_connsock_count_;
 
     /**
      * 待回收的连接的列表。
