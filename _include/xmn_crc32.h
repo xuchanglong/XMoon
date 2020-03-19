@@ -2,7 +2,9 @@
  * 
  *  @function CRC32 单字节校验算法。
  *  @time   2019-09-13
- *  @reference link：https://www.cnblogs.com/esestt/archive/2007/08/09/848856.html
+ *  @reference link：
+ *  （1）https://www.cnblogs.com/esestt/archive/2007/08/09/848856.html
+ *  （2）https://zhuanlan.zhihu.com/p/26469035
  * 
  *****************************************************************************************/
 #ifndef XMOON__INCLUDE_XMN_CRC32_H_
@@ -23,7 +25,7 @@ private:
 
 public:
     /**
-     * @function 用 crc32_table 查找表来产生数据的CRC值
+     * @function 用 crc32_table 查找表来产生数据的 CRC 值。
      * @paras buffer 待转换的数据的首地址。
      *        kSize 待转换的数据的字节数量。
      * @ret 最终的经过 crc32 转换之后的数据。

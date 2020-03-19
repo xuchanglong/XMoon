@@ -54,9 +54,7 @@ int XMNCRC32::GetCRC32(unsigned char *buffer, const size_t &kSize)
 	}
 
 	unsigned int crc(0xffffffff);
-	size_t len;
-
-	len = kSize;
+	size_t len = kSize;
 	/**
 	 * 对每一个字节的数据进行异或。
 	*/
