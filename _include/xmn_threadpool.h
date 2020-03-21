@@ -32,10 +32,12 @@ private:
          * 该线程所在的线程池的首地址。
         */
         XMNThreadPool *pthreadpool_;
+
         /**
          * 该线程是否在运行。
         */
         bool isrunning_;
+
         /**
          * 该线程的描述符。
         */
@@ -120,7 +122,7 @@ private:
     /**
      * 线程是否退出的标识。
     */
-    static bool isquit_;
+    bool isquit_;
 
     /**
      * 线程池中正在运行的线程的数量。
@@ -130,12 +132,12 @@ private:
     /**
      * 线程同步互斥量。
     */
-    static pthread_mutex_t thread_mutex_;
+    pthread_mutex_t thread_mutex_;
 
     /**
      * 线程同步条件。
     */
-    static pthread_cond_t thread_cond_;
+    pthread_cond_t thread_cond_;
 
     /**
      * 记录上次线程池中的线程全都工作时的时间。
@@ -145,7 +147,7 @@ private:
     /**
      * 接收消息队列的同步互斥量。
     */
-    static pthread_mutex_t recvdata_queue_mutex_;
+    pthread_mutex_t recvdata_queue_mutex_;
 
     /**
      * 存放接收的数据的消息队列。

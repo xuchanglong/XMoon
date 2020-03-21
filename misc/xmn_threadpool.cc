@@ -7,18 +7,18 @@
 #include <errno.h>
 #include <unistd.h>
 
-bool XMNThreadPool::isquit_ = false;
-pthread_mutex_t XMNThreadPool::thread_mutex_ = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t XMNThreadPool::thread_cond_ = PTHREAD_COND_INITIALIZER;
-
-pthread_mutex_t XMNThreadPool::recvdata_queue_mutex_ = PTHREAD_MUTEX_INITIALIZER;
-
 XMNThreadPool::XMNThreadPool()
 {
     threadpoolsize_ = 0;
     threadrunningcount_ = 0;
     allthreadswork_lasttime_ = 0;
     queue_recvdata_count_ = 0;
+
+    thread_mutex_ = PTHREAD_MUTEX_INITIALIZER;
+    thread_cond_ = PTHREAD_COND_INITIALIZER;
+    recvdata_queue_mutex_ = PTHREAD_MUTEX_INITIALIZER;
+
+    isquit_ = false;
 }
 
 XMNThreadPool::~XMNThreadPool()
@@ -85,13 +85,13 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
     */
     while (true)
     {
-        r = pthread_mutex_lock(&thread_mutex_);
+        r = pthread_mutex_lock(&pthreadpool->thread_mutex_);
         if (r != 0)
         {
             XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
-        while ((!isquit_) && ((pmsg = pthreadpool->PutOutRecvDataQueue()) == nullptr))
+        while ((!pthreadpool->isquit_) && ((pmsg = pthreadpool->PutOutRecvDataQueue()) == nullptr))
         {
             /**
              * 运行到这里，说明线程没有接收到退出命令且也没有从消息链表中拿到了消息。
@@ -104,7 +104,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
             */
-            pthread_cond_wait(&thread_cond_, &thread_mutex_);
+            pthread_cond_wait(&pthreadpool->thread_cond_, &pthreadpool->thread_mutex_);
         }
 
         /**
@@ -113,7 +113,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 解锁。
         */
-        r = pthread_mutex_unlock(&thread_mutex_);
+        r = pthread_mutex_unlock(&pthreadpool->thread_mutex_);
         if (r != 0)
         {
             XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_unlock 执行失败。");
@@ -127,14 +127,11 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 开始业务处理。
         */
-        //XMNLogStdErr(0, "业务逻辑开始执行，pid = %d", pid);
-        //sleep(5);
         g_socket.ThreadRecvProcFunc(pmsg);
 
         /**
          * 业务处理结束。
         */
-        //XMNLogStdErr(0, "业务逻辑执行结束，pid = %d", pid);
 
         /**
          * 正在运行的线程数 - 1 。
