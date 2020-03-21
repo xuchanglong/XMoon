@@ -130,6 +130,11 @@ int XMNSocketLogic::HandleLogin(XMNMsgHeader *pmsgheader, char *ppkgbody, size_t
 
 void XMNSocketLogic::ThreadRecvProcFunc(char *pmsgbuf)
 {
+    if (pmsgbuf == nullptr)
+    {
+        return;
+    }
+
     /**
      * （1）变量声明。
     */

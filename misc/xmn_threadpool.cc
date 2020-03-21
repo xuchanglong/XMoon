@@ -15,8 +15,9 @@ XMNThreadPool::XMNThreadPool()
     queue_recvdata_count_ = 0;
 
     thread_mutex_ = PTHREAD_MUTEX_INITIALIZER;
-    thread_cond_ = PTHREAD_COND_INITIALIZER;
+    //thread_cond_ = PTHREAD_COND_INITIALIZER;
     recvdata_queue_mutex_ = PTHREAD_MUTEX_INITIALIZER;
+    queue_thread_cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
     isquit_ = false;
 }
@@ -25,7 +26,14 @@ XMNThreadPool::~XMNThreadPool()
 {
     pthread_mutex_destroy(&thread_mutex_);
     pthread_mutex_destroy(&recvdata_queue_mutex_);
-    pthread_cond_destroy(&thread_cond_);
+    pthread_mutex_destroy(&queue_thread_cond_mutex);
+    //pthread_cond_destroy(&thread_cond_);
+    while (queue_thread_cond_.size())
+    {
+        delete queue_thread_cond_.front();
+        queue_thread_cond_.pop();
+    }
+    std::queue<pthread_cond_t *>().swap(queue_thread_cond_);
 }
 
 int XMNThreadPool::Create(const size_t &kThreadCount)
@@ -39,6 +47,9 @@ int XMNThreadPool::Create(const size_t &kThreadCount)
     for (size_t i = 0; i < threadpoolsize_; i++)
     {
         ThreadInfo *pthreadinfoitem = new ThreadInfo(this);
+        pthread_cond_t *pcond = new pthread_cond_t();
+        pthread_cond_init(pcond, nullptr);
+        pthreadinfoitem->SetCond(pcond);
         r = pthread_create(&pthreadinfoitem->threadhandle_, nullptr, ThreadFunc, (void *)pthreadinfoitem);
         if (r != 0)
         {
@@ -76,6 +87,8 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
     int r = 0;
     ThreadInfo *pthreadinfo = (ThreadInfo *)pthreaddata;
     XMNThreadPool *pthreadpool = pthreadinfo->pthreadpool_;
+    pthread_cond_t *pcond = pthreadinfo->GetCond();
+
     char *pmsg = nullptr;
 
     const pthread_t pid = pthread_self();
@@ -83,7 +96,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
     /**
      * 从消息链表中取出数据。
     */
-    while (true)
+    while (!pthreadpool->isquit_)
     {
         r = pthread_mutex_lock(&pthreadpool->thread_mutex_);
         if (r != 0)
@@ -91,7 +104,7 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             XMNLogStdErr(r, "XMNThreadPool::ThreadFunc 中 pthread_mutex_lock 执行失败。");
         }
 
-        while ((!pthreadpool->isquit_) && ((pmsg = pthreadpool->PutOutRecvDataQueue()) == nullptr))
+        while ((!pthreadpool->isquit_) && (pmsg = pthreadpool->PutOutRecvDataQueue()) == nullptr)
         {
             /**
              * 运行到这里，说明线程没有接收到退出命令且也没有从消息链表中拿到了消息。
@@ -101,15 +114,27 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
             */
             pthreadinfo->isrunning_ = true;
             /**
+             * 将该线程的 cond 压入等待队列中。
+            */
+            pthread_mutex_lock(&pthreadpool->queue_thread_cond_mutex);
+            pthreadpool->queue_thread_cond_.push(pcond);
+            //XMNLogInfo(6, 0, ("当前压入队列中的线程 pid = " + std::to_string(pid)).c_str());
+            pthread_mutex_unlock(&pthreadpool->queue_thread_cond_mutex);
+            /**
              * 进入该函数时，解锁。
              * 走出该函数时，加锁。
             */
-            pthread_cond_wait(&pthreadpool->thread_cond_, &pthreadpool->thread_mutex_);
+            pthread_cond_wait(pcond, &pthreadpool->thread_mutex_);
+            /**
+             * 保证每次线程运行时都能对 pmsg 进行初始化。
+            */
+            pmsg = nullptr;
         }
 
         /**
          * 运行到这里，说明线程从消息链表中取出了数据或者线程要退出，即：isquit_ == true 。
         */
+        //XMNLogInfo(6, 0, ("当前线程 pid = " + std::to_string(pid)).c_str());
         /**
          * 解锁。
         */
@@ -132,12 +157,12 @@ void *XMNThreadPool::ThreadFunc(void *pthreaddata)
         /**
          * 业务处理结束。
         */
-
         /**
          * 正在运行的线程数 - 1 。
         */
         --pthreadpool->threadrunningcount_;
     }
+    pthread_cond_destroy(pcond);
     return 0;
 }
 
@@ -152,11 +177,21 @@ int XMNThreadPool::Destroy()
         return -1;
     }
     isquit_ = true;
-
-    r = pthread_cond_broadcast(&thread_cond_);
-    if (r != 0)
+    /**
+     * 让每一个线程安全退出。
+    */
+    while (queue_thread_cond_.size())
     {
-        XMNLogStdErr(r, "XMNThreadPool::Destroy() 中 pthread_cond_signal 执行失败。");
+        pthread_mutex_lock(&queue_thread_cond_mutex);
+        pthread_cond_t *pcond = queue_thread_cond_.front();
+        queue_thread_cond_.pop();
+        pthread_mutex_unlock(&queue_thread_cond_mutex);
+
+        r = pthread_cond_signal(pcond);
+        if (r != 0)
+        {
+            XMNLogStdErr(r, "XMNThreadPool::Destroy() 中 pthread_cond_signal 执行失败。");
+        }
     }
 
     /**
@@ -166,7 +201,7 @@ int XMNThreadPool::Destroy()
     {
         /**
          * @function    1、等待指定的线程退出。
-         *                           2、释放退出的线程的系统资源。
+         *              2、释放退出的线程的系统资源。
         */
         pthread_join(x->threadhandle_, nullptr);
     }
@@ -174,7 +209,6 @@ int XMNThreadPool::Destroy()
     /**
      * （3）销毁条件变量和互斥量、释放存储线程池中各个线程信息的内存。
     */
-    pthread_cond_destroy(&thread_cond_);
     pthread_mutex_destroy(&thread_mutex_);
 
     vthreadinfo_.clear();
@@ -185,10 +219,26 @@ int XMNThreadPool::Destroy()
 int XMNThreadPool::Call()
 {
     /**
-     * （1）向线程池中的线程发生一个消息，注意仅仅对其中优先级最高的线程发送。
-     * 使该线程从 pthread_cond_wait 函数跳出。
+     * 按照线程等待队列中的顺序依次调用线程。
+     * 若无线程可掉，则休息 10us ，再次调用尝试。
     */
-    int r = pthread_cond_signal(&thread_cond_);
+    pthread_cond_t *pcond = nullptr;
+    while (true)
+    {
+        pthread_mutex_lock(&queue_thread_cond_mutex);
+        pcond = queue_thread_cond_.front();
+        if (!pcond)
+        {
+            pthread_mutex_unlock(&queue_thread_cond_mutex);
+            usleep(10);
+            continue;
+        }
+        queue_thread_cond_.pop();
+        pthread_mutex_unlock(&queue_thread_cond_mutex);
+        break;
+    }
+
+    int r = pthread_cond_signal(pcond);
     if (r != 0)
     {
         XMNLogStdErr(r, "XMNThreadPool::Call 中 pthread_cond_signal 执行失败。");

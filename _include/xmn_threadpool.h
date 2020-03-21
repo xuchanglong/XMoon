@@ -28,6 +28,17 @@ private:
         ~ThreadInfo(){};
 
     public:
+        pthread_cond_t *GetCond()
+        {
+            return pcond_;
+        }
+
+        void SetCond(pthread_cond_t *pcond)
+        {
+            pcond_ = pcond;;
+        }
+
+    public:
         /**
          * 该线程所在的线程池的首地址。
         */
@@ -42,6 +53,11 @@ private:
          * 该线程的描述符。
         */
         pthread_t threadhandle_;
+
+        /**
+         * 线程专属条件变量。
+        */
+        pthread_cond_t *pcond_;
     };
 
 public:
@@ -135,9 +151,14 @@ private:
     pthread_mutex_t thread_mutex_;
 
     /**
-     * 线程同步条件。
+     * 线程同步条件数组。
     */
-    pthread_cond_t thread_cond_;
+    std::queue<pthread_cond_t *> queue_thread_cond_;
+
+    /**
+     * vthread_cond_ 同步锁。
+    */
+    pthread_mutex_t queue_thread_cond_mutex;
 
     /**
      * 记录上次线程池中的线程全都工作时的时间。
