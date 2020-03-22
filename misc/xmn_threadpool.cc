@@ -221,7 +221,7 @@ int XMNThreadPool::Destroy()
     /**
      * （3）销毁条件变量和互斥量、释放存储线程池中各个线程信息的内存。
     */
-    pthread_mutex_destroy(&thread_mutex_);
+    //pthread_mutex_destroy(&thread_mutex_);
 
     vthreadinfo_.clear();
     std::vector<ThreadInfo *>().swap(vthreadinfo_);
