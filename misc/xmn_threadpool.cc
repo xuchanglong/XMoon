@@ -30,10 +30,23 @@ XMNThreadPool::~XMNThreadPool()
     //pthread_cond_destroy(&thread_cond_);
     while (queue_thread_cond_.size())
     {
-        delete queue_thread_cond_.front();
+        pthread_cond_t *ptmp = queue_thread_cond_.front();
         queue_thread_cond_.pop();
+        delete ptmp;
     }
     std::queue<pthread_cond_t *>().swap(queue_thread_cond_);
+
+    // 由于在连接回收线程中，会检测线程池的 isquit 变量。
+    // 如果该变量为 true，则可以释放接收数据所占的内存，
+    // 故，此处不用再释放内存了。
+    
+    // while (recvdata_queue_.size())
+    // {
+    //     char *ptmp = recvdata_queue_.front();
+    //     recvdata_queue_.pop();
+    //     delete ptmp;
+    // }
+    std::queue<char *>().swap(recvdata_queue_);
 }
 
 int XMNThreadPool::Create(const size_t &kThreadCount)
