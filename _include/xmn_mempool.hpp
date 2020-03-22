@@ -36,7 +36,8 @@ public:
             pfreehead_ = pobj->next;
             free((void *)pobj);
         }
-        pthread_mutex_destroy(&mtx_);
+        // 静态初始化的锁无需销毁。
+        //pthread_mutex_destroy(&mtx_);
     };
 
 public:

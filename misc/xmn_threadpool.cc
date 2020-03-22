@@ -15,7 +15,6 @@ XMNThreadPool::XMNThreadPool()
     queue_recvdata_count_ = 0;
 
     thread_mutex_ = PTHREAD_MUTEX_INITIALIZER;
-    //thread_cond_ = PTHREAD_COND_INITIALIZER;
     recvdata_queue_mutex_ = PTHREAD_MUTEX_INITIALIZER;
     queue_thread_cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -24,10 +23,10 @@ XMNThreadPool::XMNThreadPool()
 
 XMNThreadPool::~XMNThreadPool()
 {
-    pthread_mutex_destroy(&thread_mutex_);
-    pthread_mutex_destroy(&recvdata_queue_mutex_);
-    pthread_mutex_destroy(&queue_thread_cond_mutex);
-    //pthread_cond_destroy(&thread_cond_);
+    // 静态初始化的锁无需销毁。
+    //pthread_mutex_destroy(&thread_mutex_);
+    //pthread_mutex_destroy(&recvdata_queue_mutex_);
+    //pthread_mutex_destroy(&queue_thread_cond_mutex);
     while (queue_thread_cond_.size())
     {
         pthread_cond_t *ptmp = queue_thread_cond_.front();
