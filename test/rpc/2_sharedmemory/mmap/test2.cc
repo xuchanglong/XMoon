@@ -1,38 +1,52 @@
-#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/mman.h>
-#include <unistd.h>
+#include <iostream>
 
-struct PeopleInfo
+struct sUserInfo
 {
-    char name;
-    size_t age;
+    int age;
+    char name[20];
+    char sex;
 };
 
-const size_t kPeopleCount = 10;
-
-int main()
+//这个进程读
+int main(int argc, char *argv[]) 
 {
-    int fd = open("test.txt", O_CREAT | O_RDWR, 00777);
-    PeopleInfo *pinfo = (PeopleInfo *)mmap(nullptr, sizeof(PeopleInfo) * kPeopleCount, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
-    if (pinfo < 0)
+    if (argc != 2)
     {
-        std::cout << "Failed to create mmap." << std::endl;
+        std::cout << "Please specify the file." << std::endl;
         return -1;
     }
-    close(fd);
-
-    for (size_t i = 0; i < kPeopleCount; i++)
+    int fd = open(argv[1], O_RDONLY, 0644);
+    if (fd < 0)
     {
-        std::cout << "name = " << pinfo[i].name << "   "
-                  << "age = " << pinfo[i].age << std::endl;
-    }
-    if (munmap((void *)pinfo, sizeof(PeopleInfo) * kPeopleCount) < 0)
-    {
-        std::cout << "Failed to delete mmap." << std::endl;
+        std::cout << "open file failed." << std::endl;
         return -2;
+    }
+    struct sUserInfo student;
+    struct sUserInfo *p = (struct sUserInfo *)mmap(NULL, sizeof(struct sUserInfo), PROT_READ, MAP_SHARED, fd, 0);
+    if (p == MAP_FAILED)
+    {
+        std::cout << "mmap failed." << std::endl;
+        return -3;
+    }
+    close(fd);
+    int i = 0;
+    while (true)
+    {
+        printf("id = %d\tname = %s\t%c\n", p->age, p->name, p->sex);
+        sleep(2);
+    }
+    int ret = munmap(p, sizeof(student));
+    if (ret < 0)
+    {
+        std::cout << "munmap failed" << std::endl;
+        return -4;
     }
     return 0;
 }
