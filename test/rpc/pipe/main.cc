@@ -13,9 +13,7 @@ size_t strlen(char *pdata)
 {
     const char *ptmp = pdata;
     while (*pdata != '\0')
-    {
         pdata++;
-    }
     return pdata - ptmp;
 }
 
@@ -48,9 +46,7 @@ int main()
     pipe(fd2);
     pid_t pid = fork();
     if (pid == -1)
-    {
         return -1;
-    }
     else if (pid == 0)
     {
         close(fd1[1]);
